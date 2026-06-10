@@ -1,0 +1,40 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { AuthService } from '@/lib/services/authService';
+import { ResponseService } from '@/lib/services/responseService';
+import type { AnswerInput } from '@/lib/types/database';
+
+export interface ResponseActionState {
+  error: string | null;
+}
+
+export async function submitResponseAction(
+  _prev: ResponseActionState,
+  formData: FormData
+): Promise<ResponseActionState> {
+  const surveyId = String(formData.get('surveyId') ?? '');
+  const payloadRaw = String(formData.get('payload') ?? '');
+
+  let answers: AnswerInput[];
+  try {
+    answers = JSON.parse(payloadRaw) as AnswerInput[];
+  } catch {
+    return { error: '回答データの形式が不正です' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const user = await new AuthService(supabase).getCurrentUser();
+  if (!user) return { error: 'ログインが必要です' };
+
+  try {
+    await new ResponseService(supabase).submitResponse(user.id, surveyId, answers);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '回答の送信に失敗しました' };
+  }
+
+  revalidatePath('/surveys');
+  redirect('/?answered=1');
+}
