@@ -47,15 +47,14 @@ export function RegisterForm() {
         <input id="email" name="email" type="email" required className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="password">パスワード（小文字と数字のみ・6文字以上）<span className="text-red-500">*</span></label>
+        <label className={labelClass} htmlFor="password">パスワード（8文字以上・英小文字と数字を含む）<span className="text-red-500">*</span></label>
         <input
           id="password"
           name="password"
           type="password"
           required
-          minLength={6}
-          pattern="[a-z0-9]{6,}"
-          title="小文字（a-z）と数字（0-9）のみ・6文字以上"
+          minLength={8}
+          title="8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください"
           className={inputClass}
         />
       </div>

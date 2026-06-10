@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
-import type { SurveyInput, SurveyStatus } from '@/lib/types/database';
+import type { SurveyStatus } from '@/lib/types/database';
+import { parseJsonWith, surveyInputSchema } from '@/lib/domain/schemas';
 
 export interface SurveyActionState {
   error: string | null;
@@ -22,10 +23,9 @@ export async function saveSurveyAction(
   const surveyId = formData.get('surveyId') ? String(formData.get('surveyId')) : null;
   const payloadRaw = String(formData.get('payload') ?? '');
 
-  let input: SurveyInput;
-  try {
-    input = JSON.parse(payloadRaw) as SurveyInput;
-  } catch {
+  // 構文チェックだけでなく zod で構造・型も検証する（改ざんされた payload を弾く）
+  const input = parseJsonWith(surveyInputSchema, payloadRaw);
+  if (!input) {
     return { error: '入力データの形式が不正です' };
   }
 

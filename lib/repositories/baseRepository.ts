@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { throwDbError } from './dbError';
 
 /**
  * 全リポジトリ共通の抽象親クラス。
@@ -21,13 +22,13 @@ export abstract class BaseRepository<T> {
       .select('*')
       .eq('id', id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, this.table);
     return (data as T) ?? null;
   }
 
   /** id で削除 */
   async deleteById(id: string): Promise<void> {
     const { error } = await this.supabase.from(this.table).delete().eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, this.table);
   }
 }

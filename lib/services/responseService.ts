@@ -58,6 +58,22 @@ export class ResponseService {
     const already = await this.responseRepo.hasResponded(surveyId, userId);
     if (already) throw new Error('すでに回答済みです');
 
+    // 防御的検証：回答が「このアンケートの設問」と「その設問の選択肢」だけを
+    // 参照していることを確認する。他設問・他アンケートの option_id を混入させた
+    // 改ざんpayloadや、同一設問への重複回答をここで弾く。
+    const questionById = new Map(survey.questions.map((q) => [q.id, q]));
+    const seenQuestionIds = new Set<string>();
+    for (const a of answers) {
+      const q = questionById.get(a.question_id);
+      if (!q) throw new Error('回答データの形式が不正です');
+      if (seenQuestionIds.has(a.question_id)) throw new Error('回答データの形式が不正です');
+      seenQuestionIds.add(a.question_id);
+      const validOptionIds = new Set(q.options.map((o) => o.id));
+      for (const id of a.option_ids ?? []) {
+        if (!validOptionIds.has(id)) throw new Error('回答データの形式が不正です');
+      }
+    }
+
     // 条件付き表示：実際に表示される設問のみを必須・形式検証＆保存対象とする。
     // 回答者が選んだ選択肢のテキストは、送信された option_ids から逆引きする。
     const optionTextById = new Map<string, string>();
