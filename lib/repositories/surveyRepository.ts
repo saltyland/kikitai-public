@@ -66,10 +66,13 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
   }
 
   async findOpenSurveys(): Promise<Survey[]> {
+    // 期限なし(null)、または期限が今日以降のもののみ。期限切れは除外する。
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await this.supabase
       .from('surveys')
       .select('*')
       .eq('status', 'open')
+      .or(`deadline.is.null,deadline.gte.${today}`)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []) as Survey[];

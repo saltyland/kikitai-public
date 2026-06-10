@@ -19,7 +19,7 @@ export default async function AnswerSurveyPage({
   let survey;
   let errorMsg: string | null = null;
   try {
-    survey = await new ResponseService(supabase).getSurveyForAnswer(id);
+    survey = await new ResponseService(supabase).getSurveyForAnswer(profile.id, id);
   } catch (e) {
     errorMsg = e instanceof Error ? e.message : 'アンケートを取得できませんでした';
   }

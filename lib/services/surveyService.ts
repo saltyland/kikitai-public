@@ -27,6 +27,7 @@ export class SurveyService {
   /** 入力バリデーション。設問タイプ固有の検証はレジストリ経由で各タイプ定義に委譲する。 */
   private validate(input: SurveyInput): void {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
+    if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
     input.questions.forEach((q: QuestionInput, i: number) => {
       if (!q.text.trim()) throw new Error(`設問${i + 1}の文章を入力してください`);
@@ -77,6 +78,10 @@ export class SurveyService {
     const existing = await this.surveyRepo.findById(surveyId);
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('編集権限がありません');
+    // 公開後の設問変更は集計データとの不整合を生むため、下書きのみ編集可とする
+    if (existing.status !== 'draft') {
+      throw new Error('公開中・終了したアンケートは編集できません（下書きのみ編集可）');
+    }
 
     const survey = await this.surveyRepo.updateSurvey(surveyId, {
       title: input.title.trim(),
@@ -93,6 +98,9 @@ export class SurveyService {
     const survey = await this.surveyRepo.findWithQuestions(surveyId);
     if (!survey) throw new Error('アンケートが見つかりません');
     if (survey.user_id !== userId) throw new Error('編集権限がありません');
+    if (survey.status !== 'draft') {
+      throw new Error('公開中・終了したアンケートは編集できません（下書きのみ編集可）');
+    }
     return survey;
   }
 
