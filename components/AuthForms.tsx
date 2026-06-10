@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { loginAction, registerAction, type ActionState } from '@/app/actions/auth';
 import { inputClass } from '@/lib/ui/styles';
 import { FormLabel } from '@/components/ui/FormLabel';
+import { Spinner } from '@/components/ui/Spinner';
 
 const initial: ActionState = { error: null };
 
@@ -24,7 +25,8 @@ export function LoginForm() {
         <input id="password" name="password" type="password" required className={inputClass} />
       </div>
       {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-      <button type="submit" disabled={pending} className={submitButtonClass}>
+      <button type="submit" disabled={pending} className={`${submitButtonClass} flex items-center justify-center gap-2`}>
+        {pending && <Spinner className="h-4 w-4" />}
         {pending ? 'ログイン中…' : 'ログイン'}
       </button>
       <p className="text-center text-sm text-zinc-600">
@@ -72,7 +74,8 @@ export function RegisterForm() {
         <input id="field" name="field" type="text" className={inputClass} />
       </div>
       {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-      <button type="submit" disabled={pending} className={submitButtonClass}>
+      <button type="submit" disabled={pending} className={`${submitButtonClass} flex items-center justify-center gap-2`}>
+        {pending && <Spinner className="h-4 w-4" />}
         {pending ? '登録中…' : '登録する'}
       </button>
       <p className="text-center text-sm text-zinc-600">

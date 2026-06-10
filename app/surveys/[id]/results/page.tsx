@@ -89,9 +89,13 @@ export default async function ResultsPage({
             </Link>
           </div>
         ) : responseCount === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-            まだ回答がありません。
-          </p>
+          <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
+            <p className="text-4xl" aria-hidden="true">📊</p>
+            <p className="mt-2 text-sm font-medium text-zinc-800">まだ回答がありません</p>
+            <p className="mt-1 text-sm text-zinc-600">
+              回答が集まると、ここに集計グラフが表示されます。
+            </p>
+          </div>
         ) : statsMode ? (
           <ResultStats aggregates={aggregates} />
         ) : (
@@ -106,30 +110,48 @@ export default async function ResultsPage({
                   </p>
 
                   {agg.gridCounts ? (
-                    // グリッド：行×列のクロス集計表
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <caption className="sr-only">{agg.question.text}の行×列クロス集計</caption>
-                        <thead>
-                          <tr>
-                            <th scope="col" className="p-2"><span className="sr-only">行ラベル</span></th>
-                            {Object.keys(Object.values(agg.gridCounts)[0] ?? {}).map((c) => (
-                              <th key={c} scope="col" className="p-2 text-center text-xs font-medium text-zinc-700">{c}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.entries(agg.gridCounts).map(([row, cols]) => (
-                            <tr key={row} className="border-t border-zinc-100">
-                              <th scope="row" className="p-2 text-left font-medium text-zinc-700">{row}</th>
-                              {Object.entries(cols).map(([c, n]) => (
-                                <td key={c} className="p-2 text-center text-zinc-700">{n}</td>
+                    <>
+                      {/* sm以上：行×列のクロス集計表 */}
+                      <div className="hidden sm:block overflow-x-auto">
+                        <table className="min-w-full text-sm">
+                          <caption className="sr-only">{agg.question.text}の行×列クロス集計</caption>
+                          <thead>
+                            <tr>
+                              <th scope="col" className="p-2"><span className="sr-only">行ラベル</span></th>
+                              {Object.keys(Object.values(agg.gridCounts)[0] ?? {}).map((c) => (
+                                <th key={c} scope="col" className="p-2 text-center text-xs font-medium text-zinc-700">{c}</th>
                               ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {Object.entries(agg.gridCounts).map(([row, cols]) => (
+                              <tr key={row} className="border-t border-zinc-100">
+                                <th scope="row" className="p-2 text-left font-medium text-zinc-700">{row}</th>
+                                {Object.entries(cols).map(([c, n]) => (
+                                  <td key={c} className="p-2 text-center text-zinc-700">{n}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* sm未満：行ごとのカード（横スクロール回避） */}
+                      <div className="space-y-3 sm:hidden">
+                        {Object.entries(agg.gridCounts).map(([row, cols]) => (
+                          <div key={row} className="rounded-lg border border-zinc-200 p-3">
+                            <p className="mb-2 text-sm font-medium text-zinc-700">{row}</p>
+                            <dl className="space-y-1">
+                              {Object.entries(cols).map(([c, n]) => (
+                                <div key={c} className="flex justify-between text-sm text-zinc-700">
+                                  <dt className="text-zinc-600">{c}</dt>
+                                  <dd className="font-medium">{n}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   ) : agg.question.options.length > 0 ? (
                     // 選択式（single/multiple/dropdown/scale）：円グラフ＋棒グラフ
                     <ResultChart
