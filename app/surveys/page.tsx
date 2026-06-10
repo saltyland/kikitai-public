@@ -18,9 +18,19 @@ export default async function SurveyListPage() {
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <h1 className="mb-6 text-xl font-bold text-zinc-800">回答できるアンケート</h1>
         {surveys.length === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-            現在、回答できるアンケートはありません。
-          </p>
+          <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
+            <p className="text-4xl" aria-hidden="true">📭</p>
+            <p className="mt-2 text-sm font-medium text-zinc-800">回答できるアンケートはありません</p>
+            <p className="mt-1 text-sm text-zinc-600">
+              現在、公開中のアンケートはありません。自分でアンケートを作って交換を始めましょう。
+            </p>
+            <Link
+              href="/surveys/new"
+              className="mt-4 inline-block rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              ＋ アンケートを作成する
+            </Link>
+          </div>
         ) : (
           <ul className="space-y-3">
             {surveys.map((s) => {

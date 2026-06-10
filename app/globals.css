@@ -10,6 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* セマンティックカラーの下地（今後ハードコードのindigo/red等を段階的に置き換える土台）。
+     primary=indigo-600 / danger=red-600 / success=green-600 / accent(Pro)=amber-500 */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-accent: #f59e0b;
 }
 
 body {
@@ -46,10 +54,22 @@ body {
   animation: kikitai-save-blink 0.8s ease-in-out;
 }
 
+/* ローディング用スピナーの回転 */
+@keyframes kikitai-spin {
+  to { transform: rotate(360deg); }
+}
+.kikitai-spin {
+  animation: kikitai-spin 0.7s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kikitai-check-pop,
   .kikitai-slide-in,
   .kikitai-saving {
     animation: none;
+  }
+  /* スピナーは「処理中」を伝える機能的アニメのため、低速にして残す */
+  .kikitai-spin {
+    animation-duration: 1.4s;
   }
 }
