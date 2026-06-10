@@ -38,6 +38,18 @@ export interface GridConfig {
 /** 設問タイプ別の追加設定（DBには config jsonb として保存する） */
 export type QuestionConfig = ScaleConfig | GridConfig;
 
+/**
+ * 設問の表示条件（分岐ロジック）。
+ * 「先行設問 sourceQuestionOrder で optionText の選択肢が選ばれた時だけ、この設問を表示する」。
+ * null（未設定）の設問は常に表示。
+ */
+export interface QuestionCondition {
+  /** 条件元となる先行設問の order_index */
+  sourceQuestionOrder: number;
+  /** その設問でこの選択肢テキストが選ばれていれば表示する */
+  optionText: string;
+}
+
 /** セクション（ページ）メタ情報。survey.sections の各要素。 */
 export interface SectionMeta {
   title: string;
@@ -76,6 +88,8 @@ export interface Question {
   /** 所属セクション（ページ）番号。0始まり。 */
   section_index: number;
   order_index: number;
+  /** 表示条件（分岐）。null は常に表示。 */
+  condition: QuestionCondition | null;
 }
 
 export interface Option {
@@ -130,6 +144,8 @@ export interface QuestionInput {
   config: QuestionConfig | null;
   /** 所属セクション番号 */
   section_index: number;
+  /** 表示条件（分岐）。null は常に表示。 */
+  condition: QuestionCondition | null;
 }
 
 /** アンケート作成・更新の入力データ */

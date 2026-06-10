@@ -34,6 +34,7 @@ export interface QuestionRow {
   config: unknown | null;
   section_index: number;
   order_index: number;
+  condition: unknown | null;
   options: { text: string; order_index: number }[];
 }
 
@@ -152,6 +153,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
           config: q.config,
           section_index: q.section_index,
           order_index: q.order_index,
+          condition: q.condition,
         })
         .select('id')
         .single();

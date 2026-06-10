@@ -7,6 +7,7 @@ import type {
   SurveyWithQuestions,
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
+import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 
 /** アンケート回答・結果集計のビジネスロジック */
 export class ResponseService {
@@ -57,13 +58,28 @@ export class ResponseService {
     const already = await this.responseRepo.hasResponded(surveyId, userId);
     if (already) throw new Error('すでに回答済みです');
 
-    // 各設問の回答（必須・形式）を、各設問タイプ定義に委譲して検証する
+    // 条件付き表示：実際に表示される設問のみを必須・形式検証＆保存対象とする。
+    // 回答者が選んだ選択肢のテキストは、送信された option_ids から逆引きする。
+    const optionTextById = new Map<string, string>();
+    survey.questions.forEach((q) =>
+      q.options.forEach((o) => optionTextById.set(o.id, o.text))
+    );
+    const selectedTexts = (questionId: string): string[] => {
+      const a = answers.find((x) => x.question_id === questionId);
+      return (a?.option_ids ?? []).map((id) => optionTextById.get(id) ?? '');
+    };
+    const visibleIds = computeVisibleQuestionIds(survey.questions, selectedTexts);
+
+    // 表示されている設問だけを検証する（非表示の条件設問は未回答でも問題なし）
     for (const q of survey.questions) {
+      if (!visibleIds.has(q.id)) continue;
       const a = answers.find((x) => x.question_id === q.id);
       QuestionTypeRegistry.get(q.type).validateAnswer(a, q);
     }
 
-    await this.responseRepo.saveResponse(surveyId, userId, answers);
+    // 非表示設問の回答は保存しない
+    const visibleAnswers = answers.filter((a) => visibleIds.has(a.question_id));
+    await this.responseRepo.saveResponse(surveyId, userId, visibleAnswers);
   }
 
   /** 結果確認（作成者のみ） */

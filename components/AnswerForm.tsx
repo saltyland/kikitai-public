@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { submitResponseAction } from '@/app/actions/response';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
+import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import type {
   AnswerInput,
   GridConfig,
@@ -44,9 +45,21 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  // 条件付き表示：現在の回答に応じて「実際に表示される設問」の集合を算出する
+  const visibleIds = useMemo(() => {
+    const optionTextById = new Map<string, string>();
+    survey.questions.forEach((q) => q.options.forEach((o) => optionTextById.set(o.id, o.text)));
+    const selectedTexts = (qid: string) =>
+      (answers[qid]?.optionIds ?? []).map((id) => optionTextById.get(id) ?? '');
+    return computeVisibleQuestionIds(survey.questions, selectedTexts);
+  }, [survey.questions, answers]);
+
   const pageQuestions = useMemo(
-    () => survey.questions.filter((q) => Math.min(q.section_index, pages - 1) === page),
-    [survey.questions, page, pages]
+    () =>
+      survey.questions.filter(
+        (q) => Math.min(q.section_index, pages - 1) === page && visibleIds.has(q.id)
+      ),
+    [survey.questions, page, pages, visibleIds]
   );
 
   // ---- 状態更新 ----
@@ -97,7 +110,10 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
 
   const submit = async () => {
     if (!validatePage()) return;
-    const payload: AnswerInput[] = survey.questions.map((q) => buildAnswer(q, answers[q.id]));
+    // 表示されている設問の回答のみ送信する（非表示の条件設問は送らない）
+    const payload: AnswerInput[] = survey.questions
+      .filter((q) => visibleIds.has(q.id))
+      .map((q) => buildAnswer(q, answers[q.id]));
     const formData = new FormData();
     formData.set('surveyId', survey.id);
     formData.set('payload', JSON.stringify(payload));

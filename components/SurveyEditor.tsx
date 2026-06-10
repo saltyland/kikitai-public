@@ -25,6 +25,8 @@ interface EditorQuestion {
   options: string[];
   config: Partial<ScaleConfig & GridConfig>;
   section_index: number;
+  /** 表示条件。sourceKey の設問で optionText が選ばれた時だけ表示。null は常に表示。 */
+  condition: { sourceKey: string; optionText: string } | null;
 }
 
 const inputClass =
@@ -50,6 +52,7 @@ function newQuestion(sectionIndex: number): EditorQuestion {
     options: ['', ''],
     config: {},
     section_index: sectionIndex,
+    condition: null,
   };
 }
 
@@ -72,14 +75,13 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     };
   }
   const sections = survey.sections.length ? survey.sections : [{ title: '', description: '' }];
-  return {
-    title: survey.title,
-    description: survey.description ?? '',
-    requiredCount: survey.required_count,
-    deadline: survey.deadline ?? '',
-    sections,
-    questions: survey.questions.map((q) => ({
-      key: uid(),
+  // 先にキーを採番（条件の参照解決に使う）
+  const keyByOrder = new Map<number, string>();
+  const questions: EditorQuestion[] = survey.questions.map((q) => {
+    const key = uid();
+    keyByOrder.set(q.order_index, key);
+    return {
+      key,
       type: q.type,
       text: q.text,
       description: q.description ?? '',
@@ -87,7 +89,23 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
       options: needsOptions(q.type) ? q.options.map((o) => o.text) : [],
       config: (q.config as Partial<ScaleConfig & GridConfig>) ?? {},
       section_index: Math.min(q.section_index, sections.length - 1),
-    })),
+      condition: null,
+    };
+  });
+  // condition（保存形式: order_index 参照）を editor 形式（key 参照）へ復元
+  survey.questions.forEach((q, i) => {
+    const cond = q.condition;
+    if (!cond) return;
+    const sourceKey = keyByOrder.get(cond.sourceQuestionOrder);
+    if (sourceKey) questions[i].condition = { sourceKey, optionText: cond.optionText };
+  });
+  return {
+    title: survey.title,
+    description: survey.description ?? '',
+    requiredCount: survey.required_count,
+    deadline: survey.deadline ?? '',
+    sections,
+    questions,
   };
 }
 
@@ -103,6 +121,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // セクション順に並べた表示順（条件の「先行設問」候補算出に使う）
+  const orderedQuestions = [...questions].sort((a, b) => a.section_index - b.section_index);
 
   // ---- 設問操作 ----
   const updateQuestion = (key: string, patch: Partial<EditorQuestion>) =>
@@ -121,7 +142,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
     setQuestions((qs) => {
       const idx = qs.findIndex((q) => q.key === key);
       if (idx < 0) return qs;
-      const copy = { ...qs[idx], key: uid(), options: [...qs[idx].options], config: { ...qs[idx].config } };
+      const copy = {
+        ...qs[idx],
+        key: uid(),
+        options: [...qs[idx].options],
+        config: { ...qs[idx].config },
+        condition: qs[idx].condition ? { ...qs[idx].condition } : null,
+      };
       return [...qs.slice(0, idx + 1), copy, ...qs.slice(idx + 1)];
     });
 
@@ -220,6 +247,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
     }
     // 設問は元の配列順を維持しつつ、セクション順 → 元順 で安定ソートして保存する
     const ordered = [...questions].sort((a, b) => a.section_index - b.section_index);
+    // condition の参照（key）を保存後の並び順（order_index）に変換する
+    const orderByKey = new Map(ordered.map((q, i) => [q.key, i]));
     // 単一セクションでタイトル・説明が空なら「セクションなし」として保存
     const sectionsPayload =
       sections.length === 1 && !sections[0].title.trim() && !sections[0].description.trim()
@@ -233,15 +262,24 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       deadline: deadline || null,
       status,
       sections: sectionsPayload,
-      questions: ordered.map((q) => ({
-        type: q.type,
-        text: q.text,
-        description: q.description || null,
-        required: q.required,
-        options: q.options,
-        config: needsConfig(q.type) ? (q.config as SurveyInput['questions'][number]['config']) : null,
-        section_index: q.section_index,
-      })),
+      questions: ordered.map((q, qi) => {
+        // 条件元が自分より前にある場合のみ有効
+        const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
+        const condition =
+          q.condition && srcOrder !== undefined && srcOrder < qi
+            ? { sourceQuestionOrder: srcOrder, optionText: q.condition.optionText }
+            : null;
+        return {
+          type: q.type,
+          text: q.text,
+          description: q.description || null,
+          required: q.required,
+          options: q.options,
+          config: needsConfig(q.type) ? (q.config as SurveyInput['questions'][number]['config']) : null,
+          section_index: q.section_index,
+          condition,
+        };
+      }),
     };
 
     const formData = new FormData();
@@ -493,6 +531,12 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     <p className="text-xs text-zinc-500 pl-1">回答者は日付を選択します。</p>
                   )}
 
+                  <ConditionEditor
+                    question={q}
+                    candidates={orderedQuestions.slice(0, orderedQuestions.findIndex((x) => x.key === q.key))}
+                    onChange={(condition) => updateQuestion(q.key, { condition })}
+                  />
+
                   <label className="flex items-center gap-2 pt-1 text-sm text-zinc-700">
                     <input
                       type="checkbox"
@@ -565,6 +609,85 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
 /** scale/grid のみ config を持つ */
 function needsConfig(type: QuestionType) {
   return type === 'scale' || type === 'grid';
+}
+
+/**
+ * 表示条件（分岐）の編集UI。
+ * 「この設問より前にある選択式設問」で特定の選択肢が選ばれた時だけ、この設問を表示する。
+ */
+function ConditionEditor({
+  question,
+  candidates,
+  onChange,
+}: {
+  question: EditorQuestion;
+  candidates: EditorQuestion[];
+  onChange: (condition: { sourceKey: string; optionText: string } | null) => void;
+}) {
+  // 条件元になれるのは「選択肢を持つ設問（single/multiple/dropdown）」のみ
+  const sources = candidates.filter((c) => needsOptions(c.type) && c.options.some((o) => o.trim()));
+  const cond = question.condition;
+  const enabled = !!cond;
+
+  if (sources.length === 0) {
+    // 条件元になりうる先行設問がまだ無い
+    return null;
+  }
+
+  const source = cond ? sources.find((s) => s.key === cond.sourceKey) ?? null : null;
+  const sourceOptions = (source?.options ?? []).map((o) => o.trim()).filter(Boolean);
+
+  return (
+    <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-3">
+      <label className="flex items-center gap-2 text-sm font-medium text-amber-800">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => {
+            if (e.target.checked) {
+              const first = sources[0];
+              onChange({ sourceKey: first.key, optionText: first.options.map((o) => o.trim()).find(Boolean) ?? '' });
+            } else {
+              onChange(null);
+            }
+          }}
+        />
+        🔀 条件付きで表示する（特定の回答をした人だけに見せる）
+      </label>
+
+      {enabled && cond && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-700">
+          <select
+            className="rounded-md border border-zinc-300 px-2 py-1"
+            value={cond.sourceKey}
+            onChange={(e) => {
+              const next = sources.find((s) => s.key === e.target.value)!;
+              onChange({ sourceKey: next.key, optionText: next.options.map((o) => o.trim()).find(Boolean) ?? '' });
+            }}
+          >
+            {sources.map((s, i) => (
+              <option key={s.key} value={s.key}>
+                {`設問「${s.text.trim() || `（無題 ${i + 1}）`}」`}
+              </option>
+            ))}
+          </select>
+          <span>で</span>
+          <select
+            className="rounded-md border border-zinc-300 px-2 py-1"
+            value={cond.optionText}
+            onChange={(e) => onChange({ sourceKey: cond.sourceKey, optionText: e.target.value })}
+          >
+            {sourceOptions.map((o, i) => (
+              <option key={i} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+          <span>を選んだ人だけに表示</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** グリッドの行・列リストの編集UI */

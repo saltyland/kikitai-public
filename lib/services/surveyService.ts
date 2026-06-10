@@ -39,6 +39,14 @@ export class SurveyService {
   private toQuestionRows(questions: QuestionInput[]) {
     return questions.map((q, qi) => {
       const def = QuestionTypeRegistry.get(q.type);
+      // 表示条件は「自分より前の設問」だけを参照できる（循環・前方参照を防ぐ）
+      const condition =
+        q.condition &&
+        q.condition.sourceQuestionOrder >= 0 &&
+        q.condition.sourceQuestionOrder < qi &&
+        q.condition.optionText
+          ? q.condition
+          : null;
       return {
         type: q.type,
         text: q.text.trim(),
@@ -47,6 +55,7 @@ export class SurveyService {
         config: def.buildConfig(q),
         section_index: Math.max(0, q.section_index ?? 0),
         order_index: qi,
+        condition,
         options: def.buildOptions(q),
       };
     });
