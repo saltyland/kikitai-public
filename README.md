@@ -42,44 +42,49 @@ npm install
 
 ### 2. 環境変数の設定
 
-`.env.local` に Supabase の URL と anon key を設定します。
+`.env.local` を作成し、`.env.local.example` を参考に値を設定します。
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# 必須
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# `npm run sync` で自動反映する場合に設定（任意）
+SUPABASE_ACCESS_TOKEN=...   # https://supabase.com/dashboard/account/tokens
+SUPABASE_DB_PASSWORD=...    # プロジェクト作成時のDBパスワード
 ```
 
-### 3. データベースの作成（Supabase CLI）
+### 3. DBスキーマの反映とメール設定（ワンコマンド）
 
 DBスキーマは `supabase/migrations/` でバージョン管理しています。
-ダッシュボードへの手動コピペは不要で、CLIから反映します。
-
-初回のみ（ログインとプロジェクト紐付け）:
+`.env.local` に上記の `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` を入れたうえで:
 
 ```bash
-npx supabase login                                    # ブラウザ認証
-npx supabase link --project-ref <your-project-ref>    # ダッシュボードURLの project/<ここ>
+npm run sync
 ```
 
-スキーマをリモートDBに反映:
+これだけで次の2つが自動実行されます。
+
+1. **メール確認をOFF（自動確認）に設定** … 新規登録時の `email rate limit exceeded`
+   を解消（確認メールを送らず、登録後すぐログイン状態になる）
+2. **`supabase db push`** … `supabase/migrations/` のスキーマをリモートDBへ反映
+
+以降、SQLを変えたら `supabase/migrations/` にファイルを足して `npm run sync`
+（DBだけなら `npm run db:push`）。新しいマイグレーションの雛形は `npm run db:new <name>`。
+
+> マイグレーションは冪等（再実行しても安全）です。既存DBに対して反映してもエラーになりません。
+
+#### 手動で行う場合（CLIを直接使う）
 
 ```bash
+npx supabase login                                 # ブラウザ認証
+npx supabase link --project-ref <project-ref>
 npx supabase db push
 ```
+メール確認OFFは Authentication → Sign In/Providers → Email の「Confirm email」を
+ダッシュボードでオフにしても同じです。
 
-以降、`supabase/migrations/` にSQLファイルを追加して `npx supabase db push` するだけで
-変更が反映されます。新しいマイグレーションは
-`npx supabase migration new <name>` で雛形を作れます。
-
-> マイグレーションは冪等（再実行しても安全）に書いてあるため、既に手動でテーブルを
-> 作成済みのDBに対して `db push` してもエラーになりません。
-
-### 4. メール確認の設定（任意）
-
-デモを手早く試す場合は、Supabase の Authentication → Providers → Email で
-「Confirm email」をオフにすると、登録後すぐにログイン状態になります。
-
-### 5. 開発サーバーの起動
+### 4. 開発サーバーの起動
 
 ```bash
 npm run dev
