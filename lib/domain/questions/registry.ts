@@ -3,23 +3,34 @@ import { QuestionTypeDefinition } from './QuestionTypeDefinition';
 import {
   SingleChoiceQuestion,
   MultipleChoiceQuestion,
+  DropdownQuestion,
   ScaleQuestion,
 } from './ChoiceQuestion';
-import { TextQuestion } from './TextQuestion';
+import {
+  ShortTextQuestion,
+  ParagraphQuestion,
+  DateQuestion,
+} from './TextQuestion';
+import { GridQuestion } from './GridQuestion';
 
 /**
  * 設問タイプのレジストリ。
  *
- * 新しい設問タイプ（順位付け・マトリクス等）を追加する場合は、
- * QuestionTypeDefinition を継承したクラスを作り、この配列に1行足すだけでよい。
- * サービス層・UI層はこのレジストリ経由でしか設問タイプを扱わないため、
- * 既存コードを変更せずに機能拡張できる（開放閉鎖の原則）。
+ * 新しい設問タイプを追加する場合は、QuestionTypeDefinition を継承したクラスを作り、
+ * この配列に1行足すだけでよい。サービス層・UI層はこのレジストリ経由でしか設問タイプを
+ * 扱わないため、既存コードを変更せずに機能拡張できる（開放閉鎖の原則）。
+ *
+ * 配列の順序が、作成画面のタイプ選択メニューの表示順になる。
  */
 const DEFINITIONS: QuestionTypeDefinition[] = [
   new SingleChoiceQuestion(),
   new MultipleChoiceQuestion(),
-  new TextQuestion(),
+  new DropdownQuestion(),
+  new ShortTextQuestion(),
+  new ParagraphQuestion(),
+  new DateQuestion(),
   new ScaleQuestion(),
+  new GridQuestion(),
 ];
 
 const BY_TYPE: Record<QuestionType, QuestionTypeDefinition> = DEFINITIONS.reduce(

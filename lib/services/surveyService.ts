@@ -35,14 +35,21 @@ export class SurveyService {
     });
   }
 
-  /** 設問入力をDB保存用の行に変換する。選択肢生成は各設問タイプ定義に委譲する。 */
+  /** 設問入力をDB保存用の行に変換する。選択肢・設定の生成は各設問タイプ定義に委譲する。 */
   private toQuestionRows(questions: QuestionInput[]) {
-    return questions.map((q, qi) => ({
-      type: q.type,
-      text: q.text.trim(),
-      order_index: qi,
-      options: QuestionTypeRegistry.get(q.type).buildOptions(q.options),
-    }));
+    return questions.map((q, qi) => {
+      const def = QuestionTypeRegistry.get(q.type);
+      return {
+        type: q.type,
+        text: q.text.trim(),
+        description: q.description?.trim() || null,
+        required: !!q.required,
+        config: def.buildConfig(q),
+        section_index: Math.max(0, q.section_index ?? 0),
+        order_index: qi,
+        options: def.buildOptions(q),
+      };
+    });
   }
 
   /**
@@ -57,6 +64,14 @@ export class SurveyService {
     );
   }
 
+  /** セクション（ページ）メタ情報を正規化する */
+  private sanitizeSections(input: SurveyInput) {
+    return (input.sections ?? []).map((s) => ({
+      title: (s.title ?? '').trim(),
+      description: (s.description ?? '').trim(),
+    }));
+  }
+
   /** 新規作成 */
   async createSurvey(userId: string, input: SurveyInput): Promise<Survey> {
     this.validate(input);
@@ -67,6 +82,7 @@ export class SurveyService {
       required_count: input.required_count,
       deadline: input.deadline || null,
       status: input.status,
+      sections: this.sanitizeSections(input),
     });
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
     return survey;
@@ -89,6 +105,7 @@ export class SurveyService {
       required_count: input.required_count,
       deadline: input.deadline || null,
       status: input.status,
+      sections: this.sanitizeSections(input),
     });
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
     return survey;

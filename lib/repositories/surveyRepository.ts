@@ -22,10 +22,19 @@ export interface ISurveyRepository {
   updateStatus(id: string, status: SurveyStatus): Promise<void>;
   delete(id: string): Promise<void>;
   /** 設問と選択肢を一括で置き換える（既存削除 → 新規挿入） */
-  replaceQuestions(
-    surveyId: string,
-    questions: { type: string; text: string; order_index: number; options: { text: string; order_index: number }[] }[]
-  ): Promise<void>;
+  replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void>;
+}
+
+/** replaceQuestions が受け取る設問1件分の保存データ */
+export interface QuestionRow {
+  type: string;
+  text: string;
+  description: string | null;
+  required: boolean;
+  config: unknown | null;
+  section_index: number;
+  order_index: number;
+  options: { text: string; order_index: number }[];
 }
 
 export class SurveyRepository extends BaseRepository<Survey> implements ISurveyRepository {
@@ -123,10 +132,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
     await this.deleteById(id);
   }
 
-  async replaceQuestions(
-    surveyId: string,
-    questions: { type: string; text: string; order_index: number; options: { text: string; order_index: number }[] }[]
-  ): Promise<void> {
+  async replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void> {
     // 既存設問を削除（選択肢はON DELETE CASCADEで消える）
     const { error: delError } = await this.supabase
       .from('questions')
@@ -141,6 +147,10 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
           survey_id: surveyId,
           type: q.type,
           text: q.text,
+          description: q.description,
+          required: q.required,
+          config: q.config,
+          section_index: q.section_index,
           order_index: q.order_index,
         })
         .select('id')

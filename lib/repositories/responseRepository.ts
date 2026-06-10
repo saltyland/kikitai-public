@@ -13,6 +13,8 @@ export interface IResponseRepository {
   ): Promise<void>;
   /** あるアンケートの全回答（個別回答）を取得する。結果集計用。 */
   findAnswersBySurvey(surveyId: string): Promise<Answer[]>;
+  /** あるアンケートの回答セッション一覧を取得する。CSV出力用。 */
+  findSessionsBySurvey(surveyId: string): Promise<ResponseSession[]>;
 }
 
 export class ResponseRepository
@@ -48,15 +50,18 @@ export class ResponseRepository
 
     const responseId = (session as { id: string }).id;
 
-    // 個別回答を組み立てる（multipleは選択肢ごとに1行）
+    // 個別回答を組み立てる
+    //  - multiple: 選択肢ごとに1行
+    //  - grid: 行×選択列ごとに1行（row_labelに行ラベル、text_answerに列ラベル）
     const rows: Omit<Answer, 'id'>[] = [];
     for (const a of answers) {
-      if (a.text_answer !== undefined && a.text_answer !== null) {
+      if (a.text_answer !== undefined && a.text_answer !== null && a.text_answer !== '') {
         rows.push({
           response_id: responseId,
           question_id: a.question_id,
           option_id: null,
           text_answer: a.text_answer,
+          row_label: null,
         });
       }
       for (const optionId of a.option_ids ?? []) {
@@ -65,7 +70,19 @@ export class ResponseRepository
           question_id: a.question_id,
           option_id: optionId,
           text_answer: null,
+          row_label: null,
         });
+      }
+      for (const g of a.grid_answers ?? []) {
+        for (const col of g.columns) {
+          rows.push({
+            response_id: responseId,
+            question_id: a.question_id,
+            option_id: null,
+            text_answer: col,
+            row_label: g.row,
+          });
+        }
       }
     }
 
@@ -92,5 +109,15 @@ export class ResponseRepository
       .in('response_id', ids);
     if (error) throw new Error(error.message);
     return (data ?? []) as Answer[];
+  }
+
+  async findSessionsBySurvey(surveyId: string): Promise<ResponseSession[]> {
+    const { data, error } = await this.supabase
+      .from('responses')
+      .select('*')
+      .eq('survey_id', surveyId)
+      .order('created_at', { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ResponseSession[];
   }
 }

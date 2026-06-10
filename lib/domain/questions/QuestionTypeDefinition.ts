@@ -1,7 +1,9 @@
 import type {
   Answer,
   AnswerInput,
+  Option,
   QuestionAggregate,
+  QuestionConfig,
   QuestionInput,
   QuestionType,
   QuestionWithOptions,
@@ -16,13 +18,10 @@ export interface OptionRow {
 /**
  * 設問タイプの振る舞いを定義する抽象親クラス。
  *
- * 設問タイプごとに異なる「選択肢の扱い」「バリデーション」「集計」「ポイントコスト」を
- * このクラスのサブクラスにカプセル化することで、新しい設問タイプ（順位付け・マトリクス等）
- * の追加を、このディレクトリにクラスを1つ足してレジストリに登録するだけで完結させる。
- *
- * - Phase 1：単一選択・複数選択・自由記述・スケール
- * - Phase 2（予定）：順位付け・マトリクス → 新しいサブクラスを追加するだけ
- * - Phase 4（予定）：ポイントシステム → pointCost をそのまま利用
+ * 設問タイプごとに異なる「選択肢の扱い」「設定(config)」「バリデーション」「集計」
+ * 「CSV出力」「ポイントコスト」を、このクラスのサブクラスにカプセル化する。
+ * これにより、新しい設問タイプの追加を、このディレクトリにクラスを1つ足して
+ * レジストリに登録するだけで完結させる（開放閉鎖の原則）。
  */
 export abstract class QuestionTypeDefinition {
   /** DBに保存する設問タイプ識別子 */
@@ -37,15 +36,43 @@ export abstract class QuestionTypeDefinition {
   /** 作成者が選択肢テキストを入力する必要があるか（UIの出し分けに使用） */
   abstract readonly requiresOptionInput: boolean;
 
-  /** 入力された選択肢から、DB保存用の選択肢行を生成する */
-  abstract buildOptions(inputOptions: string[]): OptionRow[];
+  /** 入力からDB保存用の選択肢行を生成する（選択肢を持たないタイプは空配列） */
+  abstract buildOptions(input: QuestionInput): OptionRow[];
+
+  /** 入力からDB保存用の設定(config)を生成する（設定を持たないタイプは null） */
+  buildConfig(input: QuestionInput): QuestionConfig | null {
+    void input;
+    return null;
+  }
 
   /** 作成時のバリデーション。問題があれば Error を投げる。 */
   abstract validateDefinition(input: QuestionInput, humanIndex: number): void;
 
   /** 回答時のバリデーション。未回答・不正があれば Error を投げる。 */
-  abstract validateAnswer(answer: AnswerInput | undefined, questionText: string): void;
+  abstract validateAnswer(answer: AnswerInput | undefined, question: QuestionWithOptions): void;
 
   /** この設問に対する回答群を集計する */
   abstract aggregate(question: QuestionWithOptions, answers: Answer[]): QuestionAggregate;
+
+  /**
+   * CSV出力用：ある1回答セッションの当該設問への回答（複数行になりうる）を
+   * 1セルの文字列に整形する。
+   */
+  abstract renderAnswerText(answers: Answer[], question: QuestionWithOptions): string;
+
+  /**
+   * 「必須なのに未回答」を共通判定するヘルパ。
+   * answered=false かつ required の場合のみ Error を投げる。
+   */
+  protected enforceRequired(answered: boolean, question: QuestionWithOptions): void {
+    if (!answered && question.required) {
+      throw new Error(`「${question.text}」に回答してください`);
+    }
+  }
+
+  /** option_id から選択肢テキストを引く小ヘルパ */
+  protected optionText(options: Option[], optionId: string | null): string {
+    if (!optionId) return '';
+    return options.find((o) => o.id === optionId)?.text ?? '';
+  }
 }

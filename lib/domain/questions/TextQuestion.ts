@@ -3,15 +3,14 @@ import type {
   Answer,
   AnswerInput,
   QuestionAggregate,
-  QuestionInput,
   QuestionWithOptions,
 } from '@/lib/types/database';
 
-/** 自由記述 */
-export class TextQuestion extends QuestionTypeDefinition {
-  readonly type = 'text' as const;
-  readonly label = '自由記述';
-  readonly pointCost = 2.0;
+/**
+ * テキスト系（記述式・段落・日付）の共通親クラス。
+ * いずれも text_answer に1つの文字列を保存し、集計は回答一覧として扱う。
+ */
+export abstract class FreeTextQuestion extends QuestionTypeDefinition {
   readonly requiresOptionInput = false;
 
   buildOptions(): OptionRow[] {
@@ -19,13 +18,11 @@ export class TextQuestion extends QuestionTypeDefinition {
   }
 
   validateDefinition(): void {
-    // 自由記述は選択肢を持たないため追加バリデーションは不要
+    // テキスト系は選択肢を持たないため追加バリデーションは不要
   }
 
-  validateAnswer(answer: AnswerInput | undefined, questionText: string): void {
-    if (!answer?.text_answer?.trim()) {
-      throw new Error(`「${questionText}」に回答してください`);
-    }
+  validateAnswer(answer: AnswerInput | undefined, question: QuestionWithOptions): void {
+    this.enforceRequired(!!answer?.text_answer?.trim(), question);
   }
 
   aggregate(question: QuestionWithOptions, answers: Answer[]): QuestionAggregate {
@@ -37,4 +34,29 @@ export class TextQuestion extends QuestionTypeDefinition {
     }
     return { question, optionCounts: {}, textAnswers };
   }
+
+  renderAnswerText(answers: Answer[]): string {
+    return answers.map((a) => a.text_answer ?? '').filter(Boolean).join(' ');
+  }
+}
+
+/** 記述式（短文） */
+export class ShortTextQuestion extends FreeTextQuestion {
+  readonly type = 'text' as const;
+  readonly label = '記述式（短文）';
+  readonly pointCost = 1.0;
+}
+
+/** 段落（長文） */
+export class ParagraphQuestion extends FreeTextQuestion {
+  readonly type = 'paragraph' as const;
+  readonly label = '段落（長文）';
+  readonly pointCost = 2.0;
+}
+
+/** 日付 */
+export class DateQuestion extends FreeTextQuestion {
+  readonly type = 'date' as const;
+  readonly label = '日付';
+  readonly pointCost = 0.5;
 }
