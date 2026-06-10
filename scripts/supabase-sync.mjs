@@ -15,7 +15,7 @@
 // =============================================================
 
 import { execSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -88,31 +88,76 @@ async function disableEmailConfirmation() {
 }
 
 // -------------------------------------------------------------
-// 2. DBスキーマを反映（supabase db push）
+// 2. DBスキーマを反映
+//    - DBパスワードがあれば supabase db push（差分のみ正攻法で適用）
+//    - 無ければ Management API でマイグレーションSQLを直接実行（冪等前提のフォールバック）
+//      ※ マイグレーションは冪等（再実行安全）に書く運用なのでAPI実行でも問題ない
 // -------------------------------------------------------------
-function pushDatabase() {
-  if (!accessToken) {
-    console.warn('⚠ SUPABASE_ACCESS_TOKEN 未設定のため db push をスキップします。');
-    return;
-  }
-  if (!dbPassword) {
-    console.warn(
-      '⚠ SUPABASE_DB_PASSWORD 未設定のため db push をスキップします。\n' +
-        '   → .env.local に DBパスワードを設定すると自動反映されます。'
-    );
-    return;
-  }
+function pushWithCli() {
   const env = { SUPABASE_ACCESS_TOKEN: accessToken };
   console.log('▶ プロジェクトとリンク中…');
   run(`npx supabase link --project-ref ${ref} --password "${dbPassword}"`, env);
   console.log('▶ マイグレーションを反映中（db push）…');
   run(`npx supabase db push --password "${dbPassword}"`, env);
-  console.log('✔ DBスキーマを反映しました。');
+  console.log('✔ DBスキーマを反映しました（db push）。');
+}
+
+/** Management API のクエリエンドポイントでSQLを実行する（DBパスワード不要） */
+async function runSqlViaApi(sql) {
+  const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query: sql }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`SQL実行に失敗しました (${res.status}): ${body}`);
+  }
+}
+
+async function pushWithApi() {
+  const migDir = join(root, 'supabase', 'migrations');
+  if (!existsSync(migDir)) {
+    console.warn('⚠ supabase/migrations が見つかりません。反映をスキップします。');
+    return;
+  }
+  const files = readdirSync(migDir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort(); // タイムスタンプ接頭辞順＝適用順
+  if (files.length === 0) {
+    console.warn('⚠ マイグレーションSQLがありません。');
+    return;
+  }
+  console.log(
+    '▶ SUPABASE_DB_PASSWORD 未設定 → Management API でマイグレーションを反映します（冪等）…'
+  );
+  for (const f of files) {
+    const sql = readFileSync(join(migDir, f), 'utf8');
+    process.stdout.write(`   • ${f} … `);
+    await runSqlViaApi(sql);
+    console.log('OK');
+  }
+  console.log('✔ DBスキーマを反映しました（Management API）。');
+}
+
+async function pushDatabase() {
+  if (!accessToken) {
+    console.warn('⚠ SUPABASE_ACCESS_TOKEN 未設定のため DB反映をスキップします。');
+    return;
+  }
+  if (dbPassword) {
+    pushWithCli();
+  } else {
+    await pushWithApi();
+  }
 }
 
 try {
   await disableEmailConfirmation();
-  pushDatabase();
+  await pushDatabase();
   console.log('\n✅ 同期が完了しました。');
 } catch (e) {
   console.error(`\n✖ エラー: ${e.message}`);

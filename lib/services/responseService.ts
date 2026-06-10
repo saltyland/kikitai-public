@@ -7,6 +7,7 @@ import type {
   SurveyWithQuestions,
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
+import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 
 /** アンケート回答・結果集計のビジネスロジック */
 export class ResponseService {
@@ -57,13 +58,28 @@ export class ResponseService {
     const already = await this.responseRepo.hasResponded(surveyId, userId);
     if (already) throw new Error('すでに回答済みです');
 
-    // 全設問への回答が揃っているか、各設問タイプ定義に委譲して検証する
+    // 条件付き表示：実際に表示される設問のみを必須・形式検証＆保存対象とする。
+    // 回答者が選んだ選択肢のテキストは、送信された option_ids から逆引きする。
+    const optionTextById = new Map<string, string>();
+    survey.questions.forEach((q) =>
+      q.options.forEach((o) => optionTextById.set(o.id, o.text))
+    );
+    const selectedTexts = (questionId: string): string[] => {
+      const a = answers.find((x) => x.question_id === questionId);
+      return (a?.option_ids ?? []).map((id) => optionTextById.get(id) ?? '');
+    };
+    const visibleIds = computeVisibleQuestionIds(survey.questions, selectedTexts);
+
+    // 表示されている設問だけを検証する（非表示の条件設問は未回答でも問題なし）
     for (const q of survey.questions) {
+      if (!visibleIds.has(q.id)) continue;
       const a = answers.find((x) => x.question_id === q.id);
-      QuestionTypeRegistry.get(q.type).validateAnswer(a, q.text);
+      QuestionTypeRegistry.get(q.type).validateAnswer(a, q);
     }
 
-    await this.responseRepo.saveResponse(surveyId, userId, answers);
+    // 非表示設問の回答は保存しない
+    const visibleAnswers = answers.filter((a) => visibleIds.has(a.question_id));
+    await this.responseRepo.saveResponse(surveyId, userId, visibleAnswers);
   }
 
   /** 結果確認（作成者のみ） */
@@ -85,4 +101,52 @@ export class ResponseService {
 
     return { survey, responseCount, aggregates };
   }
+
+  /**
+   * 結果をCSV文字列で出力する（作成者のみ）。
+   * 1行＝1回答セッション。列＝タイムスタンプ＋各設問。
+   * 設問ごとの整形は各設問タイプ定義の renderAnswerText に委譲する。
+   */
+  async getResultCsv(
+    userId: string,
+    surveyId: string
+  ): Promise<{ filename: string; csv: string }> {
+    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.user_id !== userId) throw new Error('結果を閲覧する権限がありません');
+
+    const sessions = await this.responseRepo.findSessionsBySurvey(surveyId);
+    const answers = await this.responseRepo.findAnswersBySurvey(surveyId);
+
+    // response_id ごとに回答をまとめる
+    const byResponse = new Map<string, typeof answers>();
+    for (const a of answers) {
+      const list = byResponse.get(a.response_id) ?? [];
+      list.push(a);
+      byResponse.set(a.response_id, list);
+    }
+
+    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const rows = sessions.map((s) => {
+      const mine = byResponse.get(s.id) ?? [];
+      const cells = survey.questions.map((q) => {
+        const forQ = mine.filter((a) => a.question_id === q.id);
+        return QuestionTypeRegistry.get(q.type).renderAnswerText(forQ, q);
+      });
+      return [new Date(s.created_at).toLocaleString('ja-JP'), ...cells];
+    });
+
+    const csv = [header, ...rows].map((r) => r.map(escapeCsv).join(',')).join('\r\n');
+    // Excelの文字化け対策にBOMを付与する
+    return { filename: `${survey.title || 'survey'}_results.csv`, csv: '﻿' + csv };
+  }
+}
+
+/** CSVの1セルをエスケープする（カンマ・改行・引用符を含む場合は引用符で囲む） */
+function escapeCsv(value: string): string {
+  const v = value ?? '';
+  if (/[",\r\n]/.test(v)) {
+    return `"${v.replace(/"/g, '""')}"`;
+  }
+  return v;
 }

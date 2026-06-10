@@ -4,13 +4,68 @@
  */
 
 export type SurveyStatus = 'draft' | 'open' | 'closed';
-export type QuestionType = 'single' | 'multiple' | 'text' | 'scale';
+
+/** 料金プラン。pro のみ統計解析モードを利用できる。 */
+export type Plan = 'free' | 'pro';
+
+/**
+ * 設問タイプ。Googleフォーム相当の種類を網羅する。
+ * 新タイプを足す場合は、ここに識別子を追加し、対応する QuestionTypeDefinition の
+ * サブクラスを作ってレジストリに登録するだけでよい（開放閉鎖の原則）。
+ */
+export type QuestionType =
+  | 'single' // ラジオボタン（単一選択）
+  | 'multiple' // チェックボックス（複数選択）
+  | 'dropdown' // プルダウン（単一選択）
+  | 'text' // 記述式（短文）
+  | 'paragraph' // 段落（長文）
+  | 'date' // 日付
+  | 'scale' // 均等目盛り（可変段階＋両端ラベル）
+  | 'grid'; // 選択式／チェックボックスグリッド
+
+/** スケール設問の設定 */
+export interface ScaleConfig {
+  min: number;
+  max: number;
+  minLabel: string | null;
+  maxLabel: string | null;
+}
+
+/** グリッド設問の設定。multiple=true でチェックボックスグリッド。 */
+export interface GridConfig {
+  rows: string[];
+  columns: string[];
+  multiple: boolean;
+}
+
+/** 設問タイプ別の追加設定（DBには config jsonb として保存する） */
+export type QuestionConfig = ScaleConfig | GridConfig;
+
+/**
+ * 設問の表示条件（分岐ロジック）。
+ * 「先行設問 sourceQuestionOrder で optionText の選択肢が選ばれた時だけ、この設問を表示する」。
+ * null（未設定）の設問は常に表示。
+ */
+export interface QuestionCondition {
+  /** 条件元となる先行設問の order_index */
+  sourceQuestionOrder: number;
+  /** その設問でこの選択肢テキストが選ばれていれば表示する */
+  optionText: string;
+}
+
+/** セクション（ページ）メタ情報。survey.sections の各要素。 */
+export interface SectionMeta {
+  title: string;
+  description: string;
+}
 
 export interface Profile {
   id: string;
   nickname: string;
   affiliation: string | null;
   field: string | null;
+  /** 料金プラン。pro のみ統計解析モードを利用できる。 */
+  plan: Plan;
   created_at: string;
 }
 
@@ -22,6 +77,8 @@ export interface Survey {
   required_count: number;
   deadline: string | null;
   status: SurveyStatus;
+  /** ページ分割。空配列＝単一ページ。 */
+  sections: SectionMeta[];
   created_at: string;
 }
 
@@ -30,7 +87,14 @@ export interface Question {
   survey_id: string;
   type: QuestionType;
   text: string;
+  description: string | null;
+  required: boolean;
+  config: QuestionConfig | null;
+  /** 所属セクション（ページ）番号。0始まり。 */
+  section_index: number;
   order_index: number;
+  /** 表示条件（分岐）。null は常に表示。 */
+  condition: QuestionCondition | null;
 }
 
 export interface Option {
@@ -53,6 +117,8 @@ export interface Answer {
   question_id: string;
   option_id: string | null;
   text_answer: string | null;
+  /** グリッド設問の行ラベル（行ごとに1回答行） */
+  row_label: string | null;
 }
 
 /** 設問＋選択肢をまとめた集約型 */
@@ -75,7 +141,16 @@ export interface SurveyWithStats extends Survey {
 export interface QuestionInput {
   type: QuestionType;
   text: string;
+  description: string | null;
+  required: boolean;
+  /** 選択肢（single/multiple/dropdown 用） */
   options: string[];
+  /** タイプ別設定（scale/grid 用） */
+  config: QuestionConfig | null;
+  /** 所属セクション番号 */
+  section_index: number;
+  /** 表示条件（分岐）。null は常に表示。 */
+  condition: QuestionCondition | null;
 }
 
 /** アンケート作成・更新の入力データ */
@@ -85,22 +160,34 @@ export interface SurveyInput {
   required_count: number;
   deadline: string | null;
   status: SurveyStatus;
+  sections: SectionMeta[];
   questions: QuestionInput[];
+}
+
+/** グリッド設問の1行分の回答（行ラベル→選択した列） */
+export interface GridRowAnswer {
+  row: string;
+  columns: string[];
 }
 
 /** 回答送信の入力データ（question_idごとの回答） */
 export interface AnswerInput {
   question_id: string;
-  /** single/scale: 単一option_id, multiple: option_id配列, text: 文字列 */
+  /** single/scale/dropdown: 単一option_id, multiple: option_id配列 */
   option_ids?: string[];
+  /** text/paragraph/date: 文字列 */
   text_answer?: string;
+  /** grid: 行ごとの選択 */
+  grid_answers?: GridRowAnswer[];
 }
 
 /** 結果集計：設問ごとの集計 */
 export interface QuestionAggregate {
   question: QuestionWithOptions;
-  /** option_id -> 件数 */
+  /** option_id -> 件数（選択式） */
   optionCounts: Record<string, number>;
-  /** 自由記述の回答テキスト一覧 */
+  /** 自由記述・日付の回答テキスト一覧 */
   textAnswers: string[];
+  /** グリッド集計：行ラベル -> 列ラベル -> 件数 */
+  gridCounts?: Record<string, Record<string, number>>;
 }
