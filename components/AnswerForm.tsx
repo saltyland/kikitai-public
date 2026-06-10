@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { submitResponseAction } from '@/app/actions/response';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
@@ -33,10 +33,25 @@ function buildAnswer(q: QuestionWithOptions, s: QState): AnswerInput {
   return { question_id: q.id, option_ids: s.optionIds };
 }
 
+/** 1設問あたりの推定回答秒数（所要時間の目安に使う） */
+const SECONDS_PER_TYPE: Record<string, number> = {
+  single: 8,
+  multiple: 12,
+  dropdown: 8,
+  scale: 8,
+  grid: 20,
+  text: 25,
+  paragraph: 60,
+  date: 10,
+};
+
+function draftKey(surveyId: string) {
+  return `kikitai-draft-${surveyId}`;
+}
+
 export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) {
-  const pages = Math.max(1, survey.sections.length);
   const [consented, setConsented] = useState(false);
-  const [page, setPage] = useState(0);
+  const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<AnswerState>(() => {
     const init: AnswerState = {};
     survey.questions.forEach((q) => (init[q.id] = { optionIds: [], text: '', grid: {} }));
@@ -44,23 +59,78 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [restored, setRestored] = useState(false);
 
-  // 条件付き表示：現在の回答に応じて「実際に表示される設問」の集合を算出する
-  const visibleIds = useMemo(() => {
+  // ---- 途中保存：マウント時に下書き（localStorage）を復元 ----
+  // localStorage は外部ストアであり、SSRとのハイドレーション不整合を避けるため
+  // 初期値ではなくマウント後の effect で読み込む（set-state-in-effect は意図的）。
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey(survey.id));
+      if (raw) {
+        const data = JSON.parse(raw) as { answers?: AnswerState; step?: number; consented?: boolean };
+        if (data.answers) {
+          setAnswers((prev) => {
+            const merged = { ...prev };
+            for (const id of Object.keys(merged)) {
+              if (data.answers![id]) merged[id] = data.answers![id];
+            }
+            return merged;
+          });
+          setStep(data.step ?? 0);
+          setConsented(!!data.consented);
+          setRestored(true);
+        }
+      }
+    } catch {
+      /* 壊れた下書きは無視 */
+    }
+    setLoaded(true);
+  }, [survey.id]);
+
+  // ---- 途中保存：回答・進捗の変化を自動保存 ----
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem(draftKey(survey.id), JSON.stringify({ answers, step, consented }));
+    } catch {
+      /* 保存失敗は無視 */
+    }
+  }, [answers, step, consented, loaded, survey.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(draftKey(survey.id));
+    } catch {
+      /* 無視 */
+    }
+  };
+
+  // 条件付き表示：現在の回答に応じて「実際に表示される設問」を順番に並べる
+  const visibleQuestions = useMemo(() => {
     const optionTextById = new Map<string, string>();
     survey.questions.forEach((q) => q.options.forEach((o) => optionTextById.set(o.id, o.text)));
     const selectedTexts = (qid: string) =>
       (answers[qid]?.optionIds ?? []).map((id) => optionTextById.get(id) ?? '');
-    return computeVisibleQuestionIds(survey.questions, selectedTexts);
+    const visibleIds = computeVisibleQuestionIds(survey.questions, selectedTexts);
+    return [...survey.questions]
+      .sort((a, b) => a.section_index - b.section_index || a.order_index - b.order_index)
+      .filter((q) => visibleIds.has(q.id));
   }, [survey.questions, answers]);
 
-  const pageQuestions = useMemo(
-    () =>
-      survey.questions.filter(
-        (q) => Math.min(q.section_index, pages - 1) === page && visibleIds.has(q.id)
-      ),
-    [survey.questions, page, pages, visibleIds]
-  );
+  const total = visibleQuestions.length;
+  // 回答により表示設問が増減しても範囲内に収める
+  const safeStep = Math.min(step, Math.max(0, total - 1));
+  const current = visibleQuestions[safeStep];
+
+  // 残り設問の推定所要時間（秒）
+  const remainingSeconds = visibleQuestions
+    .slice(safeStep)
+    .reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0);
+  const remainingMin = Math.max(1, Math.round(remainingSeconds / 60));
 
   // ---- 状態更新 ----
   const setSingle = (qid: string, optionId: string) =>
@@ -85,35 +155,42 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
       return { ...a, [qid]: { ...a[qid], grid: { ...a[qid].grid, [row]: next } } };
     });
 
-  // ---- ページ内必須バリデーション（設問タイプ定義に委譲） ----
-  const validatePage = (): boolean => {
-    for (const q of pageQuestions) {
-      try {
-        QuestionTypeRegistry.get(q.type).validateAnswer(buildAnswer(q, answers[q.id]), q);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : '入力内容を確認してください');
-        return false;
-      }
+  // ---- 現在の設問のみバリデーション（設問タイプ定義に委譲） ----
+  const validateCurrent = (): boolean => {
+    if (!current) return true;
+    try {
+      QuestionTypeRegistry.get(current.type).validateAnswer(buildAnswer(current, answers[current.id]), current);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '入力内容を確認してください');
+      return false;
     }
     setError(null);
     return true;
   };
 
   const goNext = () => {
-    if (!validatePage()) return;
-    setPage((p) => Math.min(pages - 1, p + 1));
+    if (!validateCurrent()) return;
+    setStep(Math.min(total - 1, safeStep + 1));
   };
   const goPrev = () => {
     setError(null);
-    setPage((p) => Math.max(0, p - 1));
+    setStep(Math.max(0, safeStep - 1));
+  };
+
+  const restart = () => {
+    clearDraft();
+    const init: AnswerState = {};
+    survey.questions.forEach((q) => (init[q.id] = { optionIds: [], text: '', grid: {} }));
+    setAnswers(init);
+    setStep(0);
+    setRestored(false);
+    setError(null);
   };
 
   const submit = async () => {
-    if (!validatePage()) return;
+    if (!validateCurrent()) return;
     // 表示されている設問の回答のみ送信する（非表示の条件設問は送らない）
-    const payload: AnswerInput[] = survey.questions
-      .filter((q) => visibleIds.has(q.id))
-      .map((q) => buildAnswer(q, answers[q.id]));
+    const payload: AnswerInput[] = visibleQuestions.map((q) => buildAnswer(q, answers[q.id]));
     const formData = new FormData();
     formData.set('surveyId', survey.id);
     formData.set('payload', JSON.stringify(payload));
@@ -121,21 +198,37 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     setPending(true);
     const result = await submitResponseAction({ error: null }, formData);
     setPending(false);
-    if (result?.error) setError(result.error);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      clearDraft(); // 送信成功で下書き削除
+    }
   };
 
   // インフォームドコンセント同意画面
   if (!consented) {
+    const estMin = Math.max(
+      1,
+      Math.round(
+        survey.questions.reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0) / 60
+      )
+    );
     return (
       <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-zinc-800">回答にあたってのご説明</h2>
+        <p className="rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+          全{survey.questions.length}問・所要時間 約{estMin}分
+        </p>
         <div className="space-y-2 text-sm text-zinc-600">
           <p>本アンケートは学術目的で実施されます。</p>
-          <p>・回答は任意であり、いつでも中断できます。</p>
+          <p>・回答は任意であり、いつでも中断できます（入力内容は自動保存されます）。</p>
           <p>・回答内容はアンケート作成者が研究目的で集計・利用します。</p>
           <p>・個人を特定する情報は収集しません。</p>
           <p>上記に同意のうえ、回答を開始してください。</p>
         </div>
+        {restored && (
+          <p className="text-sm text-amber-700">前回の入力内容が残っています。続きから再開できます。</p>
+        )}
         <button
           onClick={() => setConsented(true)}
           className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
@@ -146,27 +239,50 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     );
   }
 
-  const section = survey.sections[page];
+  // 現在の設問が属するセクションの見出し（最初の設問のときだけ表示）
+  const section = current ? survey.sections[Math.min(current.section_index, survey.sections.length - 1)] : null;
+  const isSectionStart =
+    current && (safeStep === 0 || visibleQuestions[safeStep - 1].section_index !== current.section_index);
 
   return (
     <div className="space-y-4">
-      {/* 進捗バー */}
-      {pages > 1 && (
-        <div>
-          <div className="mb-1 flex justify-between text-xs text-zinc-500">
-            <span>セクション {page + 1} / {pages}</span>
-            <span>{Math.round(((page + 1) / pages) * 100)}%</span>
+      {/* 進捗インジケーター（1問ずつ） */}
+      <div>
+        <div className="mb-1 flex justify-between text-xs text-zinc-500">
+          <span>問 {safeStep + 1} / {total}</span>
+          <span>残り約{remainingMin}分</span>
+        </div>
+        <div className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-indigo-500 transition-all"
+            style={{ width: `${total > 0 ? ((safeStep + 1) / total) * 100 : 0}%` }}
+          />
+        </div>
+        {/* ドット式ステップ表示 */}
+        {total <= 30 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {visibleQuestions.map((q, i) => (
+              <span
+                key={q.id}
+                className={`h-1.5 w-1.5 rounded-full ${
+                  i < safeStep ? 'bg-indigo-500' : i === safeStep ? 'bg-indigo-600 ring-2 ring-indigo-200' : 'bg-zinc-200'
+                }`}
+              />
+            ))}
           </div>
-          <div className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-indigo-500 transition-all"
-              style={{ width: `${((page + 1) / pages) * 100}%` }}
-            />
-          </div>
+        )}
+      </div>
+
+      {restored && (
+        <div className="flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+          <span>📌 前回の続きから再開しました。</span>
+          <button onClick={restart} className="font-medium underline hover:text-amber-900 cursor-pointer">
+            最初からやり直す
+          </button>
         </div>
       )}
 
-      {section && (section.title || section.description) && (
+      {isSectionStart && section && (section.title || section.description) && (
         <section className="rounded-xl bg-indigo-50 border border-indigo-200 p-4">
           {section.title && <h2 className="font-bold text-indigo-800">{section.title}</h2>}
           {section.description && (
@@ -175,31 +291,31 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         </section>
       )}
 
-      {pageQuestions.map((q, i) => {
-        return (
-          <section key={q.id} className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
-            <p className="font-medium text-zinc-800">
-              <span className="text-indigo-600 mr-1">Q{i + 1}.</span>
-              {q.text}
-              {q.required && <span className="text-red-500 ml-1">*</span>}
-            </p>
-            {q.description && <p className="text-xs text-zinc-500 whitespace-pre-wrap">{q.description}</p>}
-            <QuestionInputView
-              q={q}
-              state={answers[q.id]}
-              setSingle={setSingle}
-              toggleMultiple={toggleMultiple}
-              setText={setText}
-              setGridCell={setGridCell}
-            />
-          </section>
-        );
-      })}
+      {current && (
+        <section className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
+          <p className="font-medium text-zinc-800">
+            <span className="text-indigo-600 mr-1">Q{safeStep + 1}.</span>
+            {current.text}
+            {current.required && <span className="text-red-500 ml-1">*</span>}
+          </p>
+          {current.description && (
+            <p className="text-xs text-zinc-500 whitespace-pre-wrap">{current.description}</p>
+          )}
+          <QuestionInputView
+            q={current}
+            state={answers[current.id]}
+            setSingle={setSingle}
+            toggleMultiple={toggleMultiple}
+            setText={setText}
+            setGridCell={setGridCell}
+          />
+        </section>
+      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="flex items-center gap-3">
-        {page > 0 && (
+        {safeStep > 0 && (
           <button
             onClick={goPrev}
             className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
@@ -207,7 +323,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
             戻る
           </button>
         )}
-        {page < pages - 1 ? (
+        {safeStep < total - 1 ? (
           <button
             onClick={goNext}
             className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
@@ -223,6 +339,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
             {pending ? '送信中…' : '回答を送信する'}
           </button>
         )}
+        <span className="ml-auto text-xs text-zinc-400">✓ 入力は自動保存されます</span>
       </div>
     </div>
   );

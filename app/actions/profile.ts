@@ -37,6 +37,27 @@ export async function updateProfileAction(
   return { error: null, success: true };
 }
 
+export async function changePlanAction(
+  _prev: ProfileActionState,
+  formData: FormData
+): Promise<ProfileActionState> {
+  const plan = String(formData.get('plan') ?? '');
+  if (plan !== 'free' && plan !== 'pro') return { error: 'プランの指定が不正です' };
+
+  const supabase = await createSupabaseServerClient();
+  const user = await new AuthService(supabase).getCurrentUser();
+  if (!user) return { error: 'ログインが必要です' };
+
+  try {
+    await new ProfileService(supabase).changePlan(user.id, plan);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'プラン変更に失敗しました' };
+  }
+
+  revalidatePath('/profile');
+  return { error: null, success: true };
+}
+
 export async function deleteAccountAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();

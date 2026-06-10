@@ -5,13 +5,17 @@ import { AuthService } from '@/lib/services/authService';
 import { ResponseService } from '@/lib/services/responseService';
 import Header from '@/components/Header';
 import ResultChart from '@/components/ResultChart';
+import ResultStats from '@/components/ResultStats';
 
 export default async function ResultsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ mode?: string }>;
 }) {
   const { id } = await params;
+  const { mode } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const profile = await new AuthService(supabase).getCurrentProfile();
   if (!profile) redirect('/login');
@@ -24,6 +28,8 @@ export default async function ResultsPage({
   }
 
   const { survey, responseCount, aggregates } = data;
+  const isPro = profile.plan === 'pro';
+  const statsMode = mode === 'stats';
 
   return (
     <>
@@ -43,10 +49,51 @@ export default async function ResultsPage({
           )}
         </div>
 
-        {responseCount === 0 ? (
+        {/* 表示モード切替タブ：集計グラフ / 統計解析（Pro） */}
+        <div className="mb-5 flex gap-2 border-b border-zinc-200">
+          <Link
+            href={`/surveys/${survey.id}/results`}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
+              !statsMode
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            集計グラフ
+          </Link>
+          <Link
+            href={`/surveys/${survey.id}/results?mode=stats`}
+            className={`-mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-sm font-medium ${
+              statsMode
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            統計解析
+            <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
+          </Link>
+        </div>
+
+        {statsMode && !isPro ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
+            <p className="text-2xl">🔒</p>
+            <p className="mt-2 font-bold text-amber-800">統計解析モードはProプラン限定です</p>
+            <p className="mt-1 text-sm text-amber-700">
+              平均・中央値・標準偏差などの基礎統計量を確認できます。
+            </p>
+            <Link
+              href="/profile"
+              className="mt-4 inline-block rounded-md bg-amber-500 px-5 py-2 text-sm font-medium text-white hover:bg-amber-600"
+            >
+              Proプランに加入する
+            </Link>
+          </div>
+        ) : responseCount === 0 ? (
           <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
             まだ回答がありません。
           </p>
+        ) : statsMode ? (
+          <ResultStats aggregates={aggregates} />
         ) : (
           <div className="space-y-5">
             {aggregates.map((agg, i) => {

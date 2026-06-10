@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import type { Profile } from '@/lib/types/database';
+import type { Plan, Profile } from '@/lib/types/database';
 
 /** プロフィール編集・退会のビジネスロジック */
 export class ProfileService {
@@ -23,6 +23,14 @@ export class ProfileService {
       throw new Error('ニックネームは必須です');
     }
     return this.profileRepo.update(userId, data);
+  }
+
+  /**
+   * 料金プランを変更する（Pro加入／解約）。
+   * 本デモでは決済を介さず、ユーザー管理画面のトグルから直接切り替える。
+   */
+  async changePlan(userId: string, plan: Plan): Promise<Profile> {
+    return this.profileRepo.updatePlan(userId, plan);
   }
 
   /**

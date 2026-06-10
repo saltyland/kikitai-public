@@ -5,6 +5,9 @@
 
 export type SurveyStatus = 'draft' | 'open' | 'closed';
 
+/** 料金プラン。pro のみ統計解析モードを利用できる。 */
+export type Plan = 'free' | 'pro';
+
 /**
  * 設問タイプ。Googleフォーム相当の種類を網羅する。
  * 新タイプを足す場合は、ここに識別子を追加し、対応する QuestionTypeDefinition の
@@ -61,6 +64,8 @@ export interface Profile {
   nickname: string;
   affiliation: string | null;
   field: string | null;
+  /** 料金プラン。pro のみ統計解析モードを利用できる。 */
+  plan: Plan;
   created_at: string;
 }
 
