@@ -109,18 +109,19 @@ export default async function ResultsPage({
                     // グリッド：行×列のクロス集計表
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
+                        <caption className="sr-only">{agg.question.text}の行×列クロス集計</caption>
                         <thead>
                           <tr>
-                            <th className="p-2"></th>
+                            <th scope="col" className="p-2"><span className="sr-only">行ラベル</span></th>
                             {Object.keys(Object.values(agg.gridCounts)[0] ?? {}).map((c) => (
-                              <th key={c} className="p-2 text-center text-xs font-medium text-zinc-600">{c}</th>
+                              <th key={c} scope="col" className="p-2 text-center text-xs font-medium text-zinc-700">{c}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {Object.entries(agg.gridCounts).map(([row, cols]) => (
                             <tr key={row} className="border-t border-zinc-100">
-                              <td className="p-2 text-zinc-700">{row}</td>
+                              <th scope="row" className="p-2 text-left font-medium text-zinc-700">{row}</th>
                               {Object.entries(cols).map(([c, n]) => (
                                 <td key={c} className="p-2 text-center text-zinc-700">{n}</td>
                               ))}
@@ -143,7 +144,7 @@ export default async function ResultsPage({
                     // テキスト系（text/paragraph/date）：回答一覧
                     <ul className="space-y-2">
                       {agg.textAnswers.length === 0 ? (
-                        <li className="text-sm text-zinc-400">回答なし</li>
+                        <li className="text-sm text-zinc-500">回答なし</li>
                       ) : (
                         agg.textAnswers.map((t, idx) => (
                           <li key={idx} className="rounded-md bg-zinc-50 px-3 py-2 text-sm text-zinc-700">

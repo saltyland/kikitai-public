@@ -33,7 +33,7 @@ export default async function SurveyListPage() {
                       {s.description && (
                         <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
                       )}
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="mt-1 text-xs text-zinc-600">
                         投稿者 {s.author_nickname} ・残り {remaining}枠
                         {s.deadline && ` ・期限 ${s.deadline}`}
                       </p>

@@ -17,7 +17,7 @@ type QState = { optionIds: string[]; text: string; grid: Record<string, string[]
 type AnswerState = Record<string, QState>;
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
+  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
 
 /** 1設問分の状態を AnswerInput に変換する */
 function buildAnswer(q: QuestionWithOptions, s: QState): AnswerInput {
@@ -393,7 +393,12 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-zinc-800">
                       {q.text}
-                      {q.required && <span className="text-red-500 ml-1">*</span>}
+                      {q.required && (
+                        <>
+                          <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+                          <span className="sr-only">（必須）</span>
+                        </>
+                      )}
                     </p>
                     <p className={`mt-0.5 text-sm ${empty ? 'text-zinc-400 italic' : 'text-zinc-600'} whitespace-pre-wrap break-words`}>
                       {empty ? '（未回答）' : summary}
@@ -411,7 +416,11 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           </ul>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p role="alert" className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
         <div className="flex items-center gap-3">
           <button
@@ -463,11 +472,18 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
 
       {/* 進捗インジケーター */}
       <div>
-        <div className="mb-1 flex justify-between text-xs text-zinc-500">
+        <div className="mb-1 flex justify-between text-xs text-zinc-600">
           <span>問 {safeStep + 1} / {total}</span>
           <span>残り約{remainingMin}分</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden">
+        <div
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={total}
+          aria-valuenow={safeStep + 1}
+          aria-valuetext={`全${total}問中${safeStep + 1}問目`}
+          className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden"
+        >
           <div
             className="h-full rounded-full bg-indigo-500 transition-all"
             style={{ width: `${total > 0 ? ((safeStep + 1) / total) * 100 : 0}%` }}
@@ -528,7 +544,12 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           <p className="font-medium text-zinc-800">
             <span className="text-indigo-600 mr-1">Q{safeStep + 1}.</span>
             {current.text}
-            {current.required && <span className="text-red-500 ml-1">*</span>}
+            {current.required && (
+              <>
+                <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+                <span className="sr-only">（必須）</span>
+              </>
+            )}
           </p>
           {current.description && (
             <p className="text-xs text-zinc-500 whitespace-pre-wrap">{current.description}</p>
@@ -685,7 +706,7 @@ function QuestionInputView({
     const cfg = (q.config ?? {}) as ScaleConfig;
     return (
       <div className="flex items-center gap-2 flex-wrap justify-between">
-        {cfg.minLabel && <span className="text-xs text-zinc-400 w-full sm:w-auto">{cfg.minLabel}</span>}
+        {cfg.minLabel && <span className="text-xs text-zinc-600 w-full sm:w-auto">{cfg.minLabel}</span>}
         {q.options.map((o) => {
           const checked = state.optionIds[0] === o.id;
           return (
@@ -706,7 +727,7 @@ function QuestionInputView({
             </label>
           );
         })}
-        {cfg.maxLabel && <span className="text-xs text-zinc-400 w-full text-right sm:w-auto">{cfg.maxLabel}</span>}
+        {cfg.maxLabel && <span className="text-xs text-zinc-600 w-full text-right sm:w-auto">{cfg.maxLabel}</span>}
       </div>
     );
   }
