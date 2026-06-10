@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ResponseService } from '@/lib/services/responseService';
 import Header from '@/components/Header';
+import ResultChart from '@/components/ResultChart';
 
 export default async function ResultsPage({
   params,
@@ -82,27 +83,15 @@ export default async function ResultsPage({
                       </table>
                     </div>
                   ) : agg.question.options.length > 0 ? (
-                    // 選択式（single/multiple/dropdown/scale）：割合バー
-                    <div className="space-y-2">
-                      {agg.question.options.map((o) => {
-                        const count = agg.optionCounts[o.id] ?? 0;
-                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                        return (
-                          <div key={o.id}>
-                            <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                              <span>{o.text}</span>
-                              <span>{count}件（{pct}%）</span>
-                            </div>
-                            <div className="h-3 w-full rounded-full bg-zinc-100 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-indigo-500"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    // 選択式（single/multiple/dropdown/scale）：円グラフ＋棒グラフ
+                    <ResultChart
+                      items={agg.question.options.map((o) => ({
+                        label: o.text,
+                        count: agg.optionCounts[o.id] ?? 0,
+                      }))}
+                      total={agg.question.type === 'multiple' ? responseCount : total}
+                      multiple={agg.question.type === 'multiple'}
+                    />
                   ) : (
                     // テキスト系（text/paragraph/date）：回答一覧
                     <ul className="space-y-2">

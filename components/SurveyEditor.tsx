@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveSurveyAction } from '@/app/actions/survey';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
+import QuestionTypePicker from '@/components/QuestionTypePicker';
 import type {
   QuestionType,
   SectionMeta,
@@ -28,11 +29,6 @@ interface EditorQuestion {
 
 const inputClass =
   'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
-
-const TYPE_OPTIONS = QuestionTypeRegistry.all().map((d) => ({
-  value: d.type,
-  label: d.label,
-}));
 
 function needsOptions(type: QuestionType) {
   return QuestionTypeRegistry.get(type).requiresOptionInput;
@@ -376,15 +372,12 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <select
-                      className={inputClass + ' sm:col-span-1'}
-                      value={q.type}
-                      onChange={(e) => changeType(q.key, e.target.value as QuestionType)}
-                    >
-                      {TYPE_OPTIONS.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
+                    <div className="sm:col-span-1">
+                      <QuestionTypePicker
+                        value={q.type}
+                        onChange={(type) => changeType(q.key, type)}
+                      />
+                    </div>
                     <input
                       className={inputClass + ' sm:col-span-2'}
                       placeholder="設問文を入力"
