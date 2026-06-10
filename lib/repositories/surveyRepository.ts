@@ -6,6 +6,7 @@ import type {
   QuestionWithOptions,
 } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
+import { throwDbError } from './dbError';
 
 /** アンケート本体・設問・選択肢のDBアクセスを抽象化するインターフェース */
 export interface ISurveyRepository {
@@ -14,6 +15,7 @@ export interface ISurveyRepository {
   findByOwner(userId: string): Promise<Survey[]>;
   findOpenSurveys(): Promise<Survey[]>;
   countResponses(surveyId: string): Promise<number>;
+  countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
   insertSurvey(data: Omit<Survey, 'id' | 'created_at'>): Promise<Survey>;
   updateSurvey(
     id: string,
@@ -51,7 +53,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .select('*, questions(*, options(*))')
       .eq('id', id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     if (!data) return null;
 
     const survey = data as unknown as SurveyWithQuestions;
@@ -71,7 +73,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     return (data ?? []) as Survey[];
   }
 
@@ -84,8 +86,23 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .eq('status', 'open')
       .or(`deadline.is.null,deadline.gte.${today}`)
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     return (data ?? []) as Survey[];
+  }
+
+  /** 複数アンケートの回答数を1クエリでまとめて取得する（一覧表示のN+1対策） */
+  async countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (surveyIds.length === 0) return counts;
+    const { data, error } = await this.supabase
+      .from('responses')
+      .select('survey_id')
+      .in('survey_id', surveyIds);
+    if (error) throwDbError(error, 'surveys');
+    for (const row of (data ?? []) as { survey_id: string }[]) {
+      counts.set(row.survey_id, (counts.get(row.survey_id) ?? 0) + 1);
+    }
+    return counts;
   }
 
   async countResponses(surveyId: string): Promise<number> {
@@ -93,7 +110,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .from('responses')
       .select('*', { count: 'exact', head: true })
       .eq('survey_id', surveyId);
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     return count ?? 0;
   }
 
@@ -103,7 +120,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .insert(data)
       .select('*')
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     return inserted as Survey;
   }
 
@@ -117,7 +134,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .eq('id', id)
       .select('*')
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
     return updated as Survey;
   }
 
@@ -126,7 +143,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .from('surveys')
       .update({ status })
       .eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'surveys');
   }
 
   async delete(id: string): Promise<void> {
@@ -139,7 +156,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .from('questions')
       .delete()
       .eq('survey_id', surveyId);
-    if (delError) throw new Error(delError.message);
+    if (delError) throwDbError(delError, 'questions.delete');
 
     for (const q of questions) {
       const { data: insertedQ, error: qError } = await this.supabase
@@ -157,7 +174,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
         })
         .select('id')
         .single();
-      if (qError) throw new Error(qError.message);
+      if (qError) throwDbError(qError, 'questions.insert');
 
       if (q.options.length > 0) {
         const { error: oError } = await this.supabase.from('options').insert(
@@ -167,7 +184,7 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
             order_index: o.order_index,
           }))
         );
-        if (oError) throw new Error(oError.message);
+        if (oError) throwDbError(oError, 'options.insert');
       }
     }
   }

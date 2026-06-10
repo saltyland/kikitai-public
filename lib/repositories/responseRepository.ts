@@ -1,10 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Answer, AnswerInput, ResponseSession } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
+import { isUniqueViolation, throwDbError } from './dbError';
 
 /** 回答セッション・個別回答のDBアクセスを抽象化するインターフェース */
 export interface IResponseRepository {
   hasResponded(surveyId: string, userId: string): Promise<boolean>;
+  /** 指定ユーザーが回答済みのアンケートidを1クエリでまとめて取得する（一覧表示のN+1対策） */
+  findRespondedSurveyIds(userId: string, surveyIds: string[]): Promise<Set<string>>;
   /** 回答セッションと個別回答をまとめて保存する */
   saveResponse(
     surveyId: string,
@@ -31,8 +34,19 @@ export class ResponseRepository
       .select('*', { count: 'exact', head: true })
       .eq('survey_id', surveyId)
       .eq('user_id', userId);
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'responses');
     return (count ?? 0) > 0;
+  }
+
+  async findRespondedSurveyIds(userId: string, surveyIds: string[]): Promise<Set<string>> {
+    if (surveyIds.length === 0) return new Set();
+    const { data, error } = await this.supabase
+      .from('responses')
+      .select('survey_id')
+      .eq('user_id', userId)
+      .in('survey_id', surveyIds);
+    if (error) throwDbError(error, 'responses');
+    return new Set(((data ?? []) as { survey_id: string }[]).map((r) => r.survey_id));
   }
 
   async saveResponse(
@@ -46,7 +60,14 @@ export class ResponseRepository
       .insert({ survey_id: surveyId, user_id: userId })
       .select('id')
       .single();
-    if (sError) throw new Error(sError.message);
+    if (sError) {
+      // 事前の hasResponded チェックとすれ違いで二重送信された場合は
+      // unique(survey_id, user_id) 制約に当たるため、分かりやすいメッセージに変換する
+      if (isUniqueViolation(sError)) {
+        throw new Error('すでに回答済みです。ページを再読み込みしてください。');
+      }
+      throwDbError(sError, 'responses.insert');
+    }
 
     const responseId = (session as { id: string }).id;
 
@@ -88,7 +109,7 @@ export class ResponseRepository
 
     if (rows.length > 0) {
       const { error: aError } = await this.supabase.from('answers').insert(rows);
-      if (aError) throw new Error(aError.message);
+      if (aError) throwDbError(aError, 'answers.insert');
     }
   }
 
@@ -98,16 +119,19 @@ export class ResponseRepository
       .from('responses')
       .select('id')
       .eq('survey_id', surveyId);
-    if (sError) throw new Error(sError.message);
+    if (sError) throwDbError(sError, 'responses.list');
 
     const ids = (sessions ?? []).map((s: { id: string }) => s.id);
     if (ids.length === 0) return [];
 
+    // CSV出力などで行の並びが毎回変わらないよう、順序を明示して取得する
     const { data, error } = await this.supabase
       .from('answers')
       .select('*')
-      .in('response_id', ids);
-    if (error) throw new Error(error.message);
+      .in('response_id', ids)
+      .order('response_id', { ascending: true })
+      .order('id', { ascending: true });
+    if (error) throwDbError(error, 'answers.list');
     return (data ?? []) as Answer[];
   }
 
@@ -117,7 +141,7 @@ export class ResponseRepository
       .select('*')
       .eq('survey_id', surveyId)
       .order('created_at', { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throwDbError(error, 'responses');
     return (data ?? []) as ResponseSession[];
   }
 }

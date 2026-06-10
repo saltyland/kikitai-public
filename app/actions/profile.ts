@@ -58,11 +58,16 @@ export async function changePlanAction(
   return { error: null, success: true };
 }
 
-export async function deleteAccountAction(): Promise<void> {
+// useActionState から呼ばれるが、前回stateもフォーム値も使わないため引数は受け取らない
+export async function deleteAccountAction(): Promise<ProfileActionState> {
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
   if (!user) redirect('/login');
 
-  await new ProfileService(supabase).deleteAccount(user!.id);
+  try {
+    await new ProfileService(supabase).deleteAccount(user!.id);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '退会処理に失敗しました' };
+  }
   redirect('/login');
 }

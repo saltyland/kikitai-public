@@ -45,22 +45,30 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
         </button>
       </form>
 
-      <form
-        action={deleteAccountAction}
-        className="rounded-xl bg-white border border-red-200 p-6 shadow-sm"
-      >
-        <h2 className="text-sm font-bold text-red-700">退会する</h2>
-        <p className="mt-1 mb-3 text-sm text-zinc-500">
-          退会するとプロフィールと作成したアンケートが削除されます。この操作は取り消せません。
-        </p>
-        <button
-          type="submit"
-          className="rounded-md border border-red-300 px-5 py-2 text-sm font-medium text-red-600 hover:bg-red-50 cursor-pointer"
-        >
-          退会する
-        </button>
-      </form>
+      <DeleteAccountSection />
     </div>
+  );
+}
+
+/** 退会セクション。サーバー側のエラー（設定不足など）を表示できるようにする。 */
+function DeleteAccountSection() {
+  const [state, action, pending] = useActionState(deleteAccountAction, initial);
+
+  return (
+    <form action={action} className="rounded-xl bg-white border border-red-200 p-6 shadow-sm">
+      <h2 className="text-sm font-bold text-red-700">退会する</h2>
+      <p className="mt-1 mb-3 text-sm text-zinc-500">
+        退会するとプロフィールと作成したアンケートが削除されます。この操作は取り消せません。
+      </p>
+      {state.error && <p className="mb-3 text-sm text-red-600">{state.error}</p>}
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-md border border-red-300 px-5 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 cursor-pointer"
+      >
+        {pending ? '退会処理中…' : '退会する'}
+      </button>
+    </form>
   );
 }
 

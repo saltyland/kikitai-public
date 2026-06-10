@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ResponseService } from '@/lib/services/responseService';
-import type { AnswerInput } from '@/lib/types/database';
+import { answerListSchema, parseJsonWith } from '@/lib/domain/schemas';
 
 export interface ResponseActionState {
   error: string | null;
@@ -18,10 +18,9 @@ export async function submitResponseAction(
   const surveyId = String(formData.get('surveyId') ?? '');
   const payloadRaw = String(formData.get('payload') ?? '');
 
-  let answers: AnswerInput[];
-  try {
-    answers = JSON.parse(payloadRaw) as AnswerInput[];
-  } catch {
+  // 構文チェックだけでなく zod で構造・型も検証する（改ざんされた payload を弾く）
+  const answers = parseJsonWith(answerListSchema, payloadRaw);
+  if (!answers) {
     return { error: '回答データの形式が不正です' };
   }
 

@@ -144,36 +144,37 @@ export class SurveyService {
     await this.surveyRepo.delete(surveyId);
   }
 
-  /** ホーム画面：自分が作成したアンケート一覧（回答数つき） */
+  /** ホーム画面：自分が作成したアンケート一覧（回答数つき）。回答数は1クエリで一括取得する。 */
   async listMySurveys(userId: string): Promise<SurveyWithStats[]> {
     const surveys = await this.surveyRepo.findByOwner(userId);
-    return Promise.all(
-      surveys.map(async (s) => ({
-        ...s,
-        response_count: await this.surveyRepo.countResponses(s.id),
-      }))
-    );
+    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
+    return surveys.map((s) => ({
+      ...s,
+      response_count: counts.get(s.id) ?? 0,
+    }));
   }
 
   /**
    * 回答可能なアンケート一覧：
    * 公開中 / 自分が作成したもの除外 / 回答済み除外
+   * 回答済み判定・回答数・作成者プロフィールはそれぞれ1クエリで一括取得する（N+1対策）。
    */
   async listAnswerableSurveys(userId: string): Promise<SurveyWithStats[]> {
-    const surveys = await this.surveyRepo.findOpenSurveys();
-    const result: SurveyWithStats[] = [];
-    for (const s of surveys) {
-      if (s.user_id === userId) continue;
-      const responded = await this.responseRepo.hasResponded(s.id, userId);
-      if (responded) continue;
-      const count = await this.surveyRepo.countResponses(s.id);
-      const author = await this.profileRepo.findById(s.user_id);
-      result.push({
+    const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
+      (s) => s.user_id !== userId
+    );
+    const ids = surveys.map((s) => s.id);
+    const [respondedIds, counts, authors] = await Promise.all([
+      this.responseRepo.findRespondedSurveyIds(userId, ids),
+      this.surveyRepo.countResponsesBySurveyIds(ids),
+      this.profileRepo.findByIds(surveys.map((s) => s.user_id)),
+    ]);
+    return surveys
+      .filter((s) => !respondedIds.has(s.id))
+      .map((s) => ({
         ...s,
-        response_count: count,
-        author_nickname: author?.nickname ?? '不明',
-      });
-    }
-    return result;
+        response_count: counts.get(s.id) ?? 0,
+        author_nickname: authors.get(s.user_id)?.nickname ?? '不明',
+      }));
   }
 }

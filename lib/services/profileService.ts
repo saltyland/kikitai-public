@@ -35,19 +35,22 @@ export class ProfileService {
 
   /**
    * 退会：アカウントを削除する。
-   * サービスロールキーが設定されていれば auth.users ごと削除する
-   * （profilesはON DELETE CASCADEで連動削除される）。これにより、退会後に
-   * 同じメールアドレスで再登録できない問題（Authユーザー残存）を防ぐ。
-   * 未設定の場合はprofilesのみ削除するフォールバックに留める。
+   * auth.users ごと削除する（profilesはON DELETE CASCADEで連動削除される）。
+   * これにより、退会後に同じメールアドレスで再登録できない問題（Authユーザー残存）を防ぐ。
+   * サービスロールキー未設定時は、profilesだけ消してAuthユーザーが残る中途半端な
+   * 状態を作らないよう、削除せずエラーにする。
    */
   async deleteAccount(userId: string): Promise<void> {
     const admin = createSupabaseAdminClient();
-    if (admin) {
-      const { error } = await admin.auth.admin.deleteUser(userId);
-      if (error) throw new Error(error.message);
-    } else {
-      // サービスロール未設定時のフォールバック（Authユーザーは残る）
-      await this.profileRepo.delete(userId);
+    if (!admin) {
+      throw new Error(
+        '現在、退会機能は利用できません（サーバー設定が未完了です）。管理者にお問い合わせください。'
+      );
+    }
+    const { error } = await admin.auth.admin.deleteUser(userId);
+    if (error) {
+      console.error('[deleteAccount]', error.message);
+      throw new Error('退会処理に失敗しました。時間をおいて再度お試しください。');
     }
     await this.supabase.auth.signOut();
   }

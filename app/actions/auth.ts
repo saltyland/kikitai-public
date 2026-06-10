@@ -38,8 +38,13 @@ export async function registerAction(
   if (!email || !password || !nickname) {
     return { error: 'メールアドレス・パスワード・ニックネームは必須です' };
   }
-  if (!/^[a-z0-9]{6,}$/.test(password)) {
-    return { error: 'パスワードは小文字と数字のみ・6文字以上で入力してください' };
+  // NIST SP 800-63B に倣い最低8文字。文字種を狭めると逆に強度が落ちるため、
+  // 「英小文字と数字を最低1つずつ含む」ことだけを要求し、記号・大文字も許可する。
+  if (password.length < 8) {
+    return { error: 'パスワードは8文字以上で入力してください' };
+  }
+  if (!/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+    return { error: 'パスワードには英小文字と数字をそれぞれ1文字以上含めてください' };
   }
 
   const supabase = await createSupabaseServerClient();
