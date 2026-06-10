@@ -67,7 +67,10 @@ npm run sync
 
 1. **メール確認をOFF（自動確認）に設定** … 新規登録時の `email rate limit exceeded`
    を解消（確認メールを送らず、登録後すぐログイン状態になる）
-2. **`supabase db push`** … `supabase/migrations/` のスキーマをリモートDBへ反映
+2. **マイグレーションの反映** … `supabase/migrations/` のスキーマをリモートDBへ反映
+   - `SUPABASE_DB_PASSWORD` があれば `supabase db push`（差分のみ正攻法で適用）
+   - 無ければ **Management API でマイグレーションSQLを直接実行**（`SUPABASE_ACCESS_TOKEN`
+     だけで反映可能。マイグレーションは冪等に書く運用のため再実行も安全）
 
 以降、SQLを変えたら `supabase/migrations/` にファイルを足して `npm run sync`
 （DBだけなら `npm run db:push`）。新しいマイグレーションの雛形は `npm run db:new <name>`。
