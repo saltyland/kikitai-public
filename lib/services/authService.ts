@@ -39,9 +39,12 @@ export class AuthService {
    * プロフィール行は auth.users への INSERT トリガー（handle_new_user / SECURITY DEFINER）
    * が user metadata をもとに自動生成する。アプリ側から profiles に直接 INSERT すると
    * セッション未確立時に RLS で弾かれるため、metadata 経由でDB側に生成させる。
+   *
+   * 戻り値 hasSession: 登録と同時にログイン状態になったか。
+   * メール確認がOFFなら true（即利用可）、ONなら false（確認メール待ち）。
    */
-  async register(input: RegisterInput): Promise<void> {
-    const { error } = await this.supabase.auth.signUp({
+  async register(input: RegisterInput): Promise<{ hasSession: boolean }> {
+    const { data, error } = await this.supabase.auth.signUp({
       email: input.email,
       password: input.password,
       options: {
@@ -53,6 +56,7 @@ export class AuthService {
       },
     });
     if (error) throw new Error(error.message);
+    return { hasSession: !!data.session };
   }
 
   /** ログイン */

@@ -5,7 +5,8 @@ import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
-import { changeStatusAction, deleteSurveyAction } from '@/app/actions/survey';
+import { changeStatusAction } from '@/app/actions/survey';
+import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 
 export default async function HomePage({
   searchParams,
@@ -73,28 +74,20 @@ export default async function HomePage({
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  {s.status === 'open' && (
-                    <Link
-                      href={`/surveys/${s.id}/results`}
-                      className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
-                    >
-                      結果を見る
-                    </Link>
-                  )}
-                  {s.status === 'closed' && (
-                    <Link
-                      href={`/surveys/${s.id}/results`}
-                      className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
-                    >
-                      結果を見る
-                    </Link>
-                  )}
                   <Link
-                    href={`/surveys/${s.id}/edit`}
+                    href={`/surveys/${s.id}/results`}
                     className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
                   >
-                    編集
+                    結果を見る
                   </Link>
+                  {s.status === 'draft' && (
+                    <Link
+                      href={`/surveys/${s.id}/edit`}
+                      className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
+                    >
+                      編集
+                    </Link>
+                  )}
                   {s.status === 'draft' && (
                     <form action={changeStatusAction}>
                       <input type="hidden" name="surveyId" value={s.id} />
@@ -113,12 +106,7 @@ export default async function HomePage({
                       </button>
                     </form>
                   )}
-                  <form action={deleteSurveyAction}>
-                    <input type="hidden" name="surveyId" value={s.id} />
-                    <button className="rounded-md px-3 py-1 text-red-600 hover:bg-red-50 cursor-pointer">
-                      削除
-                    </button>
-                  </form>
+                  <DeleteSurveyButton surveyId={s.id} title={s.title} />
                 </div>
               </li>
             ))}

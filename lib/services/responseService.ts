@@ -18,11 +18,27 @@ export class ResponseService {
     this.responseRepo = new ResponseRepository(supabase);
   }
 
-  /** 回答フォーム表示用に設問つきアンケートを取得 */
-  async getSurveyForAnswer(surveyId: string): Promise<SurveyWithQuestions> {
+  /** 期限切れ（deadlineが過去）かどうか */
+  private isExpired(survey: SurveyWithQuestions): boolean {
+    if (!survey.deadline) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return survey.deadline < today;
+  }
+
+  /**
+   * 回答フォーム表示用に設問つきアンケートを取得。
+   * 直接URLでアクセスされても、回答不可の条件（非公開・期限切れ・自作・回答済み）を
+   * ここで弾き、フォームを表示しないようにする。
+   */
+  async getSurveyForAnswer(userId: string, surveyId: string): Promise<SurveyWithQuestions> {
     const survey = await this.surveyRepo.findWithQuestions(surveyId);
     if (!survey) throw new Error('アンケートが見つかりません');
     if (survey.status !== 'open') throw new Error('このアンケートは現在回答を受け付けていません');
+    if (this.isExpired(survey)) throw new Error('このアンケートは回答期限を過ぎています');
+    if (survey.user_id === userId) throw new Error('自分が作成したアンケートには回答できません');
+    if (await this.responseRepo.hasResponded(surveyId, userId)) {
+      throw new Error('このアンケートにはすでに回答済みです');
+    }
     return survey;
   }
 
@@ -35,6 +51,7 @@ export class ResponseService {
     const survey = await this.surveyRepo.findWithQuestions(surveyId);
     if (!survey) throw new Error('アンケートが見つかりません');
     if (survey.status !== 'open') throw new Error('このアンケートは回答を受け付けていません');
+    if (this.isExpired(survey)) throw new Error('このアンケートは回答期限を過ぎています');
     if (survey.user_id === userId) throw new Error('自分のアンケートには回答できません');
 
     const already = await this.responseRepo.hasResponded(surveyId, userId);

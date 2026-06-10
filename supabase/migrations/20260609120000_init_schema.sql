@@ -1,10 +1,11 @@
 -- =============================================================
--- キキタイ Phase 1  DBスキーマ
--- SupabaseのSQL Editorにこのファイルの内容を貼り付けて実行してください。
+-- キキタイ 初期スキーマ（冪等）
+-- 既存DBに手動適用済みでも安全に再実行できるよう、
+-- create table if not exists / drop policy if exists で構成している。
 -- =============================================================
 
 -- ユーザープロフィール（Supabase Authと連携）
-create table profiles (
+create table if not exists profiles (
   id uuid references auth.users on delete cascade primary key,
   nickname text not null,
   affiliation text,
@@ -13,7 +14,7 @@ create table profiles (
 );
 
 -- アンケート
-create table surveys (
+create table if not exists surveys (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) on delete cascade not null,
   title text not null,
@@ -25,7 +26,7 @@ create table surveys (
 );
 
 -- 設問
-create table questions (
+create table if not exists questions (
   id uuid default gen_random_uuid() primary key,
   survey_id uuid references surveys(id) on delete cascade not null,
   type text not null check (type in ('single', 'multiple', 'text', 'scale')),
@@ -34,7 +35,7 @@ create table questions (
 );
 
 -- 選択肢
-create table options (
+create table if not exists options (
   id uuid default gen_random_uuid() primary key,
   question_id uuid references questions(id) on delete cascade not null,
   text text not null,
@@ -42,7 +43,7 @@ create table options (
 );
 
 -- 回答セッション
-create table responses (
+create table if not exists responses (
   id uuid default gen_random_uuid() primary key,
   survey_id uuid references surveys(id) on delete cascade not null,
   user_id uuid references profiles(id) on delete cascade not null,
@@ -51,7 +52,7 @@ create table responses (
 );
 
 -- 個別回答
-create table answers (
+create table if not exists answers (
   id uuid default gen_random_uuid() primary key,
   response_id uuid references responses(id) on delete cascade not null,
   question_id uuid references questions(id) on delete cascade not null,
@@ -59,7 +60,7 @@ create table answers (
   text_answer text
 );
 
--- RLSの有効化
+-- RLSの有効化（再実行しても無害）
 alter table profiles enable row level security;
 alter table surveys enable row level security;
 alter table questions enable row level security;
@@ -67,22 +68,28 @@ alter table options enable row level security;
 alter table responses enable row level security;
 alter table answers enable row level security;
 
--- RLSポリシー（基本）
+-- RLSポリシー（drop if exists → create で冪等化）
+drop policy if exists "プロフィールは全員閲覧可" on profiles;
 create policy "プロフィールは全員閲覧可" on profiles
   for select using (true);
 
+drop policy if exists "プロフィールは本人のみ編集可" on profiles;
 create policy "プロフィールは本人のみ編集可" on profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
 
+drop policy if exists "アンケートは全員閲覧可" on surveys;
 create policy "アンケートは全員閲覧可" on surveys
   for select using (true);
 
+drop policy if exists "アンケートは本人のみ作成・編集可" on surveys;
 create policy "アンケートは本人のみ作成・編集可" on surveys
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "設問は全員閲覧可" on questions;
 create policy "設問は全員閲覧可" on questions
   for select using (true);
 
+drop policy if exists "設問は本人のみ編集可" on questions;
 create policy "設問は本人のみ編集可" on questions
   for all using (
     auth.uid() = (select user_id from surveys where id = survey_id)
@@ -90,9 +97,11 @@ create policy "設問は本人のみ編集可" on questions
     auth.uid() = (select user_id from surveys where id = survey_id)
   );
 
+drop policy if exists "選択肢は全員閲覧可" on options;
 create policy "選択肢は全員閲覧可" on options
   for select using (true);
 
+drop policy if exists "選択肢は本人のみ編集可" on options;
 create policy "選択肢は本人のみ編集可" on options
   for all using (
     auth.uid() = (
@@ -108,20 +117,24 @@ create policy "選択肢は本人のみ編集可" on options
     )
   );
 
+drop policy if exists "回答は本人のみ作成可" on responses;
 create policy "回答は本人のみ作成可" on responses
   for insert with check (auth.uid() = user_id);
 
+drop policy if exists "回答は本人とアンケート作成者が閲覧可" on responses;
 create policy "回答は本人とアンケート作成者が閲覧可" on responses
   for select using (
     auth.uid() = user_id
     or auth.uid() = (select user_id from surveys where id = survey_id)
   );
 
+drop policy if exists "回答は本人のみ作成可（個別）" on answers;
 create policy "回答は本人のみ作成可（個別）" on answers
   for insert with check (
     auth.uid() = (select r.user_id from responses r where r.id = response_id)
   );
 
+drop policy if exists "回答内容はアンケート作成者と本人のみ閲覧可" on answers;
 create policy "回答内容はアンケート作成者と本人のみ閲覧可" on answers
   for select using (
     auth.uid() = (
@@ -134,31 +147,3 @@ create policy "回答内容はアンケート作成者と本人のみ閲覧可" 
       where q.id = question_id
     )
   );
-
--- =============================================================
--- 新規登録時のプロフィール自動生成
--- アプリから profiles へ直接INSERTするとセッション未確立時にRLSで弾かれるため、
--- auth.users へのINSERTをトリガーにして SECURITY DEFINER 関数でプロフィールを作る。
--- ニックネーム等は signUp の options.data（user metadata）から受け取る。
--- =============================================================
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  insert into public.profiles (id, nickname, affiliation, field)
-  values (
-    new.id,
-    coalesce(nullif(new.raw_user_meta_data->>'nickname', ''), 'ユーザー'),
-    nullif(new.raw_user_meta_data->>'affiliation', ''),
-    nullif(new.raw_user_meta_data->>'field', '')
-  );
-  return new;
-end;
-$$;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();

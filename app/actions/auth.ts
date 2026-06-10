@@ -44,17 +44,29 @@ export async function registerAction(
 
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
+  let hasSession = false;
   try {
-    await auth.register({
+    ({ hasSession } = await auth.register({
       email,
       password,
       nickname,
       affiliation: affiliation || undefined,
       field: field || undefined,
-    });
+    }));
   } catch (e) {
     return { error: e instanceof Error ? e.message : '登録に失敗しました' };
   }
+
+  // メール確認がONの場合はセッションが張られない（未確認ユーザー）。
+  // その状態でログインすると "Invalid login credentials" になるため、
+  // 無言でリダイレクトせず、確認が必要であることを明示する。
+  if (!hasSession) {
+    return {
+      error:
+        'アカウントは作成されましたが、メール確認が必要な設定になっています。受信した確認メールのリンクを開いて登録を完了してください。（即時利用するには管理者がメール確認をOFFにする必要があります）',
+    };
+  }
+
   redirect('/');
 }
 

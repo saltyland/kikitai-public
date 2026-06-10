@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import type { Profile } from '@/lib/types/database';
 
 /** プロフィール編集・退会のビジネスロジック */
@@ -25,13 +26,21 @@ export class ProfileService {
   }
 
   /**
-   * 退会：プロフィールを削除する。
-   * profilesはauth.usersをON DELETE CASCADEで参照しているが、逆方向の
-   * Authユーザー削除はサービスロールが必要なため、Phase 1ではprofiles削除
-   * とサインアウトに留める。
+   * 退会：アカウントを削除する。
+   * サービスロールキーが設定されていれば auth.users ごと削除する
+   * （profilesはON DELETE CASCADEで連動削除される）。これにより、退会後に
+   * 同じメールアドレスで再登録できない問題（Authユーザー残存）を防ぐ。
+   * 未設定の場合はprofilesのみ削除するフォールバックに留める。
    */
   async deleteAccount(userId: string): Promise<void> {
-    await this.profileRepo.delete(userId);
+    const admin = createSupabaseAdminClient();
+    if (admin) {
+      const { error } = await admin.auth.admin.deleteUser(userId);
+      if (error) throw new Error(error.message);
+    } else {
+      // サービスロール未設定時のフォールバック（Authユーザーは残る）
+      await this.profileRepo.delete(userId);
+    }
     await this.supabase.auth.signOut();
   }
 }

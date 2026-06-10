@@ -54,9 +54,12 @@ export async function changeStatusAction(formData: FormData): Promise<void> {
 
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
-  if (!user) redirect('/login');
+  if (!user) {
+    redirect('/login');
+    return;
+  }
 
-  await new SurveyService(supabase).changeStatus(user!.id, surveyId, status);
+  await new SurveyService(supabase).changeStatus(user.id, surveyId, status);
   revalidatePath('/');
 }
 
@@ -65,8 +68,11 @@ export async function deleteSurveyAction(formData: FormData): Promise<void> {
 
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
-  if (!user) redirect('/login');
+  if (!user) {
+    redirect('/login');
+    return;
+  }
 
-  await new SurveyService(supabase).deleteSurvey(user!.id, surveyId);
+  await new SurveyService(supabase).deleteSurvey(user.id, surveyId);
   revalidatePath('/');
 }
