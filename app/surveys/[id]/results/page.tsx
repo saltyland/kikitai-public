@@ -76,7 +76,6 @@ export default async function ResultsPage({
 
         {statsMode && !isPro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
-            <p className="text-2xl">🔒</p>
             <p className="mt-2 font-bold text-amber-800">統計解析モードはProプラン限定です</p>
             <p className="mt-1 text-sm text-amber-700">
               平均・中央値・標準偏差などの基礎統計量を確認できます。

@@ -141,7 +141,7 @@ export default function BranchFlow({
                   <div className="mt-0.5 flex items-center gap-2 pl-6 text-[10px] text-zinc-400">
                     <span>{LABEL[q.type]}</span>
                     <span>セクション{q.section_index + 1}</span>
-                    {isTarget && <span className="text-amber-600">🔀 条件付き</span>}
+                    {isTarget && <span className="text-amber-600">条件付き表示</span>}
                   </div>
                 </div>
               </foreignObject>

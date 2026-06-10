@@ -74,21 +74,21 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-zinc-500">👁 回答者プレビュー</span>
+        <span className="text-xs font-bold text-zinc-500">回答者プレビュー</span>
         <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
           <button
             type="button"
             onClick={() => setDevice('pc')}
             className={`px-3 py-1 ${device === 'pc' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
           >
-            🖥 PC
+            PC
           </button>
           <button
             type="button"
             onClick={() => setDevice('mobile')}
             className={`px-3 py-1 ${device === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
           >
-            📱 スマホ
+            スマホ
           </button>
         </div>
       </div>

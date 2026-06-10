@@ -365,16 +365,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             setTemplateSection(0);
             setShowTemplates(true);
           }}
-          className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+          className="rounded-full border border-indigo-300 bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
         >
-          📚 テンプレートから追加
+          テンプレートから追加
         </button>
         <button
           type="button"
           onClick={() => setShowRight((v) => !v)}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer lg:inline-block"
+          className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer lg:inline-block"
         >
-          {showRight ? '▶ プレビューを隠す' : '◀ プレビューを表示'}
+          {showRight ? 'プレビューを隠す' : 'プレビューを表示'}
         </button>
       </div>
 
@@ -483,7 +483,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                           }`}
                           title={warns.map((w) => w.message).join(' / ')}
                         >
-                          {hasError ? '⚠ 要修正' : '⚠ 注意'} {warns.length}
+                          <span className={`h-1.5 w-1.5 rounded-full ${hasError ? 'bg-red-500' : 'bg-amber-500'}`} />
+                          {hasError ? '要修正' : '注意'} {warns.length}
                         </span>
                       )}
                     </span>
@@ -647,8 +648,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                   {warns.length > 0 && (
                     <ul className="space-y-1 rounded-md bg-amber-50/70 border border-amber-200 p-2 text-xs">
                       {warns.map((w, wi) => (
-                        <li key={wi} className={w.level === 'error' ? 'text-red-700' : 'text-amber-700'}>
-                          {w.level === 'error' ? '⚠' : 'ℹ'} {w.message}
+                        <li key={wi} className={`flex items-center gap-1.5 ${w.level === 'error' ? 'text-red-700' : 'text-amber-700'}`}>
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${w.level === 'error' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                          {w.message}
                         </li>
                       ))}
                     </ul>
@@ -679,7 +681,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 }}
                 className="rounded-xl border-2 border-dashed border-indigo-300 px-4 py-3 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
               >
-                📚 テンプレート
+                テンプレート
               </button>
             </div>
           </div>
@@ -702,7 +704,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           type="button"
           disabled={pending}
           onClick={() => submit('draft')}
-          className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 disabled:opacity-50 cursor-pointer"
+          className="rounded-full bg-zinc-100 px-6 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50 cursor-pointer"
         >
           下書き保存
         </button>
@@ -710,7 +712,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           type="button"
           disabled={pending}
           onClick={() => submit('open')}
-          className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+          className="rounded-full bg-indigo-600 px-7 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
         >
           {survey ? '保存して公開' : '公開する'}
         </button>
@@ -734,14 +736,14 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 onClick={() => setRightTab('preview')}
                 className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                👁 プレビュー
+                プレビュー
               </button>
               <button
                 type="button"
                 onClick={() => setRightTab('flow')}
                 className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                🔀 分岐フロー
+                分岐フロー
               </button>
             </div>
             {rightTab === 'preview' ? (
@@ -766,7 +768,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       {publishIssues && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h2 className="mb-2 text-base font-bold text-red-700">⚠ 公開前に修正が必要です</h2>
+            <h2 className="mb-2 text-base font-bold text-red-700">公開前に修正が必要です</h2>
             <p className="mb-3 text-xs text-zinc-500">
               次の設問にエラーがあります。修正してから公開してください。
             </p>
@@ -810,6 +812,7 @@ function needsConfig(type: QuestionType) {
 /**
  * 表示条件（分岐）の編集UI。
  * 「この設問より前にある選択式設問」で特定の選択肢が選ばれた時だけ、この設問を表示する。
+ * 「もし〜なら表示」という自然文のルールビルダーとして見せ、使い方が直感的に分かるようにしている。
  */
 function ConditionEditor({
   question,
@@ -825,61 +828,102 @@ function ConditionEditor({
   const cond = question.condition;
   const enabled = !!cond;
 
+  // 条件元になりうる先行設問がまだ無い場合：機能の存在を知らせるヒントを出す（発見性のため）
   if (sources.length === 0) {
-    // 条件元になりうる先行設問がまだ無い
-    return null;
+    return (
+      <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-400">
+        この設問より前に「選択式（1つ選ぶ／複数選ぶ／リストから選ぶ）」の設問があると、
+        <span className="font-medium text-zinc-500">特定の回答をした人にだけ表示する分岐</span>
+        を設定できます。
+      </div>
+    );
   }
 
   const source = cond ? sources.find((s) => s.key === cond.sourceKey) ?? null : null;
   const sourceOptions = (source?.options ?? []).map((o) => o.trim()).filter(Boolean);
+  const sourceLabel = (s: EditorQuestion, i: number) => s.text.trim() || `無題の設問 ${i + 1}`;
+
+  const selectClass =
+    'rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-sm text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
   return (
-    <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-3">
-      <label className="flex items-center gap-2 text-sm font-medium text-amber-800">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => {
-            if (e.target.checked) {
+    <div className={`rounded-xl border p-3 ${enabled ? 'border-indigo-200 bg-indigo-50/50' : 'border-zinc-200 bg-zinc-50/60'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-zinc-800">条件分岐（出し分け）</p>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            前の設問で特定の回答をした人にだけ、この設問を表示します。
+          </p>
+        </div>
+        {/* トグルスイッチ（絵文字なし） */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => {
+            if (!enabled) {
               const first = sources[0];
               onChange({ sourceKey: first.key, optionText: first.options.map((o) => o.trim()).find(Boolean) ?? '' });
             } else {
               onChange(null);
             }
           }}
-        />
-        🔀 条件付きで表示する（特定の回答をした人だけに見せる）
-      </label>
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition cursor-pointer ${
+            enabled ? 'bg-indigo-600' : 'bg-zinc-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+              enabled ? 'translate-x-5' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
+      </div>
 
       {enabled && cond && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-700">
-          <select
-            className="rounded-md border border-zinc-300 px-2 py-1"
-            value={cond.sourceKey}
-            onChange={(e) => {
-              const next = sources.find((s) => s.key === e.target.value)!;
-              onChange({ sourceKey: next.key, optionText: next.options.map((o) => o.trim()).find(Boolean) ?? '' });
-            }}
-          >
-            {sources.map((s, i) => (
-              <option key={s.key} value={s.key}>
-                {`設問「${s.text.trim() || `（無題 ${i + 1}）`}」`}
-              </option>
-            ))}
-          </select>
-          <span>で</span>
-          <select
-            className="rounded-md border border-zinc-300 px-2 py-1"
-            value={cond.optionText}
-            onChange={(e) => onChange({ sourceKey: cond.sourceKey, optionText: e.target.value })}
-          >
-            {sourceOptions.map((o, i) => (
-              <option key={i} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-          <span>を選んだ人だけに表示</span>
+        <div className="mt-3 space-y-3">
+          {/* もし〜なら、という自然文のルールビルダー */}
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white border border-indigo-100 p-3 text-sm text-zinc-700">
+            <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">もし</span>
+            <select
+              className={selectClass}
+              value={cond.sourceKey}
+              onChange={(e) => {
+                const next = sources.find((s) => s.key === e.target.value)!;
+                onChange({ sourceKey: next.key, optionText: next.options.map((o) => o.trim()).find(Boolean) ?? '' });
+              }}
+            >
+              {sources.map((s, i) => (
+                <option key={s.key} value={s.key}>
+                  {sourceLabel(s, i)}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-zinc-500">で</span>
+            <select
+              className={selectClass}
+              value={cond.optionText}
+              onChange={(e) => onChange({ sourceKey: cond.sourceKey, optionText: e.target.value })}
+            >
+              {sourceOptions.map((o, i) => (
+                <option key={i} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+            <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">と回答した人に表示</span>
+          </div>
+
+          {/* プレビュー文（プレーンな日本語で結果を説明） */}
+          {source && cond.optionText && (
+            <p className="text-xs text-zinc-500">
+              この設問は、
+              <span className="font-medium text-zinc-700">
+                「{sourceLabel(source, sources.indexOf(source))}」で「{cond.optionText}」
+              </span>
+              を選んだ回答者にだけ表示されます。右側の「分岐フロー」タブで流れを確認できます。
+            </p>
+          )}
         </div>
       )}
     </div>

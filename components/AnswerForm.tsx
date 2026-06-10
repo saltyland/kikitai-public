@@ -363,7 +363,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         )}
         <button
           onClick={() => setConsented(true)}
-          className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+          className="w-full rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 cursor-pointer sm:w-auto"
         >
           同意して回答を始める
         </button>
@@ -416,14 +416,14 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setReviewing(false)}
-            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+            className="rounded-full bg-zinc-100 px-6 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-200 cursor-pointer"
           >
             設問に戻る
           </button>
           <button
             onClick={submit}
             disabled={pending}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+            className="flex-1 rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 cursor-pointer sm:flex-none"
           >
             {pending ? '送信中…' : queued ? '再送信する' : '回答を送信する'}
           </button>
@@ -496,7 +496,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
 
       {restored && (
         <div className="flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-          <span>📌 前回の続きから再開しました。</span>
+          <span>前回の続きから再開しました。</span>
           <button onClick={restart} className="font-medium underline hover:text-amber-900 cursor-pointer">
             最初からやり直す
           </button>
@@ -519,10 +519,13 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           onTouchEnd={onTouchEnd}
           className="kikitai-slide-in relative rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3"
         >
-          {/* ✓ マイクロフィードバック */}
+          {/* マイクロフィードバック（チェックマーク） */}
           {showCheck && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="kikitai-check-pop text-6xl">✅</span>
+              <svg className="kikitai-check-pop h-20 w-20" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="22" fill="#eef2ff" stroke="#6366f1" strokeWidth="2.5" />
+                <path d="M15 24.5 l6 6 l12 -13" fill="none" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           )}
           <p className="font-medium text-zinc-800">
@@ -550,7 +553,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         {safeStep > 0 && (
           <button
             onClick={goPrev}
-            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+            className="rounded-full bg-zinc-100 px-6 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-200 cursor-pointer"
           >
             戻る
           </button>
@@ -558,14 +561,14 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         {safeStep < total - 1 ? (
           <button
             onClick={goNext}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            className="flex-1 rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 cursor-pointer sm:flex-none"
           >
             次へ
           </button>
         ) : (
           <button
             onClick={goReview}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            className="flex-1 rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 cursor-pointer sm:flex-none"
           >
             回答内容を確認する
           </button>
@@ -573,10 +576,10 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         <span
           className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
         >
-          {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
+          {saving ? '保存しました' : '入力は自動保存されます'}
         </span>
       </div>
-      <p className="text-center text-[11px] text-zinc-300 sm:hidden">← スワイプで前後に移動できます →</p>
+      <p className="text-center text-[11px] text-zinc-300 sm:hidden">スワイプで前後に移動できます</p>
     </div>
   );
 }
@@ -602,9 +605,9 @@ function OfflineBanner({
     >
       <span>
         {!online
-          ? '📴 オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
+          ? 'オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
           : queued
-          ? '⏳ 未送信の回答があります。オンラインに復帰しました。'
+          ? '未送信の回答があります。オンラインに復帰しました。'
           : ''}
       </span>
       {queued && online && (
@@ -645,9 +648,9 @@ function QuestionInputView({
           return (
             <label
               key={o.id}
-              className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm cursor-pointer transition ${
+              className={`flex w-full items-center gap-3 rounded-2xl border px-5 py-4 text-sm cursor-pointer transition ${
                 checked
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-900 shadow-sm'
                   : 'border-zinc-200 bg-white text-zinc-700 hover:border-indigo-300 hover:bg-indigo-50/40'
               }`}
             >

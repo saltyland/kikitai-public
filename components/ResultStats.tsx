@@ -13,7 +13,7 @@ export default function ResultStats({ aggregates }: { aggregates: QuestionAggreg
   return (
     <div className="space-y-5">
       <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-        📊 統計解析モード（Proプラン）— 数値設問の基礎統計量を表示しています。
+        統計解析モード（Proプラン）— 数値設問の基礎統計量を表示しています。
       </div>
 
       {aggregates.map((agg, i) => {

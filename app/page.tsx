@@ -43,7 +43,7 @@ export default async function HomePage({
             href="/surveys"
             className="rounded-xl bg-white p-6 shadow-sm border border-zinc-200 hover:border-indigo-300"
           >
-            <p className="text-lg font-bold text-zinc-800">✎ アンケートに回答する</p>
+            <p className="text-lg font-bold text-zinc-800">アンケートに回答する</p>
             <p className="mt-1 text-sm text-zinc-500">公開中のアンケートに回答します</p>
           </Link>
         </div>
