@@ -1,8 +1,8 @@
 -- =============================================================
--- 既存DBへの追加マイグレーション
--- 新規登録時のRLSエラー（new row violates row-level security policy for table "profiles"）
--- を解消するため、auth.usersへのINSERTトリガーでプロフィールを自動生成する。
--- Supabaseの SQL Editor でこのファイルの内容を実行してください。
+-- 新規登録時のプロフィール自動生成トリガー
+-- アプリから profiles へ直接INSERTするとセッション未確立時にRLSで弾かれるため、
+-- auth.users へのINSERTをトリガーにして SECURITY DEFINER 関数でプロフィールを作る。
+-- ニックネーム等は signUp の options.data（user metadata）から受け取る。
 -- =============================================================
 
 create or replace function public.handle_new_user()

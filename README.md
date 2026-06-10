@@ -49,11 +49,30 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 3. データベースの作成
+### 3. データベースの作成（Supabase CLI）
 
-Supabase ダッシュボードの SQL Editor で `supabase/schema.sql` の内容を実行します。
-テーブル（profiles / surveys / questions / options / responses / answers）と
-RLSポリシーが作成されます。
+DBスキーマは `supabase/migrations/` でバージョン管理しています。
+ダッシュボードへの手動コピペは不要で、CLIから反映します。
+
+初回のみ（ログインとプロジェクト紐付け）:
+
+```bash
+npx supabase login                                    # ブラウザ認証
+npx supabase link --project-ref <your-project-ref>    # ダッシュボードURLの project/<ここ>
+```
+
+スキーマをリモートDBに反映:
+
+```bash
+npx supabase db push
+```
+
+以降、`supabase/migrations/` にSQLファイルを追加して `npx supabase db push` するだけで
+変更が反映されます。新しいマイグレーションは
+`npx supabase migration new <name>` で雛形を作れます。
+
+> マイグレーションは冪等（再実行しても安全）に書いてあるため、既に手動でテーブルを
+> 作成済みのDBに対して `db push` してもエラーになりません。
 
 ### 4. メール確認の設定（任意）
 
