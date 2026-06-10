@@ -12,7 +12,7 @@ export default async function NewSurveyPage() {
   return (
     <>
       <Header nickname={profile.nickname} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <h1 className="mb-6 text-xl font-bold text-zinc-800">アンケートを作成</h1>
         <SurveyEditor survey={null} />
       </main>

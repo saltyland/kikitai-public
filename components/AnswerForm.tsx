@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { submitResponseAction } from '@/app/actions/response';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
@@ -48,6 +48,24 @@ const SECONDS_PER_TYPE: Record<string, number> = {
 function draftKey(surveyId: string) {
   return `kikitai-draft-${surveyId}`;
 }
+function pendingKey(surveyId: string) {
+  return `kikitai-pending-${surveyId}`;
+}
+
+/** 確認画面表示用：1設問の回答を人が読める文字列にする */
+function answerSummary(q: QuestionWithOptions, s: QState): string {
+  if (q.type === 'text' || q.type === 'paragraph' || q.type === 'date') {
+    return s.text.trim();
+  }
+  if (q.type === 'grid') {
+    const parts = Object.entries(s.grid)
+      .filter(([, cols]) => cols.length > 0)
+      .map(([row, cols]) => `${row}：${cols.join('・')}`);
+    return parts.join(' / ');
+  }
+  const textById = new Map(q.options.map((o) => [o.id, o.text]));
+  return s.optionIds.map((id) => textById.get(id) ?? '').filter(Boolean).join('・');
+}
 
 export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) {
   const [consented, setConsented] = useState(false);
@@ -61,10 +79,17 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   const [pending, setPending] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [restored, setRestored] = useState(false);
+  // 追加状態
+  const [reviewing, setReviewing] = useState(false); // 送信前の確認・修正画面
+  const [showCheck, setShowCheck] = useState(false); // 「次へ」進行時の✓アニメ
+  const [saving, setSaving] = useState(false); // 自動保存インジケーターの点滅
+  const [online, setOnline] = useState(true); // オンライン状態
+  const [queued, setQueued] = useState(false); // 未送信（オフライン保留）の有無
+
+  // スワイプ移動用のタッチ座標
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   // ---- 途中保存：マウント時に下書き（localStorage）を復元 ----
-  // localStorage は外部ストアであり、SSRとのハイドレーション不整合を避けるため
-  // 初期値ではなくマウント後の effect で読み込む（set-state-in-effect は意図的）。
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
@@ -84,17 +109,21 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           setRestored(true);
         }
       }
+      if (localStorage.getItem(pendingKey(survey.id))) setQueued(true);
     } catch {
       /* 壊れた下書きは無視 */
     }
     setLoaded(true);
   }, [survey.id]);
 
-  // ---- 途中保存：回答・進捗の変化を自動保存 ----
+  // ---- 途中保存：回答・進捗の変化を自動保存（保存時に保存インジケーターを点滅） ----
   useEffect(() => {
     if (!loaded) return;
     try {
       localStorage.setItem(draftKey(survey.id), JSON.stringify({ answers, step, consented }));
+      setSaving(true);
+      const t = setTimeout(() => setSaving(false), 800);
+      return () => clearTimeout(t);
     } catch {
       /* 保存失敗は無視 */
     }
@@ -122,11 +151,9 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   }, [survey.questions, answers]);
 
   const total = visibleQuestions.length;
-  // 回答により表示設問が増減しても範囲内に収める
   const safeStep = Math.min(step, Math.max(0, total - 1));
   const current = visibleQuestions[safeStep];
 
-  // 残り設問の推定所要時間（秒）
   const remainingSeconds = visibleQuestions
     .slice(safeStep)
     .reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0);
@@ -155,7 +182,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
       return { ...a, [qid]: { ...a[qid], grid: { ...a[qid].grid, [row]: next } } };
     });
 
-  // ---- 現在の設問のみバリデーション（設問タイプ定義に委譲） ----
+  // ---- 現在の設問のみバリデーション ----
   const validateCurrent = (): boolean => {
     if (!current) return true;
     try {
@@ -168,13 +195,33 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     return true;
   };
 
+  // ✓アニメを一瞬出す
+  const popCheck = () => {
+    setShowCheck(true);
+    setTimeout(() => setShowCheck(false), 700);
+  };
+
   const goNext = () => {
     if (!validateCurrent()) return;
+    popCheck();
     setStep(Math.min(total - 1, safeStep + 1));
   };
   const goPrev = () => {
     setError(null);
     setStep(Math.max(0, safeStep - 1));
+  };
+
+  // 最後の設問から確認画面へ
+  const goReview = () => {
+    if (!validateCurrent()) return;
+    popCheck();
+    setReviewing(true);
+  };
+  // 確認画面から該当設問へジャンプして修正
+  const editQuestion = (index: number) => {
+    setReviewing(false);
+    setStep(index);
+    setError(null);
   };
 
   const restart = () => {
@@ -183,35 +230,120 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     survey.questions.forEach((q) => (init[q.id] = { optionIds: [], text: '', grid: {} }));
     setAnswers(init);
     setStep(0);
+    setReviewing(false);
     setRestored(false);
     setError(null);
   };
 
-  const submit = async () => {
-    if (!validateCurrent()) return;
-    // 表示されている設問の回答のみ送信する（非表示の条件設問は送らない）
-    const payload: AnswerInput[] = visibleQuestions.map((q) => buildAnswer(q, answers[q.id]));
+  // ---- 送信（オフライン時はキューに保存して再送） ----
+  const queuePayload = (payload: AnswerInput[]) => {
+    try {
+      localStorage.setItem(pendingKey(survey.id), JSON.stringify(payload));
+    } catch {
+      /* 無視 */
+    }
+    setQueued(true);
+    // Background Sync を登録（対応ブラウザのみ）
+    navigator.serviceWorker?.ready
+      .then((reg) => (reg as ServiceWorkerRegistration & { sync?: { register: (t: string) => Promise<void> } }).sync?.register('kikitai-submit'))
+      .catch(() => {});
+  };
+
+  const sendPayload = async (payload: AnswerInput[]): Promise<boolean> => {
     const formData = new FormData();
     formData.set('surveyId', survey.id);
     formData.set('payload', JSON.stringify(payload));
-
-    setPending(true);
-    const result = await submitResponseAction({ error: null }, formData);
-    setPending(false);
-    if (result?.error) {
-      setError(result.error);
-    } else {
-      clearDraft(); // 送信成功で下書き削除
+    try {
+      const result = await submitResponseAction({ error: null }, formData);
+      if (result?.error) {
+        setError(result.error);
+        return false;
+      }
+      // 成功（通常はサーバー側 redirect で遷移）
+      clearDraft();
+      try {
+        localStorage.removeItem(pendingKey(survey.id));
+      } catch {
+        /* 無視 */
+      }
+      setQueued(false);
+      return true;
+    } catch (e) {
+      // Next の redirect はそのまま伝播させる（成功扱い）
+      if (e && typeof e === 'object' && 'digest' in e && String((e as { digest?: string }).digest).startsWith('NEXT_REDIRECT')) {
+        throw e;
+      }
+      // ネットワーク失敗 → キューに退避
+      queuePayload(payload);
+      return false;
     }
   };
+
+  const submit = async () => {
+    const payload: AnswerInput[] = visibleQuestions.map((q) => buildAnswer(q, answers[q.id]));
+    if (!navigator.onLine) {
+      queuePayload(payload);
+      return;
+    }
+    setPending(true);
+    await sendPayload(payload);
+    setPending(false);
+  };
+
+  // 保留中の回答を再送する
+  const retryPending = async () => {
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(pendingKey(survey.id));
+    } catch {
+      /* 無視 */
+    }
+    if (!raw) return;
+    if (!navigator.onLine) return;
+    let payload: AnswerInput[];
+    try {
+      payload = JSON.parse(raw) as AnswerInput[];
+    } catch {
+      return;
+    }
+    setPending(true);
+    await sendPayload(payload);
+    setPending(false);
+  };
+
+  // ---- オフライン対応：Service Worker 登録・オンライン復帰の監視 ----
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+    const goOnline = () => {
+      setOnline(true);
+      void retryPending();
+    };
+    const goOffline = () => setOnline(false);
+    const onSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'kikitai-retry-submit') void retryPending();
+    };
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    navigator.serviceWorker?.addEventListener('message', onSwMessage);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+      navigator.serviceWorker?.removeEventListener('message', onSwMessage);
+    };
+    // マウント時に1回登録すれば十分。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // インフォームドコンセント同意画面
   if (!consented) {
     const estMin = Math.max(
       1,
-      Math.round(
-        survey.questions.reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0) / 60
-      )
+      Math.round(survey.questions.reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0) / 60)
     );
     return (
       <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
@@ -239,14 +371,97 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     );
   }
 
-  // 現在の設問が属するセクションの見出し（最初の設問のときだけ表示）
+  // ===== 送信前の確認・修正画面 =====
+  if (reviewing) {
+    return (
+      <div className="space-y-4">
+        <OfflineBanner online={online} queued={queued} pending={pending} onRetry={retryPending} />
+        <div className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
+          <h2 className="text-lg font-bold text-zinc-800">回答内容の確認</h2>
+          <p className="text-sm text-zinc-500">
+            送信前に内容をご確認ください。修正したい設問は「修正」を押すと戻れます。
+          </p>
+          <ul className="divide-y divide-zinc-100">
+            {visibleQuestions.map((q, i) => {
+              const summary = answerSummary(q, answers[q.id]);
+              const empty = !summary;
+              return (
+                <li key={q.id} className="flex items-start gap-3 py-3">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-zinc-800">
+                      {q.text}
+                      {q.required && <span className="text-red-500 ml-1">*</span>}
+                    </p>
+                    <p className={`mt-0.5 text-sm ${empty ? 'text-zinc-400 italic' : 'text-zinc-600'} whitespace-pre-wrap break-words`}>
+                      {empty ? '（未回答）' : summary}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => editQuestion(i)}
+                    className="shrink-0 rounded-md border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+                  >
+                    修正
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setReviewing(false)}
+            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+          >
+            設問に戻る
+          </button>
+          <button
+            onClick={submit}
+            disabled={pending}
+            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+          >
+            {pending ? '送信中…' : queued ? '再送信する' : '回答を送信する'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 現在の設問が属するセクションの見出し
   const section = current ? survey.sections[Math.min(current.section_index, survey.sections.length - 1)] : null;
   const isSectionStart =
     current && (safeStep === 0 || visibleQuestions[safeStep - 1].section_index !== current.section_index);
 
+  // スワイプ判定（横移動が縦より大きく一定距離を超えたら前後移動）
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    touchStart.current = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) {
+      if (safeStep < total - 1) goNext();
+      else goReview();
+    } else {
+      goPrev();
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* 進捗インジケーター（1問ずつ） */}
+      <OfflineBanner online={online} queued={queued} pending={pending} onRetry={retryPending} />
+
+      {/* 進捗インジケーター */}
       <div>
         <div className="mb-1 flex justify-between text-xs text-zinc-500">
           <span>問 {safeStep + 1} / {total}</span>
@@ -258,14 +473,20 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
             style={{ width: `${total > 0 ? ((safeStep + 1) / total) * 100 : 0}%` }}
           />
         </div>
-        {/* ドット式ステップ表示 */}
         {total <= 30 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {visibleQuestions.map((q, i) => (
-              <span
+              <button
                 key={q.id}
-                className={`h-1.5 w-1.5 rounded-full ${
-                  i < safeStep ? 'bg-indigo-500' : i === safeStep ? 'bg-indigo-600 ring-2 ring-indigo-200' : 'bg-zinc-200'
+                type="button"
+                aria-label={`設問${i + 1}へ`}
+                onClick={() => i <= safeStep && setStep(i)}
+                className={`h-2 w-2 rounded-full transition ${
+                  i < safeStep
+                    ? 'bg-indigo-500 cursor-pointer'
+                    : i === safeStep
+                    ? 'bg-indigo-600 ring-2 ring-indigo-200'
+                    : 'bg-zinc-200 cursor-default'
                 }`}
               />
             ))}
@@ -292,7 +513,18 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
       )}
 
       {current && (
-        <section className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
+        <section
+          key={current.id}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          className="kikitai-slide-in relative rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3"
+        >
+          {/* ✓ マイクロフィードバック */}
+          {showCheck && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="kikitai-check-pop text-6xl">✅</span>
+            </div>
+          )}
           <p className="font-medium text-zinc-800">
             <span className="text-indigo-600 mr-1">Q{safeStep + 1}.</span>
             {current.text}
@@ -332,20 +564,63 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           </button>
         ) : (
           <button
-            onClick={submit}
-            disabled={pending}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+            onClick={goReview}
+            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
           >
-            {pending ? '送信中…' : '回答を送信する'}
+            回答内容を確認する
           </button>
         )}
-        <span className="ml-auto text-xs text-zinc-400">✓ 入力は自動保存されます</span>
+        <span
+          className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
+        >
+          {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
+        </span>
       </div>
+      <p className="text-center text-[11px] text-zinc-300 sm:hidden">← スワイプで前後に移動できます →</p>
     </div>
   );
 }
 
-/** 設問タイプ別の入力UI */
+/** オフライン／未送信の通知バナー */
+function OfflineBanner({
+  online,
+  queued,
+  pending,
+  onRetry,
+}: {
+  online: boolean;
+  queued: boolean;
+  pending: boolean;
+  onRetry: () => void;
+}) {
+  if (online && !queued) return null;
+  return (
+    <div
+      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
+        online ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-zinc-300 bg-zinc-100 text-zinc-700'
+      }`}
+    >
+      <span>
+        {!online
+          ? '📴 オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
+          : queued
+          ? '⏳ 未送信の回答があります。オンラインに復帰しました。'
+          : ''}
+      </span>
+      {queued && online && (
+        <button
+          onClick={onRetry}
+          disabled={pending}
+          className="ml-2 shrink-0 rounded-md bg-amber-600 px-3 py-1 font-medium text-white hover:bg-amber-700 disabled:opacity-50 cursor-pointer"
+        >
+          {pending ? '送信中…' : '今すぐ再送信'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** 設問タイプ別の入力UI（スマホ最適化：行全体をタップ可能に） */
 function QuestionInputView({
   q,
   state,
@@ -361,15 +636,32 @@ function QuestionInputView({
   setText: (qid: string, text: string) => void;
   setGridCell: (qid: string, row: string, col: string, multiple: boolean) => void;
 }) {
-  if (q.type === 'single') {
+  if (q.type === 'single' || q.type === 'multiple') {
+    const multiple = q.type === 'multiple';
     return (
       <div className="space-y-2">
-        {q.options.map((o) => (
-          <label key={o.id} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-            <input type="radio" name={q.id} checked={state.optionIds[0] === o.id} onChange={() => setSingle(q.id, o.id)} />
-            {o.text}
-          </label>
-        ))}
+        {q.options.map((o) => {
+          const checked = multiple ? state.optionIds.includes(o.id) : state.optionIds[0] === o.id;
+          return (
+            <label
+              key={o.id}
+              className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm cursor-pointer transition ${
+                checked
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
+                  : 'border-zinc-200 bg-white text-zinc-700 hover:border-indigo-300 hover:bg-indigo-50/40'
+              }`}
+            >
+              <input
+                type={multiple ? 'checkbox' : 'radio'}
+                name={q.id}
+                className="h-4 w-4 shrink-0"
+                checked={checked}
+                onChange={() => (multiple ? toggleMultiple(q.id, o.id) : setSingle(q.id, o.id))}
+              />
+              <span className="flex-1">{o.text}</span>
+            </label>
+          );
+        })}
       </div>
     );
   }
@@ -389,65 +681,46 @@ function QuestionInputView({
     );
   }
 
-  if (q.type === 'multiple') {
-    return (
-      <div className="space-y-2">
-        {q.options.map((o) => (
-          <label key={o.id} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-            <input type="checkbox" checked={state.optionIds.includes(o.id)} onChange={() => toggleMultiple(q.id, o.id)} />
-            {o.text}
-          </label>
-        ))}
-      </div>
-    );
-  }
-
   if (q.type === 'scale') {
     const cfg = (q.config ?? {}) as ScaleConfig;
     return (
-      <div className="flex items-center gap-3 flex-wrap">
-        {cfg.minLabel && <span className="text-xs text-zinc-400">{cfg.minLabel}</span>}
-        {q.options.map((o) => (
-          <label key={o.id} className="flex flex-col items-center text-sm text-zinc-700 cursor-pointer">
-            <span className="mb-1 text-xs">{o.text}</span>
-            <input type="radio" name={q.id} checked={state.optionIds[0] === o.id} onChange={() => setSingle(q.id, o.id)} />
-          </label>
-        ))}
-        {cfg.maxLabel && <span className="text-xs text-zinc-400">{cfg.maxLabel}</span>}
+      <div className="flex items-center gap-2 flex-wrap justify-between">
+        {cfg.minLabel && <span className="text-xs text-zinc-400 w-full sm:w-auto">{cfg.minLabel}</span>}
+        {q.options.map((o) => {
+          const checked = state.optionIds[0] === o.id;
+          return (
+            <label
+              key={o.id}
+              className={`flex min-w-[44px] flex-col items-center gap-1 rounded-lg border px-2 py-2 text-sm cursor-pointer transition ${
+                checked ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-zinc-200 text-zinc-700 hover:bg-indigo-50/40'
+              }`}
+            >
+              <span className="text-xs">{o.text}</span>
+              <input
+                type="radio"
+                name={q.id}
+                className="h-4 w-4"
+                checked={checked}
+                onChange={() => setSingle(q.id, o.id)}
+              />
+            </label>
+          );
+        })}
+        {cfg.maxLabel && <span className="text-xs text-zinc-400 w-full text-right sm:w-auto">{cfg.maxLabel}</span>}
       </div>
     );
   }
 
   if (q.type === 'text') {
-    return (
-      <input
-        className={inputClass}
-        value={state.text}
-        onChange={(e) => setText(q.id, e.target.value)}
-      />
-    );
+    return <input className={inputClass} value={state.text} onChange={(e) => setText(q.id, e.target.value)} />;
   }
 
   if (q.type === 'paragraph') {
-    return (
-      <textarea
-        rows={4}
-        className={inputClass}
-        value={state.text}
-        onChange={(e) => setText(q.id, e.target.value)}
-      />
-    );
+    return <textarea rows={4} className={inputClass} value={state.text} onChange={(e) => setText(q.id, e.target.value)} />;
   }
 
   if (q.type === 'date') {
-    return (
-      <input
-        type="date"
-        className={inputClass}
-        value={state.text}
-        onChange={(e) => setText(q.id, e.target.value)}
-      />
-    );
+    return <input type="date" className={inputClass} value={state.text} onChange={(e) => setText(q.id, e.target.value)} />;
   }
 
   if (q.type === 'grid') {
@@ -472,6 +745,7 @@ function QuestionInputView({
                     <input
                       type={cfg.multiple ? 'checkbox' : 'radio'}
                       name={`${q.id}__${r}`}
+                      className="h-4 w-4"
                       checked={(state.grid[r] ?? []).includes(c)}
                       onChange={() => setGridCell(q.id, r, c, cfg.multiple)}
                     />

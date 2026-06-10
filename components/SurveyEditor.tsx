@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveSurveyAction } from '@/app/actions/survey';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import QuestionTypePicker from '@/components/QuestionTypePicker';
+import SurveyPreview from '@/components/SurveyPreview';
+import BranchFlow from '@/components/BranchFlow';
+import QuestionTemplates from '@/components/QuestionTemplates';
+import { validateEditorQuestion, hasBlockingWarning, type QuestionWarning } from '@/lib/domain/validation';
+import type { QuestionSeed } from '@/lib/domain/questionTemplates';
 import type {
   QuestionType,
   SectionMeta,
@@ -51,6 +56,22 @@ function newQuestion(sectionIndex: number): EditorQuestion {
     required: false,
     options: ['', ''],
     config: {},
+    section_index: sectionIndex,
+    condition: null,
+  };
+}
+
+/** テンプレートの種から編集用設問を生成する */
+function questionFromSeed(seed: QuestionSeed, sectionIndex: number): EditorQuestion {
+  const needs = needsOptions(seed.type);
+  return {
+    key: uid(),
+    type: seed.type,
+    text: seed.text,
+    description: seed.description ?? '',
+    required: seed.required ?? false,
+    options: needs ? (seed.options && seed.options.length ? [...seed.options] : ['', '']) : [],
+    config: { ...(seed.config ?? {}) },
     section_index: sectionIndex,
     condition: null,
   };
@@ -121,9 +142,23 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // 右ペイン表示（プレビュー / 分岐フロー）と各種モーダル
+  const [rightTab, setRightTab] = useState<'preview' | 'flow'>('preview');
+  const [showRight, setShowRight] = useState(true);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templateSection, setTemplateSection] = useState(0);
+  const [publishIssues, setPublishIssues] = useState<{ index: number; text: string; warnings: QuestionWarning[] }[] | null>(null);
 
   // セクション順に並べた表示順（条件の「先行設問」候補算出に使う）
   const orderedQuestions = [...questions].sort((a, b) => a.section_index - b.section_index);
+
+  // 設問単位のバリデーション警告（key → 警告一覧）
+  const warningsByKey = useMemo(() => {
+    const byKey = new Map(questions.map((q) => [q.key, q]));
+    const map = new Map<string, QuestionWarning[]>();
+    for (const q of questions) map.set(q.key, validateEditorQuestion(q, byKey));
+    return map;
+  }, [questions]);
 
   // ---- 設問操作 ----
   const updateQuestion = (key: string, patch: Partial<EditorQuestion>) =>
@@ -137,6 +172,22 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
 
   const addQuestion = (sectionIndex: number) =>
     setQuestions((qs) => [...qs, newQuestion(sectionIndex)]);
+
+  // テンプレート（種の配列）を指定セクションの末尾に追加
+  const insertSeeds = (seeds: QuestionSeed[]) => {
+    setQuestions((qs) => [...qs, ...seeds.map((s) => questionFromSeed(s, templateSection))]);
+    setShowTemplates(false);
+  };
+
+  // 「マイテンプレート保存」用に現在の設問を種へ変換
+  const currentSeeds: QuestionSeed[] = questions.map((q) => ({
+    type: q.type,
+    text: q.text,
+    description: q.description || undefined,
+    required: q.required,
+    options: needsOptions(q.type) ? q.options : undefined,
+    config: needsConfig(q.type) ? q.config : undefined,
+  }));
 
   const duplicateQuestion = (key: string) =>
     setQuestions((qs) => {
@@ -245,6 +296,17 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       setError('タイトルを入力してください');
       return;
     }
+    // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
+    if (status === 'open') {
+      const ordered0 = [...questions].sort((a, b) => a.section_index - b.section_index);
+      const issues = ordered0
+        .map((q, i) => ({ index: i, text: q.text, warnings: warningsByKey.get(q.key) ?? [] }))
+        .filter((it) => hasBlockingWarning(it.warnings));
+      if (issues.length > 0) {
+        setPublishIssues(issues);
+        return;
+      }
+    }
     // 設問は元の配列順を維持しつつ、セクション順 → 元順 で安定ソートして保存する
     const ordered = [...questions].sort((a, b) => a.section_index - b.section_index);
     // condition の参照（key）を保存後の並び順（order_index）に変換する
@@ -293,7 +355,29 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   };
 
   return (
-    <div className="space-y-6">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:gap-6 lg:items-start">
+      <div className="space-y-6">
+      {/* ツールバー */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setTemplateSection(0);
+            setShowTemplates(true);
+          }}
+          className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+        >
+          📚 テンプレートから追加
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowRight((v) => !v)}
+          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer lg:inline-block"
+        >
+          {showRight ? '▶ プレビューを隠す' : '◀ プレビューを表示'}
+        </button>
+      </div>
+
       {/* 基本情報 */}
       <section className="rounded-xl bg-white border-t-8 border-t-indigo-500 border border-zinc-200 p-5 shadow-sm space-y-4">
         <div>
@@ -374,6 +458,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             .filter((q) => q.section_index === si)
             .map((q) => {
               const globalIndex = questions.findIndex((x) => x.key === q.key);
+              const warns = warningsByKey.get(q.key) ?? [];
+              const hasError = warns.some((w) => w.level === 'error');
               return (
                 <section
                   key={q.key}
@@ -386,8 +472,20 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="cursor-grab select-none text-zinc-400" title="ドラッグで並べ替え">
-                      ⠿ 設問 {globalIndex + 1}
+                    <span className="flex items-center gap-2">
+                      <span className="cursor-grab select-none text-zinc-400" title="ドラッグで並べ替え">
+                        ⠿ 設問 {globalIndex + 1}
+                      </span>
+                      {warns.length > 0 && (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            hasError ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                          }`}
+                          title={warns.map((w) => w.message).join(' / ')}
+                        >
+                          {hasError ? '⚠ 要修正' : '⚠ 注意'} {warns.length}
+                        </span>
+                      )}
                     </span>
                     <div className="flex items-center gap-1 text-xs">
                       {sections.length > 1 && (
@@ -545,6 +643,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     />
                     必須
                   </label>
+
+                  {warns.length > 0 && (
+                    <ul className="space-y-1 rounded-md bg-amber-50/70 border border-amber-200 p-2 text-xs">
+                      {warns.map((w, wi) => (
+                        <li key={wi} className={w.level === 'error' ? 'text-red-700' : 'text-amber-700'}>
+                          {w.level === 'error' ? '⚠' : 'ℹ'} {w.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </section>
               );
             })}
@@ -555,13 +663,25 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             onDrop={() => dropOnSection(si)}
             className="space-y-2"
           >
-            <button
-              type="button"
-              onClick={() => addQuestion(si)}
-              className="w-full rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-600 hover:border-indigo-400 hover:text-indigo-600 cursor-pointer"
-            >
-              ＋ 設問を追加
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => addQuestion(si)}
+                className="flex-1 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-600 hover:border-indigo-400 hover:text-indigo-600 cursor-pointer"
+              >
+                ＋ 設問を追加
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTemplateSection(si);
+                  setShowTemplates(true);
+                }}
+                className="rounded-xl border-2 border-dashed border-indigo-300 px-4 py-3 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
+              >
+                📚 テンプレート
+              </button>
+            </div>
           </div>
         </div>
       ))}
@@ -602,6 +722,82 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           キャンセル
         </button>
       </div>
+      </div>
+
+      {/* 右ペイン：回答者プレビュー / 分岐フロー */}
+      {showRight && (
+        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-4 lg:self-start">
+          <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+            <div className="mb-3 inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+              <button
+                type="button"
+                onClick={() => setRightTab('preview')}
+                className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+              >
+                👁 プレビュー
+              </button>
+              <button
+                type="button"
+                onClick={() => setRightTab('flow')}
+                className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+              >
+                🔀 分岐フロー
+              </button>
+            </div>
+            {rightTab === 'preview' ? (
+              <SurveyPreview data={{ title, description, sections, questions }} />
+            ) : (
+              <BranchFlow questions={questions} sections={sections} />
+            )}
+          </div>
+        </aside>
+      )}
+
+      {/* テンプレートライブラリ */}
+      {showTemplates && (
+        <QuestionTemplates
+          onInsert={insertSeeds}
+          onClose={() => setShowTemplates(false)}
+          currentQuestions={currentSeeds}
+        />
+      )}
+
+      {/* 公開前の未解決バリデーション一覧 */}
+      {publishIssues && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h2 className="mb-2 text-base font-bold text-red-700">⚠ 公開前に修正が必要です</h2>
+            <p className="mb-3 text-xs text-zinc-500">
+              次の設問にエラーがあります。修正してから公開してください。
+            </p>
+            <ul className="max-h-72 space-y-2 overflow-y-auto">
+              {publishIssues.map((it) => (
+                <li key={it.index} className="rounded-md border border-red-200 bg-red-50 p-2 text-sm">
+                  <p className="font-medium text-zinc-800">
+                    設問 {it.index + 1}：{it.text.trim() || '（無題）'}
+                  </p>
+                  <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
+                    {it.warnings
+                      .filter((w) => w.level === 'error')
+                      .map((w, wi) => (
+                        <li key={wi}>{w.message}</li>
+                      ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPublishIssues(null)}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+              >
+                修正する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
