@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
@@ -7,6 +6,7 @@ import Header from '@/components/Header';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
 import { changeStatusAction } from '@/app/actions/survey';
 import DeleteSurveyButton from '@/components/DeleteSurveyButton';
+import LandingPage from '@/components/LandingPage';
 
 export default async function HomePage({
   searchParams,
@@ -19,13 +19,14 @@ export default async function HomePage({
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
   const profile = await auth.getCurrentProfile();
-  if (!profile) redirect('/login');
+  // 未ログインはサービス紹介のランディングページを表示
+  if (!profile) return <LandingPage />;
 
   const surveys = await new SurveyService(supabase).listMySurveys(profile.id);
 
   return (
     <>
-      <Header nickname={profile.nickname} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         {answered && (
           <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
@@ -63,7 +64,7 @@ export default async function HomePage({
             href="/surveys"
             className="card-3d card-3d-hover block p-6"
           >
-            <p className="text-lg font-extrabold text-slate-800">✎ アンケートに回答する</p>
+            <p className="text-lg font-extrabold text-slate-800">アンケートに回答する</p>
             <p className="mt-1 text-sm text-slate-500">公開中のアンケートに回答します</p>
           </Link>
         </div>

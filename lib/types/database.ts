@@ -86,6 +86,8 @@ export const PRIVATE_FIELDS: PrivateField[] = [
 export interface Profile {
   id: string;
   nickname: string;
+  /** アバター画像の公開URL（未設定は null → イニシャル表示） */
+  avatar_url: string | null;
   affiliation: string | null;
   field: string | null;
   age: number | null;
@@ -184,10 +186,21 @@ export interface SurveyWithQuestions extends Survey {
   questions: QuestionWithOptions[];
 }
 
+/** 一覧カードのプレビュー用：設問の最小情報（テキスト・種別・選択肢） */
+export interface PreviewQuestionLite {
+  type: QuestionType;
+  text: string;
+  options: string[];
+}
+
 /** 一覧表示用：アンケート＋回答数 */
 export interface SurveyWithStats extends Survey {
   response_count: number;
   author_nickname?: string;
+  /** 投稿者のアバター画像URL（未設定は null → イニシャル表示） */
+  author_avatar_url?: string | null;
+  /** カードに表示する設問プレビュー（先頭の数問のみ） */
+  preview?: PreviewQuestionLite[];
 }
 
 /** 編集フォームから受け取る設問の入力データ */

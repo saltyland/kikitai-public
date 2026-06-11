@@ -1,12 +1,13 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import {
   updateProfileAction,
   changePlanAction,
   deleteAccountAction,
   type ProfileActionState,
 } from '@/app/actions/profile';
+import Avatar from '@/components/Avatar';
 import type { PointsSummary, PrivateField, Profile } from '@/lib/types/database';
 
 const inputClass =
@@ -65,6 +66,8 @@ export default function ProfileForm({
       <PlanManager plan={profile.plan} />
 
       <form action={action} className="card-3d p-6 space-y-4">
+        <AvatarPicker nickname={profile.nickname} currentUrl={profile.avatar_url} />
+
         <div>
           <label className={labelClass} htmlFor="nickname">ニックネーム <span className="text-red-400">*</span></label>
           <input id="nickname" name="nickname" required defaultValue={profile.nickname} className={inputClass} />
@@ -99,6 +102,49 @@ export default function ProfileForm({
   );
 }
 
+/** アバター画像の選択＋プレビュー。選んだファイルは name="avatar" でフォーム送信される。 */
+function AvatarPicker({ nickname, currentUrl }: { nickname: string; currentUrl: string | null }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // 選択した画像のプレビューURLは使い終わったら解放する
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <Avatar name={nickname} src={preview ?? currentUrl} className="h-16 w-16 text-2xl" />
+      <div>
+        <input
+          ref={inputRef}
+          type="file"
+          name="avatar"
+          accept="image/*"
+          onChange={onPick}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="btn-3d btn-3d-secondary px-4 py-1.5 text-sm"
+        >
+          画像を変更
+        </button>
+        <p className="mt-1 text-xs text-slate-400">JPG / PNG・5MBまで。保存すると反映されます。</p>
+      </div>
+    </div>
+  );
+}
+
 /** ポイント残高・信頼スコア・失効予定を表示するカード */
 function PointsCard({ profile, points }: { profile: Profile; points: PointsSummary }) {
   return (
@@ -120,7 +166,7 @@ function PointsCard({ profile, points }: { profile: Profile; points: PointsSumma
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
           {points.expiringSoon.map((e, i) => (
             <p key={i}>
-              ⚠️ {e.amount}pt が {new Date(e.expires_at).toLocaleDateString('ja-JP')} に失効します（残り14日以内）。
+              ⚠ {e.amount}pt が {new Date(e.expires_at).toLocaleDateString('ja-JP')} に失効します（残り14日以内）。
             </p>
           ))}
         </div>

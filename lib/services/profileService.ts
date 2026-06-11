@@ -43,6 +43,8 @@ export class ProfileService {
       grade: string | null;
       major: string | null;
       private_fields: PrivateField[];
+      /** 渡された場合のみ更新する（未指定なら既存のまま） */
+      avatar_url?: string | null;
     }
   ): Promise<Profile> {
     if (!data.nickname.trim()) {
@@ -53,6 +55,33 @@ export class ProfileService {
     const profile = await this.profileRepo.update(userId, { ...data, private_fields: privateFields });
     await this.recomputePrivacyBonus(userId, privateFields.length);
     return (await this.profileRepo.findById(userId)) ?? profile;
+  }
+
+  /**
+   * アバター画像を Storage（avatars バケット）にアップロードし、公開URLを返す。
+   * パスは `${userId}/avatar.<ext>` 固定。upsert で毎回上書きし、URL末尾に
+   * バージョンクエリを付けてキャッシュを更新する。
+   */
+  async uploadAvatar(userId: string, file: File): Promise<string> {
+    const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+    if (!file.type.startsWith('image/')) {
+      throw new Error('画像ファイルを選択してください');
+    }
+    if (file.size > MAX_BYTES) {
+      throw new Error('画像サイズは5MBまでです');
+    }
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const path = `${userId}/avatar.${ext || 'png'}`;
+    const { error } = await this.supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) {
+      console.error('[uploadAvatar]', error.message);
+      throw new Error('画像のアップロードに失敗しました');
+    }
+    const { data } = this.supabase.storage.from('avatars').getPublicUrl(path);
+    // 同名パスを上書きするため、CDNキャッシュ対策にバージョンを付ける
+    return `${data.publicUrl}?v=${Date.now()}`;
   }
 
   /**

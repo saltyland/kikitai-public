@@ -16,6 +16,7 @@ export type ProfileEditable = Partial<
     | 'grade'
     | 'major'
     | 'private_fields'
+    | 'avatar_url'
   >
 >;
 

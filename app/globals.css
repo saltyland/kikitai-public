@@ -7,18 +7,18 @@
  */
 
 @theme {
-  /* ブランドカラー（design_export の brand スケール） */
-  --color-brand-50: #eef7ff;
-  --color-brand-100: #d9edff;
-  --color-brand-200: #bce0ff;
-  --color-brand-300: #8ecdff;
-  --color-brand-400: #59b0ff;
-  --color-brand-500: #338eff;
-  --color-brand-600: #1b6ef5;
-  --color-brand-700: #1457e1;
-  --color-brand-800: #1747b6;
-  --color-brand-900: #193f8f;
-  --color-brand-950: #142857;
+  /* ブランドカラー（ロゴと同じティール系） */
+  --color-brand-50: #effbf9;
+  --color-brand-100: #d6f5f0;
+  --color-brand-200: #b0eae2;
+  --color-brand-300: #7cd8cd;
+  --color-brand-400: #45beb2;
+  --color-brand-500: #26a69a;
+  --color-brand-600: #19857d;
+  --color-brand-700: #176b66;
+  --color-brand-800: #165653;
+  --color-brand-900: #164845;
+  --color-brand-950: #062a2a;
 
   --font-sans: var(--font-rounded), "Hiragino Maru Gothic ProN", sans-serif;
 
@@ -31,7 +31,7 @@
 }
 
 body {
-  background: linear-gradient(to bottom, var(--color-sky-100) 0%, #ffffff 55%, color-mix(in srgb, var(--color-brand-100) 60%, transparent) 100%);
+  background: linear-gradient(to bottom, var(--color-brand-50) 0%, #ffffff 55%, color-mix(in srgb, var(--color-brand-100) 60%, transparent) 100%);
   background-attachment: fixed;
   color: var(--color-slate-800);
   font-family: var(--font-sans);
@@ -51,9 +51,9 @@ body {
     border-radius: 1rem;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.9),
-      0 1px 2px rgba(20, 60, 140, 0.06),
-      0 8px 24px -8px rgba(20, 60, 140, 0.18),
-      0 2px 0 rgba(20, 60, 140, 0.04);
+      0 1px 2px rgba(13, 84, 79, 0.06),
+      0 8px 24px -8px rgba(13, 84, 79, 0.18),
+      0 2px 0 rgba(13, 84, 79, 0.04);
   }
   .card-3d-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -62,9 +62,9 @@ body {
     transform: translateY(-3px);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.9),
-      0 2px 4px rgba(20, 60, 140, 0.06),
-      0 18px 36px -10px rgba(20, 60, 140, 0.25),
-      0 3px 0 rgba(20, 60, 140, 0.05);
+      0 2px 4px rgba(13, 84, 79, 0.06),
+      0 18px 36px -10px rgba(13, 84, 79, 0.25),
+      0 3px 0 rgba(13, 84, 79, 0.05);
   }
 
   /* 押し込みボタン：下に「厚み」を持たせ、押すと沈む */
@@ -80,7 +80,7 @@ body {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.35),
       0 4px 0 var(--btn-edge),
-      0 8px 16px -4px rgba(20, 60, 140, 0.35);
+      0 8px 16px -4px rgba(13, 84, 79, 0.35);
     transition: transform 0.08s ease, box-shadow 0.08s ease;
   }
   .btn-3d:active:not(:disabled) {
@@ -88,7 +88,7 @@ body {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.35),
       0 1px 0 var(--btn-edge),
-      0 3px 8px -2px rgba(20, 60, 140, 0.3);
+      0 3px 8px -2px rgba(13, 84, 79, 0.3);
   }
   .btn-3d:disabled {
     opacity: 0.5;

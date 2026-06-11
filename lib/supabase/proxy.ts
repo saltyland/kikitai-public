@@ -4,6 +4,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 /** 認証不要でアクセスできるパス */
 const PUBLIC_PATHS = ['/login', '/register'];
 
+/** 完全一致のみ公開（トップはランディングページとして未ログインでも表示） */
+const PUBLIC_EXACT_PATHS = ['/'];
+
 /**
  * proxy(旧middleware)から呼ばれるセッション更新＋認証ガード。
  * - Supabaseのセッションをリフレッシュし、Cookieを書き戻す
@@ -38,7 +41,9 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + '/'));
+  const isPublic =
+    PUBLIC_EXACT_PATHS.includes(path) ||
+    PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + '/'));
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

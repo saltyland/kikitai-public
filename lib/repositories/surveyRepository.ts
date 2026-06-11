@@ -4,6 +4,8 @@ import type {
   SurveyStatus,
   SurveyWithQuestions,
   QuestionWithOptions,
+  PreviewQuestionLite,
+  QuestionType,
 } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
 import { throwDbError } from './dbError';
@@ -16,6 +18,11 @@ export interface ISurveyRepository {
   findOpenSurveys(): Promise<Survey[]>;
   countResponses(surveyId: string): Promise<number>;
   countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
+  /** 複数アンケートの設問プレビュー（先頭数問）を1クエリでまとめて取得する */
+  findPreviewQuestionsBySurveyIds(
+    surveyIds: string[],
+    perSurvey?: number
+  ): Promise<Map<string, PreviewQuestionLite[]>>;
   insertSurvey(data: Omit<Survey, 'id' | 'created_at'>): Promise<Survey>;
   updateSurvey(
     id: string,
@@ -103,6 +110,40 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       counts.set(row.survey_id, (counts.get(row.survey_id) ?? 0) + 1);
     }
     return counts;
+  }
+
+  async findPreviewQuestionsBySurveyIds(
+    surveyIds: string[],
+    perSurvey = 4
+  ): Promise<Map<string, PreviewQuestionLite[]>> {
+    const map = new Map<string, PreviewQuestionLite[]>();
+    if (surveyIds.length === 0) return map;
+    const { data, error } = await this.supabase
+      .from('questions')
+      .select('survey_id, type, text, order_index, options(text, order_index)')
+      .in('survey_id', surveyIds)
+      .order('order_index', { ascending: true });
+    if (error) throwDbError(error, 'questions');
+
+    type Row = {
+      survey_id: string;
+      type: QuestionType;
+      text: string;
+      options: { text: string; order_index: number }[] | null;
+    };
+    for (const row of (data ?? []) as Row[]) {
+      const list = map.get(row.survey_id) ?? [];
+      if (list.length >= perSurvey) continue;
+      list.push({
+        type: row.type,
+        text: row.text,
+        options: (row.options ?? [])
+          .sort((a, b) => a.order_index - b.order_index)
+          .map((o) => o.text),
+      });
+      map.set(row.survey_id, list);
+    }
+    return map;
   }
 
   async countResponses(surveyId: string): Promise<number> {

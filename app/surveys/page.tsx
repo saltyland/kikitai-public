@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
+import SurveyCard from '@/components/SurveyCard';
 
 export default async function SurveyListPage() {
   const supabase = await createSupabaseServerClient();
@@ -14,41 +14,20 @@ export default async function SurveyListPage() {
 
   return (
     <>
-      <Header nickname={profile.nickname} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-slate-800">回答できるアンケート</h1>
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+        <h1 className="mb-1 text-xl font-bold text-slate-800">回答できるアンケート</h1>
+        <p className="mb-6 text-sm text-slate-400">スクロールしていろんなアンケートを見てみましょう。</p>
         {surveys.length === 0 ? (
           <p className="card-3d px-4 py-8 text-center text-sm text-slate-500">
             現在、回答できるアンケートはありません。
           </p>
         ) : (
-          <ul className="space-y-3">
-            {surveys.map((s) => {
-              const remaining = Math.max(0, s.required_count - s.response_count);
-              return (
-                <li key={s.id} className="card-3d card-3d-hover p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
-                      {s.description && (
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-500">{s.description}</p>
-                      )}
-                      <p className="mt-1 text-xs text-slate-400">
-                        投稿者 {s.author_nickname} ・残り {remaining}枠
-                        {s.deadline && ` ・期限 ${s.deadline}`}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/surveys/${s.id}`}
-                      className="btn-3d btn-3d-primary shrink-0 px-4 py-2 text-sm"
-                    >
-                      回答する
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="grid grid-cols-1 gap-5">
+            {surveys.map((s) => (
+              <SurveyCard key={s.id} survey={s} />
+            ))}
+          </div>
         )}
       </main>
     </>

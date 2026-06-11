@@ -26,8 +26,8 @@ export default function RootLayout({
         {/* 背景の浮遊ブロブ（design_export 準拠） */}
         <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
           <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-300/30 blur-3xl" />
-          <div className="absolute right-[-8rem] top-40 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl" />
-          <div className="absolute bottom-[-10rem] left-1/3 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
+          <div className="absolute right-[-8rem] top-40 h-[28rem] w-[28rem] rounded-full bg-emerald-100/50 blur-3xl" />
+          <div className="absolute bottom-[-10rem] left-1/3 h-96 w-96 rounded-full bg-brand-200/30 blur-3xl" />
         </div>
         {children}
       </body>

@@ -164,10 +164,11 @@ export class SurveyService {
       (s) => s.user_id !== userId
     );
     const ids = surveys.map((s) => s.id);
-    const [respondedIds, counts, authors] = await Promise.all([
+    const [respondedIds, counts, authors, previews] = await Promise.all([
       this.responseRepo.findRespondedSurveyIds(userId, ids),
       this.surveyRepo.countResponsesBySurveyIds(ids),
       this.profileRepo.findByIds(surveys.map((s) => s.user_id)),
+      this.surveyRepo.findPreviewQuestionsBySurveyIds(ids),
     ]);
     return surveys
       .filter((s) => !respondedIds.has(s.id))
@@ -175,6 +176,8 @@ export class SurveyService {
         ...s,
         response_count: counts.get(s.id) ?? 0,
         author_nickname: authors.get(s.user_id)?.nickname ?? '不明',
+        author_avatar_url: authors.get(s.user_id)?.avatar_url ?? null,
+        preview: previews.get(s.id) ?? [],
       }));
   }
 }

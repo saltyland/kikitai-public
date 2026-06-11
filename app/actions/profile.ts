@@ -32,8 +32,17 @@ export async function updateProfileAction(
   const user = await new AuthService(supabase).getCurrentUser();
   if (!user) return { error: 'ログインが必要です' };
 
+  const service = new ProfileService(supabase);
+
   try {
-    await new ProfileService(supabase).updateProfile(user.id, {
+    // アバター画像が選択されていればアップロードし、その公開URLだけ更新に含める
+    const avatar = formData.get('avatar');
+    let avatarUrl: string | undefined;
+    if (avatar instanceof File && avatar.size > 0) {
+      avatarUrl = await service.uploadAvatar(user.id, avatar);
+    }
+
+    await service.updateProfile(user.id, {
       nickname,
       affiliation: str('affiliation'),
       field: str('field'),
@@ -43,12 +52,14 @@ export async function updateProfileAction(
       grade: str('grade'),
       major: str('major'),
       private_fields: privateFields,
+      ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
     });
   } catch (e) {
     return { error: e instanceof Error ? e.message : '更新に失敗しました' };
   }
 
   revalidatePath('/profile');
+  revalidatePath('/', 'layout'); // ヘッダー等のアバター表示を更新
   return { error: null, success: true };
 }
 

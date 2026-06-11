@@ -14,7 +14,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Header nickname={profile.nickname} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         <h1 className="mb-6 text-xl font-bold text-slate-800">プロフィール</h1>
         <ProfileForm profile={profile} points={points} />

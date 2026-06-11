@@ -367,7 +367,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           }}
           className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
         >
-          📚 テンプレートから追加
+          テンプレートから追加
         </button>
         <button
           type="button"
@@ -679,7 +679,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 }}
                 className="rounded-xl border-2 border-dashed border-indigo-300 px-4 py-3 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
               >
-                📚 テンプレート
+                テンプレート
               </button>
             </div>
           </div>
@@ -734,14 +734,14 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 onClick={() => setRightTab('preview')}
                 className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                👁 プレビュー
+                プレビュー
               </button>
               <button
                 type="button"
                 onClick={() => setRightTab('flow')}
                 className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                🔀 分岐フロー
+                分岐フロー
               </button>
             </div>
             {rightTab === 'preview' ? (
@@ -848,7 +848,7 @@ function ConditionEditor({
             }
           }}
         />
-        🔀 条件付きで表示する（特定の回答をした人だけに見せる）
+        条件付きで表示する（特定の回答をした人だけに見せる）
       </label>
 
       {enabled && cond && (

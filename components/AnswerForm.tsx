@@ -496,7 +496,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
 
       {restored && (
         <div className="flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-          <span>📌 前回の続きから再開しました。</span>
+          <span>前回の続きから再開しました。</span>
           <button onClick={restart} className="font-medium underline hover:text-amber-900 cursor-pointer">
             最初からやり直す
           </button>
@@ -522,7 +522,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           {/* ✓ マイクロフィードバック */}
           {showCheck && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="kikitai-check-pop text-6xl">✅</span>
+              <span className="kikitai-check-pop text-6xl text-emerald-500">✓</span>
             </div>
           )}
           <p className="font-medium text-zinc-800">
@@ -602,9 +602,9 @@ function OfflineBanner({
     >
       <span>
         {!online
-          ? '📴 オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
+          ? 'オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
           : queued
-          ? '⏳ 未送信の回答があります。オンラインに復帰しました。'
+          ? '未送信の回答があります。オンラインに復帰しました。'
           : ''}
       </span>
       {queued && online && (
