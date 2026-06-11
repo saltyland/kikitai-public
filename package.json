@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "sync": "node scripts/supabase-sync.mjs",
     "db:push": "supabase db push",
     "db:new": "supabase migration new"
@@ -28,6 +30,7 @@
     "eslint-config-next": "16.2.9",
     "supabase": "^2.105.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }
