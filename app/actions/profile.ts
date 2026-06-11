@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
+import type { PrivateField } from '@/lib/types/database';
 
 export interface ProfileActionState {
   error: string | null;
@@ -15,9 +16,17 @@ export async function updateProfileAction(
   _prev: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
+  const str = (k: string) => {
+    const v = String(formData.get(k) ?? '').trim();
+    return v || null;
+  };
   const nickname = String(formData.get('nickname') ?? '');
-  const affiliation = String(formData.get('affiliation') ?? '');
-  const field = String(formData.get('field') ?? '');
+  const ageRaw = str('age');
+  const age = ageRaw !== null && /^\d{1,3}$/.test(ageRaw) ? Number(ageRaw) : null;
+  // 非公開チェックされた属性名（PRIVATE_FIELDS のみ許可されサービス層で正規化）
+  const privateFields = formData
+    .getAll('private_fields')
+    .map((v) => String(v)) as PrivateField[];
 
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
@@ -26,8 +35,14 @@ export async function updateProfileAction(
   try {
     await new ProfileService(supabase).updateProfile(user.id, {
       nickname,
-      affiliation: affiliation || null,
-      field: field || null,
+      affiliation: str('affiliation'),
+      field: str('field'),
+      age,
+      gender: str('gender'),
+      occupation: str('occupation'),
+      grade: str('grade'),
+      major: str('major'),
+      private_fields: privateFields,
     });
   } catch (e) {
     return { error: e instanceof Error ? e.message : '更新に失敗しました' };

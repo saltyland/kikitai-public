@@ -11,9 +11,11 @@ import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ answered?: string }>;
+  searchParams: Promise<{ answered?: string; score?: string; pts?: string }>;
 }) {
-  const { answered } = await searchParams;
+  const { answered, score, pts } = await searchParams;
+  const earnedPts = pts ? Number(pts) : null;
+  const qScore = score ? Number(score) : null;
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
   const profile = await auth.getCurrentProfile();
@@ -28,6 +30,13 @@ export default async function HomePage({
         {answered && (
           <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             回答を送信しました。ご協力ありがとうございました。
+            {earnedPts !== null && qScore !== null && (
+              <span className="mt-1 block text-green-800">
+                {earnedPts > 0
+                  ? `品質スコア ${qScore} 点 → ${earnedPts}pt を獲得しました。`
+                  : `品質スコア ${qScore} 点でした。今回はポイント付与の基準に届きませんでした。`}
+              </span>
+            )}
           </div>
         )}
 

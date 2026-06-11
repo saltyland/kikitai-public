@@ -59,14 +59,67 @@ export interface SectionMeta {
   description: string;
 }
 
+/**
+ * 非公開にできる属性名。ここに含めた属性はマッチング対象外になる代わりに
+ * プロフィール充実ボーナス（+10pt/項目, 上限50pt）が付く（DESIGN_SPEC §3 逆インセンティブ）。
+ */
+export type PrivateField =
+  | 'affiliation'
+  | 'field'
+  | 'age'
+  | 'gender'
+  | 'occupation'
+  | 'grade'
+  | 'major';
+
+/** 非公開設定の対象となる属性の一覧（ボーナス計算・UI生成に使う） */
+export const PRIVATE_FIELDS: PrivateField[] = [
+  'affiliation',
+  'field',
+  'age',
+  'gender',
+  'occupation',
+  'grade',
+  'major',
+];
+
 export interface Profile {
   id: string;
   nickname: string;
   affiliation: string | null;
   field: string | null;
+  age: number | null;
+  gender: string | null;
+  occupation: string | null;
+  grade: string | null;
+  major: string | null;
+  /** ポイント残高（point_lots の非期限切れ合計のキャッシュ） */
+  points: number;
+  /** 信頼スコア（0〜100, 既定70）。低品質回答で減点される。 */
+  trust_score: number;
+  /** 非公開にした属性名。マッチング対象外になる代わりにボーナスが付く。 */
+  private_fields: PrivateField[];
   /** 料金プラン。pro のみ統計解析モードを利用できる。 */
   plan: Plan;
   created_at: string;
+}
+
+/** ポイントの束（有効期限つき）。 */
+export interface PointLot {
+  id: string;
+  user_id: string;
+  amount: number;
+  reason: string;
+  granted_at: string;
+  expires_at: string;
+}
+
+/** ポイント残高サマリ（表示用）。 */
+export interface PointsSummary {
+  /** 有効（期限内）ポイント合計 */
+  available: number;
+  /** 残り14日以内に期限切れになる束 */
+  expiringSoon: { amount: number; expires_at: string }[];
 }
 
 export interface Survey {

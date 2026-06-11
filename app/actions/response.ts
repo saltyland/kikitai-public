@@ -28,12 +28,19 @@ export async function submitResponseAction(
   const user = await new AuthService(supabase).getCurrentUser();
   if (!user) return { error: 'ログインが必要です' };
 
+  let result;
   try {
-    await new ResponseService(supabase).submitResponse(user.id, surveyId, answers);
+    result = await new ResponseService(supabase).submitResponse(user.id, surveyId, answers);
   } catch (e) {
     return { error: e instanceof Error ? e.message : '回答の送信に失敗しました' };
   }
 
   revalidatePath('/surveys');
-  redirect('/?answered=1');
+  // 品質スコアと付与ポイントをホームに渡して結果を伝える
+  const params = new URLSearchParams({
+    answered: '1',
+    score: String(result.score),
+    pts: String(result.earnedPoints),
+  });
+  redirect(`/?${params.toString()}`);
 }

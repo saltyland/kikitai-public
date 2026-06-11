@@ -8,15 +8,33 @@ import type {
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
+import { ProfileService } from '@/lib/services/profileService';
+import {
+  createQualityEvaluator,
+  scoreToMultiplier,
+  type EvaluationItem,
+} from '@/lib/domain/quality';
+
+/** 回答送信の結果（品質評価とポイント付与のサマリ） */
+export interface SubmitResult {
+  /** 品質スコア 0〜100 */
+  score: number;
+  /** 日本語フィードバック */
+  feedback: string;
+  /** 今回付与されたポイント */
+  earnedPoints: number;
+}
 
 /** アンケート回答・結果集計のビジネスロジック */
 export class ResponseService {
   private readonly surveyRepo: SurveyRepository;
   private readonly responseRepo: ResponseRepository;
+  private readonly profileService: ProfileService;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
+    this.profileService = new ProfileService(supabase);
   }
 
   /** 期限切れ（deadlineが過去）かどうか */
@@ -43,12 +61,15 @@ export class ResponseService {
     return survey;
   }
 
-  /** 回答送信 */
+  /**
+   * 回答送信。保存後に AI品質評価を行い、スコアに応じた倍率でポイントを付与する。
+   * スコア0（アテンションチェック誤答等）の場合は信頼スコアを5減点する（DESIGN_SPEC §2）。
+   */
   async submitResponse(
     userId: string,
     surveyId: string,
     answers: AnswerInput[]
-  ): Promise<void> {
+  ): Promise<SubmitResult> {
     const survey = await this.surveyRepo.findWithQuestions(surveyId);
     if (!survey) throw new Error('アンケートが見つかりません');
     if (survey.status !== 'open') throw new Error('このアンケートは回答を受け付けていません');
@@ -96,6 +117,31 @@ export class ResponseService {
     // 非表示設問の回答は保存しない
     const visibleAnswers = answers.filter((a) => visibleIds.has(a.question_id));
     await this.responseRepo.saveResponse(surveyId, userId, visibleAnswers);
+
+    // ── AI品質評価＋ポイント付与（DESIGN_SPEC §2） ──
+    const visibleQuestions = survey.questions.filter((q) => visibleIds.has(q.id));
+    const items: EvaluationItem[] = visibleQuestions.map((q) => ({
+      question: q,
+      answer: answers.find((a) => a.question_id === q.id),
+    }));
+    const result = await createQualityEvaluator().evaluate(items);
+    const multiplier = scoreToMultiplier(result.score);
+
+    // 基本コスト＝表示設問のポイントコスト合計（最低1）
+    const baseCost = Math.max(
+      1,
+      visibleQuestions.reduce((sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost, 0)
+    );
+    const earnedPoints = Math.round(baseCost * multiplier);
+
+    if (earnedPoints > 0) {
+      await this.profileService.awardPoints(userId, earnedPoints, 'answer_reward');
+    }
+    if (result.score === 0) {
+      await this.profileService.adjustTrust(userId, -5);
+    }
+
+    return { score: result.score, feedback: result.feedback, earnedPoints };
   }
 
   /** 結果確認（作成者のみ） */
