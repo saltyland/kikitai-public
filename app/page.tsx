@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
 import { changeStatusAction } from '@/app/actions/survey';
 import DeleteSurveyButton from '@/components/DeleteSurveyButton';
+import RefreshButton from '@/components/ui/RefreshButton';
 
 export default async function HomePage({
   searchParams,
@@ -48,11 +49,22 @@ export default async function HomePage({
           </Link>
         </div>
 
-        <h2 className="mb-3 text-lg font-bold text-zinc-800">作成したアンケート</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-zinc-800">作成したアンケート</h2>
+          <RefreshButton />
+        </div>
         {surveys.length === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-            まだアンケートがありません。「アンケートを作成する」から始めましょう。
-          </p>
+          <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
+            <p className="text-4xl" aria-hidden="true">📝</p>
+            <p className="mt-2 text-sm font-medium text-zinc-800">まだアンケートがありません</p>
+            <p className="mt-1 text-sm text-zinc-600">最初のアンケートを作成して回答を集めましょう。</p>
+            <Link
+              href="/surveys/new"
+              className="mt-4 inline-block rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              ＋ アンケートを作成する
+            </Link>
+          </div>
         ) : (
           <ul className="space-y-3">
             {surveys.map((s) => (

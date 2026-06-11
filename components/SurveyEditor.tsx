@@ -35,7 +35,7 @@ interface EditorQuestion {
 }
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
+  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
 
 function needsOptions(type: QuestionType) {
   return QuestionTypeRegistry.get(type).requiresOptionInput;
@@ -463,17 +463,24 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
               return (
                 <section
                   key={q.key}
-                  draggable
-                  onDragStart={() => setDragKey(q.key)}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => dropOnQuestion(q.key)}
+                  onDragEnd={() => setDragKey(null)}
                   className={`rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3 ${
                     dragKey === q.key ? 'opacity-50' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <span className="cursor-grab select-none text-zinc-400" title="ドラッグで並べ替え">
+                      {/* ドラッグはこのハンドルからのみ開始する。
+                          設問カード全体を draggable にすると、入力欄でのテキスト選択が
+                          ドラッグ扱いになりカードが薄くなる不具合（issue #5）が起きるため。 */}
+                      <span
+                        draggable
+                        onDragStart={() => setDragKey(q.key)}
+                        className="cursor-grab select-none text-zinc-500"
+                        title="ドラッグで並べ替え"
+                      >
                         ⠿ 設問 {globalIndex + 1}
                       </span>
                       {warns.length > 0 && (
@@ -534,12 +541,27 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     <div className="space-y-2 pl-1">
                       {q.options.map((o, oi) => (
                         <div key={oi} className="flex items-center gap-2">
-                          <span className="text-xs text-zinc-400 w-5">{oi + 1}.</span>
+                          <span className="text-xs text-zinc-500 w-5">{oi + 1}.</span>
                           <input
                             className={inputClass}
                             placeholder={`選択肢 ${oi + 1}`}
                             value={o}
+                            data-opt={`${q.key}:${oi}`}
                             onChange={(e) => updateOption(q.key, oi, e.target.value)}
+                            onKeyDown={(e) => {
+                              // Enterで次の選択肢を追加してフォーカス移動（Googleフォーム相当）。
+                              // IME変換確定のEnterは無視する（issue #4）。
+                              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                                e.preventDefault();
+                                const nextIndex = q.options.length;
+                                addOption(q.key);
+                                setTimeout(() => {
+                                  document
+                                    .querySelector<HTMLInputElement>(`[data-opt="${q.key}:${nextIndex}"]`)
+                                    ?.focus();
+                                }, 0);
+                              }
+                            }}
                           />
                           {q.options.length > 2 && (
                             <button type="button" onClick={() => removeOption(q.key, oi)} className="text-red-500 text-sm px-1 cursor-pointer">×</button>

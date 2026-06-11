@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
+import RefreshButton from '@/components/ui/RefreshButton';
 
 export default async function SurveyListPage() {
   const supabase = await createSupabaseServerClient();
@@ -16,11 +17,24 @@ export default async function SurveyListPage() {
     <>
       <Header nickname={profile.nickname} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-zinc-800">回答できるアンケート</h1>
+        <div className="mb-6 flex items-center justify-between gap-2">
+          <h1 className="text-xl font-bold text-zinc-800">回答できるアンケート</h1>
+          <RefreshButton />
+        </div>
         {surveys.length === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-            現在、回答できるアンケートはありません。
-          </p>
+          <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
+            <p className="text-4xl" aria-hidden="true">📭</p>
+            <p className="mt-2 text-sm font-medium text-zinc-800">回答できるアンケートはありません</p>
+            <p className="mt-1 text-sm text-zinc-600">
+              現在、公開中のアンケートはありません。自分でアンケートを作って交換を始めましょう。
+            </p>
+            <Link
+              href="/surveys/new"
+              className="mt-4 inline-block rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              ＋ アンケートを作成する
+            </Link>
+          </div>
         ) : (
           <ul className="space-y-3">
             {surveys.map((s) => {
@@ -33,7 +47,7 @@ export default async function SurveyListPage() {
                       {s.description && (
                         <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
                       )}
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="mt-1 text-xs text-zinc-600">
                         投稿者 {s.author_nickname} ・残り {remaining}枠
                         {s.deadline && ` ・期限 ${s.deadline}`}
                       </p>
