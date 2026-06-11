@@ -7,7 +7,7 @@ import { loginAction, registerAction, type ActionState } from '@/app/actions/aut
 const initial: ActionState = { error: null };
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
+  'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
 
 export function LoginForm() {
@@ -32,7 +32,7 @@ export function LoginForm() {
       </button>
       <p className="text-center text-sm text-slate-600">
         アカウントをお持ちでない方は{' '}
-        <Link href="/register" className="text-sky-600 hover:underline">新規登録</Link>
+        <Link href="/register" className="text-brand-600 hover:underline">新規登録</Link>
       </p>
     </form>
   );
@@ -80,7 +80,7 @@ export function RegisterForm() {
       </button>
       <p className="text-center text-sm text-slate-600">
         すでにアカウントをお持ちの方は{' '}
-        <Link href="/login" className="text-sky-600 hover:underline">ログイン</Link>
+        <Link href="/login" className="text-brand-600 hover:underline">ログイン</Link>
       </p>
     </form>
   );

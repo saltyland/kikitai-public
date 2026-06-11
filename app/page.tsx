@@ -56,7 +56,7 @@ export default async function HomePage({
             href="/surveys/new"
             className="card-3d card-3d-hover block p-6"
           >
-            <p className="text-lg font-extrabold text-sky-600">＋ アンケートを作成する</p>
+            <p className="text-lg font-extrabold text-brand-600">＋ アンケートを作成する</p>
             <p className="mt-1 text-sm text-slate-500">設問を作って回答を集めましょう</p>
           </Link>
           <Link

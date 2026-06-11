@@ -10,7 +10,7 @@ import {
 import type { PointsSummary, PrivateField, Profile } from '@/lib/types/database';
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
+  'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
 
 const initial: ProfileActionState = { error: null };
@@ -39,7 +39,7 @@ function AttrRow({
             name="private_fields"
             value={name}
             defaultChecked={defaultPrivate}
-            className="accent-sky-500"
+            className="accent-brand-500"
           />
           非公開にする（+10pt）
         </label>
@@ -70,8 +70,8 @@ export default function ProfileForm({
           <input id="nickname" name="nickname" required defaultValue={profile.nickname} className={inputClass} />
         </div>
 
-        <div className="rounded-lg bg-sky-50/70 px-3 py-2 text-xs text-slate-600">
-          属性を<strong className="text-sky-700">非公開</strong>にすると、その項目はマッチングに使われなくなりますが、
+        <div className="rounded-lg bg-brand-50/70 px-3 py-2 text-xs text-slate-600">
+          属性を<strong className="text-brand-700">非公開</strong>にすると、その項目はマッチングに使われなくなりますが、
           プロフィール充実ボーナス（1項目あたり +10pt・上限50pt）がもらえます。
         </div>
 
@@ -106,7 +106,7 @@ function PointsCard({ profile, points }: { profile: Profile; points: PointsSumma
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">保有ポイント</p>
-          <p className="text-3xl font-extrabold text-sky-600">
+          <p className="text-3xl font-extrabold text-brand-600">
             {points.available}
             <span className="ml-1 text-base font-bold text-slate-400">pt</span>
           </p>
@@ -136,7 +136,7 @@ function DeleteAccountSection() {
   return (
     <form action={action} className="card-3d border border-red-200 p-6">
       <h2 className="text-sm font-bold text-red-700">退会する</h2>
-      <p className="mt-1 mb-3 text-sm text-zinc-500">
+      <p className="mt-1 mb-3 text-sm text-slate-500">
         退会するとプロフィールと作成したアンケートが削除されます。この操作は取り消せません。
       </p>
       {state.error && <p className="mb-3 text-sm text-red-600">{state.error}</p>}
@@ -159,23 +159,21 @@ function PlanManager({ plan }: { plan: Profile['plan'] }) {
   return (
     <form
       action={action}
-      className={`rounded-xl border p-6 shadow-sm ${
-        isPro ? 'border-amber-300 bg-amber-50' : 'border-zinc-200 bg-white'
-      }`}
+      className={`card-3d p-6 ${isPro ? 'border-amber-300/80' : ''}`}
     >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-800">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
             料金プラン
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                isPro ? 'bg-amber-400 text-white' : 'bg-zinc-200 text-zinc-600'
+                isPro ? 'bg-amber-400 text-white' : 'bg-slate-200 text-slate-600'
               }`}
             >
               {isPro ? 'PRO' : 'FREE'}
             </span>
           </h2>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-slate-500">
             {isPro
               ? 'Proプラン加入中です。結果画面で「統計解析モード」が利用できます。'
               : 'Proプランに加入すると、結果画面で平均・中央値・標準偏差などの統計解析モードが使えます。'}

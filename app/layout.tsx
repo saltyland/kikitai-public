@@ -21,8 +21,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${rounded.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ja" className={rounded.variable}>
+      <body className="relative flex min-h-screen flex-col overflow-x-hidden font-sans antialiased">
+        {/* 背景の浮遊ブロブ（design_export 準拠） */}
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+          <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-300/30 blur-3xl" />
+          <div className="absolute right-[-8rem] top-40 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl" />
+          <div className="absolute bottom-[-10rem] left-1/3 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }
