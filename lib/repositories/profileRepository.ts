@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Plan, Profile } from '@/lib/types/database';
+import type { Plan, Profile, PublicProfile } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
 import { throwDbError } from './dbError';
 
@@ -23,14 +23,14 @@ export type ProfileEditable = Partial<
 /** プロフィールのDBアクセスを抽象化するインターフェース */
 export interface IProfileRepository {
   findById(id: string): Promise<Profile | null>;
-  /** 複数idのプロフィールを1クエリでまとめて取得する（一覧表示のN+1対策） */
-  findByIds(ids: string[]): Promise<Map<string, Profile>>;
+  /**
+   * 複数idの「公開プロフィール」を1クエリでまとめて取得する（一覧表示のN+1対策）。
+   * RLSにより profiles 本体は本人しか読めないため、他人の情報は
+   * public_profiles ビュー（非公開属性マスク済み）から取得する。
+   */
+  findByIds(ids: string[]): Promise<Map<string, PublicProfile>>;
   update(id: string, data: ProfileEditable): Promise<Profile>;
   updatePlan(id: string, plan: Plan): Promise<Profile>;
-  /** ポイント残高キャッシュを上書きする（point_lots の合計と同期する用） */
-  setPoints(id: string, points: number): Promise<void>;
-  /** 信頼スコアを上書きする（0〜100にクランプ済みの値を渡すこと） */
-  setTrustScore(id: string, trustScore: number): Promise<void>;
   delete(id: string): Promise<void>;
 }
 
@@ -41,14 +41,14 @@ export class ProfileRepository extends BaseRepository<Profile> implements IProfi
 
   // findById は BaseRepository から継承
 
-  async findByIds(ids: string[]): Promise<Map<string, Profile>> {
+  async findByIds(ids: string[]): Promise<Map<string, PublicProfile>> {
     if (ids.length === 0) return new Map();
     const { data, error } = await this.supabase
-      .from(this.table)
+      .from('public_profiles')
       .select('*')
       .in('id', Array.from(new Set(ids)));
-    if (error) throwDbError(error, 'profiles');
-    return new Map(((data ?? []) as Profile[]).map((p) => [p.id, p]));
+    if (error) throwDbError(error, 'public_profiles');
+    return new Map(((data ?? []) as PublicProfile[]).map((p) => [p.id, p]));
   }
 
   async update(id: string, data: ProfileEditable): Promise<Profile> {
@@ -60,22 +60,6 @@ export class ProfileRepository extends BaseRepository<Profile> implements IProfi
       .single();
     if (error) throwDbError(error, 'profiles');
     return updated as Profile;
-  }
-
-  async setPoints(id: string, points: number): Promise<void> {
-    const { error } = await this.supabase
-      .from(this.table)
-      .update({ points })
-      .eq('id', id);
-    if (error) throwDbError(error, 'profiles.setPoints');
-  }
-
-  async setTrustScore(id: string, trustScore: number): Promise<void> {
-    const { error } = await this.supabase
-      .from(this.table)
-      .update({ trust_score: trustScore })
-      .eq('id', id);
-    if (error) throwDbError(error, 'profiles.setTrustScore');
   }
 
   async updatePlan(id: string, plan: Plan): Promise<Profile> {

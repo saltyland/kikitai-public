@@ -42,5 +42,6 @@ export async function submitResponseAction(
     score: String(result.score),
     pts: String(result.earnedPoints),
   });
+  if (result.surveyClosed) params.set('closed', '1');
   redirect(`/?${params.toString()}`);
 }

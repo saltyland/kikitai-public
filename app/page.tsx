@@ -11,9 +11,15 @@ import LandingPage from '@/components/LandingPage';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ answered?: string; score?: string; pts?: string }>;
+  searchParams: Promise<{
+    answered?: string;
+    score?: string;
+    pts?: string;
+    closed?: string;
+    statusError?: string;
+  }>;
 }) {
-  const { answered, score, pts } = await searchParams;
+  const { answered, score, pts, closed, statusError } = await searchParams;
   const earnedPts = pts ? Number(pts) : null;
   const qScore = score ? Number(score) : null;
   const supabase = await createSupabaseServerClient();
@@ -38,6 +44,17 @@ export default async function HomePage({
                   : `品質スコア ${qScore} 点でした。今回はポイント付与の基準に届きませんでした。`}
               </span>
             )}
+            {closed && (
+              <span className="mt-1 block text-green-800">
+                このアンケートは必要回答数に到達したため締め切られました。
+              </span>
+            )}
+          </div>
+        )}
+
+        {statusError && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {statusError}
           </div>
         )}
 

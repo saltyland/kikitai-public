@@ -62,15 +62,21 @@ export class SurveyService {
   }
 
   /**
-   * アンケート公開に必要なポイントコストを試算する。
-   * 要件定義v2.0のコスト表（設問タイプ別単価）に基づく。
-   * Phase 4のポイントシステムで公開時に消費する。現時点では参照用。
+   * 設問1セット分のポイントコスト（設問タイプ別単価の合計）を試算する。
+   * 公開時には これ × required_count（切り上げ）が消費される。
+   * 実際の消費はDB側の publish_survey RPC が同じコスト表で計算する
+   * （supabase/migrations の question_point_cost と同期を保つこと）。
    */
   estimateCost(input: SurveyInput): number {
     return input.questions.reduce(
       (sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost,
       0
     );
+  }
+
+  /** 公開時に消費されるポイント総額（required_count × 設問コスト、切り上げ） */
+  estimatePublishCost(input: SurveyInput): number {
+    return Math.ceil(input.required_count * this.estimateCost(input));
   }
 
   /** セクション（ページ）メタ情報を正規化する */
@@ -134,6 +140,14 @@ export class SurveyService {
     const existing = await this.surveyRepo.findById(surveyId);
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('操作権限がありません');
+
+    // 公開（draft→open）は「回答者集めの対価」としてポイントを消費する。
+    // コスト計算・FIFO消費・open化はDB側のRPCが1トランザクションで行い、
+    // 残高不足時は BusinessRuleError（INSUFFICIENT_POINTS）で公開を拒否する。
+    if (existing.status === 'draft' && status === 'open') {
+      await this.surveyRepo.publish(surveyId);
+      return;
+    }
     await this.surveyRepo.updateStatus(surveyId, status);
   }
 

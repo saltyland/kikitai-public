@@ -8,7 +8,6 @@ import type {
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
-import { ProfileService } from '@/lib/services/profileService';
 import {
   createQualityEvaluator,
   scoreToMultiplier,
@@ -23,18 +22,18 @@ export interface SubmitResult {
   feedback: string;
   /** 今回付与されたポイント */
   earnedPoints: number;
+  /** この回答で必要回答数に到達し、アンケートが自動で締め切られたか */
+  surveyClosed: boolean;
 }
 
 /** アンケート回答・結果集計のビジネスロジック */
 export class ResponseService {
   private readonly surveyRepo: SurveyRepository;
   private readonly responseRepo: ResponseRepository;
-  private readonly profileService: ProfileService;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
-    this.profileService = new ProfileService(supabase);
   }
 
   /** 期限切れ（deadlineが過去）かどうか */
@@ -116,9 +115,8 @@ export class ResponseService {
 
     // 非表示設問の回答は保存しない
     const visibleAnswers = answers.filter((a) => visibleIds.has(a.question_id));
-    await this.responseRepo.saveResponse(surveyId, userId, visibleAnswers);
 
-    // ── AI品質評価＋ポイント付与（DESIGN_SPEC §2） ──
+    // ── AI品質評価（DESIGN_SPEC §2）。保存前に評価し、保存・付与はまとめて行う ──
     const visibleQuestions = survey.questions.filter((q) => visibleIds.has(q.id));
     const items: EvaluationItem[] = visibleQuestions.map((q) => ({
       question: q,
@@ -133,15 +131,24 @@ export class ResponseService {
       visibleQuestions.reduce((sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost, 0)
     );
     const earnedPoints = Math.round(baseCost * multiplier);
+    const trustDelta = result.score === 0 ? -5 : 0;
 
-    if (earnedPoints > 0) {
-      await this.profileService.awardPoints(userId, earnedPoints, 'answer_reward');
-    }
-    if (result.score === 0) {
-      await this.profileService.adjustTrust(userId, -5);
-    }
+    // 回答保存＋ポイント付与＋信頼スコア更新＋上限到達時の自動closeを
+    // 1トランザクション（RPC）で実行する。失敗時はすべてロールバックされるため、
+    // 「回答済みなのにポイント未付与・再回答不可」という不可逆状態にならない。
+    const outcome = await this.responseRepo.submitWithRewards(
+      surveyId,
+      visibleAnswers,
+      earnedPoints,
+      trustDelta
+    );
 
-    return { score: result.score, feedback: result.feedback, earnedPoints };
+    return {
+      score: result.score,
+      feedback: result.feedback,
+      earnedPoints,
+      surveyClosed: outcome.closed,
+    };
   }
 
   /** 結果確認（作成者のみ） */

@@ -97,27 +97,12 @@ export class ProfileService {
     await this.syncPointsBalance(userId);
   }
 
-  /** ポイントを付与する（有効期限180日）。残高キャッシュも更新する。 */
-  async awardPoints(userId: string, amount: number, reason: string): Promise<void> {
-    if (amount <= 0) return;
-    await this.pointLotRepo.grant(userId, amount, reason, POINT_EXPIRY_DAYS);
-    await this.syncPointsBalance(userId);
-  }
-
-  /** 信頼スコアを delta だけ増減する（0〜100にクランプ）。 */
-  async adjustTrust(userId: string, delta: number): Promise<void> {
-    const profile = await this.profileRepo.findById(userId);
-    if (!profile) return;
-    const next = Math.max(0, Math.min(100, profile.trust_score + delta));
-    await this.profileRepo.setTrustScore(userId, next);
-  }
-
-  /** profiles.points を point_lots（期限内）の合計に同期する。 */
-  private async syncPointsBalance(userId: string): Promise<number> {
-    const lots = await this.pointLotRepo.listActive(userId);
-    const total = lots.reduce((sum, lot) => sum + lot.amount, 0);
-    await this.profileRepo.setPoints(userId, total);
-    return total;
+  /**
+   * profiles.points を point_lots（期限内）の合計に同期する。
+   * 集計と更新をDB側の1文（RPC）で行うため、並行付与時の lost update が起きない。
+   */
+  private async syncPointsBalance(userId: string): Promise<void> {
+    await this.pointLotRepo.syncBalance(userId);
   }
 
   /** 表示用のポイントサマリ（有効残高＋まもなく失効する束）を返す。 */

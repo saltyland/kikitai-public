@@ -106,6 +106,25 @@ export interface Profile {
   created_at: string;
 }
 
+/**
+ * 他人から見えるプロフィール（public_profiles ビューの行）。
+ * private_fields に含めた属性は null にマスクされ、
+ * points / trust_score / plan / private_fields はそもそも含まれない。
+ */
+export interface PublicProfile {
+  id: string;
+  nickname: string;
+  avatar_url: string | null;
+  affiliation: string | null;
+  field: string | null;
+  age: number | null;
+  gender: string | null;
+  occupation: string | null;
+  grade: string | null;
+  major: string | null;
+  created_at: string;
+}
+
 /** ポイントの束（有効期限つき）。 */
 export interface PointLot {
   id: string;

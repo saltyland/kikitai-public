@@ -8,7 +8,7 @@ import type {
   QuestionType,
 } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
-import { throwDbError } from './dbError';
+import { throwDbError, throwRpcError } from './dbError';
 
 /** アンケート本体・設問・選択肢のDBアクセスを抽象化するインターフェース */
 export interface ISurveyRepository {
@@ -29,6 +29,12 @@ export interface ISurveyRepository {
     data: Partial<Omit<Survey, 'id' | 'user_id' | 'created_at'>>
   ): Promise<Survey>;
   updateStatus(id: string, status: SurveyStatus): Promise<void>;
+  /**
+   * 公開（draft→open）。RPC（publish_survey）が公開コスト
+   * （required_count×設問単価合計）の消費とopen化を1トランザクションで行う。
+   * 残高不足は BusinessRuleError（INSUFFICIENT_POINTS）。戻り値＝消費ポイント。
+   */
+  publish(id: string): Promise<number>;
   delete(id: string): Promise<void>;
   /** 設問と選択肢を一括で置き換える（既存削除 → 新規挿入） */
   replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void>;
@@ -185,6 +191,14 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .update({ status })
       .eq('id', id);
     if (error) throwDbError(error, 'surveys');
+  }
+
+  async publish(id: string): Promise<number> {
+    const { data, error } = await this.supabase.rpc('publish_survey', {
+      p_survey_id: id,
+    });
+    if (error) throwRpcError(error, 'publish_survey');
+    return (data as number) ?? 0;
   }
 
   async delete(id: string): Promise<void> {

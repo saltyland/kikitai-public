@@ -59,7 +59,14 @@ export async function changeStatusAction(formData: FormData): Promise<void> {
     return;
   }
 
-  await new SurveyService(supabase).changeStatus(user.id, surveyId, status);
+  try {
+    await new SurveyService(supabase).changeStatus(user.id, surveyId, status);
+  } catch (e) {
+    // 残高不足（INSUFFICIENT_POINTS）等はホームにメッセージ付きで戻す
+    const message = e instanceof Error ? e.message : '操作に失敗しました';
+    revalidatePath('/');
+    redirect(`/?statusError=${encodeURIComponent(message)}`);
+  }
   revalidatePath('/');
 }
 
