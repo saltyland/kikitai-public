@@ -16,17 +16,23 @@ function MiniQuestion({ q, index }: { q: PreviewQuestionLite; index: number }) {
 }
 
 function MiniInput({ q }: { q: PreviewQuestionLite }) {
-  const pill = 'rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-500';
-
   if (q.type === 'single' || q.type === 'multiple' || q.type === 'dropdown') {
     const opts = q.options.filter(Boolean).slice(0, 4);
     if (opts.length === 0) return <div className="h-6 rounded-md border border-slate-200 bg-white" />;
     return (
-      <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-1.5">
         {opts.map((o, i) => (
-          <span key={i} className={pill}>
-            {o}
-          </span>
+          <div
+            key={i}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5"
+          >
+            <span
+              className={`h-3.5 w-3.5 shrink-0 border border-slate-300 bg-white ${
+                q.type === 'multiple' ? 'rounded' : 'rounded-full'
+              }`}
+            />
+            <span className="line-clamp-1 text-[11px] text-slate-600">{o}</span>
+          </div>
         ))}
       </div>
     );
