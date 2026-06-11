@@ -13,7 +13,7 @@ export default async function ProfilePage() {
     <>
       <Header nickname={profile.nickname} />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-zinc-800">プロフィール</h1>
+        <h1 className="mb-6 text-xl font-bold text-slate-800">プロフィール</h1>
         <ProfileForm profile={profile} />
       </main>
     </>

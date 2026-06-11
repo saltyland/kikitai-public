@@ -26,31 +26,42 @@ export default async function HomePage({
       <Header nickname={profile.nickname} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         {answered && (
-          <div className="mb-6 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             回答を送信しました。ご協力ありがとうございました。
           </div>
         )}
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* ヒーローコピー（DESIGN_SPEC 準拠） */}
+        <section className="mb-8 text-center sm:text-left">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">
+            こたえて、あつめる。研究の輪。
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 sm:text-base">
+            アンケートに答えてポイントを貯め、自分の研究に回答者を集めよう。<br className="hidden sm:inline" />
+            学生・研究者のための、P2P型アンケート交換プラットフォーム。
+          </p>
+        </section>
+
+        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Link
             href="/surveys/new"
-            className="rounded-xl bg-indigo-600 p-6 text-white shadow-sm hover:bg-indigo-700"
+            className="card-3d card-3d-hover block p-6"
           >
-            <p className="text-lg font-bold">＋ アンケートを作成する</p>
-            <p className="mt-1 text-sm text-indigo-100">設問を作って回答を集めましょう</p>
+            <p className="text-lg font-extrabold text-sky-600">＋ アンケートを作成する</p>
+            <p className="mt-1 text-sm text-slate-500">設問を作って回答を集めましょう</p>
           </Link>
           <Link
             href="/surveys"
-            className="rounded-xl bg-white p-6 shadow-sm border border-zinc-200 hover:border-indigo-300"
+            className="card-3d card-3d-hover block p-6"
           >
-            <p className="text-lg font-bold text-zinc-800">✎ アンケートに回答する</p>
-            <p className="mt-1 text-sm text-zinc-500">公開中のアンケートに回答します</p>
+            <p className="text-lg font-extrabold text-slate-800">✎ アンケートに回答する</p>
+            <p className="mt-1 text-sm text-slate-500">公開中のアンケートに回答します</p>
           </Link>
         </div>
 
-        <h2 className="mb-3 text-lg font-bold text-zinc-800">作成したアンケート</h2>
+        <h2 className="mb-3 text-lg font-bold text-slate-800">作成したアンケート</h2>
         {surveys.length === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
+          <p className="card-3d px-4 py-8 text-center text-sm text-slate-500">
             まだアンケートがありません。「アンケートを作成する」から始めましょう。
           </p>
         ) : (
@@ -58,15 +69,15 @@ export default async function HomePage({
             {surveys.map((s) => (
               <li
                 key={s.id}
-                className="rounded-lg bg-white border border-zinc-200 p-4 shadow-sm"
+                className="card-3d p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="truncate font-semibold text-zinc-800">{s.title}</h3>
+                      <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
                       <SurveyStatusBadge status={s.status} />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-slate-500">
                       回答数 {s.response_count} / {s.required_count}
                       {s.deadline && ` ・期限 ${s.deadline}`}
                     </p>
@@ -76,14 +87,14 @@ export default async function HomePage({
                 <div className="mt-3 flex flex-wrap gap-2 text-sm">
                   <Link
                     href={`/surveys/${s.id}/results`}
-                    className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
+                    className="btn-3d btn-3d-secondary px-3 py-1"
                   >
                     結果を見る
                   </Link>
                   {s.status === 'draft' && (
                     <Link
                       href={`/surveys/${s.id}/edit`}
-                      className="rounded-md bg-zinc-100 px-3 py-1 text-zinc-700 hover:bg-zinc-200"
+                      className="btn-3d btn-3d-secondary px-3 py-1"
                     >
                       編集
                     </Link>
@@ -92,7 +103,7 @@ export default async function HomePage({
                     <form action={changeStatusAction}>
                       <input type="hidden" name="surveyId" value={s.id} />
                       <input type="hidden" name="status" value="open" />
-                      <button className="rounded-md bg-green-600 px-3 py-1 text-white hover:bg-green-700 cursor-pointer">
+                      <button className="btn-3d btn-3d-primary px-3 py-1">
                         公開する
                       </button>
                     </form>
@@ -101,7 +112,7 @@ export default async function HomePage({
                     <form action={changeStatusAction}>
                       <input type="hidden" name="surveyId" value={s.id} />
                       <input type="hidden" name="status" value="closed" />
-                      <button className="rounded-md bg-amber-600 px-3 py-1 text-white hover:bg-amber-700 cursor-pointer">
+                      <button className="btn-3d btn-3d-danger px-3 py-1">
                         終了する
                       </button>
                     </form>

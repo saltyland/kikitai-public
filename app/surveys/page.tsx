@@ -16,9 +16,9 @@ export default async function SurveyListPage() {
     <>
       <Header nickname={profile.nickname} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-zinc-800">回答できるアンケート</h1>
+        <h1 className="mb-6 text-xl font-bold text-slate-800">回答できるアンケート</h1>
         {surveys.length === 0 ? (
-          <p className="rounded-lg bg-white border border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
+          <p className="card-3d px-4 py-8 text-center text-sm text-slate-500">
             現在、回答できるアンケートはありません。
           </p>
         ) : (
@@ -26,21 +26,21 @@ export default async function SurveyListPage() {
             {surveys.map((s) => {
               const remaining = Math.max(0, s.required_count - s.response_count);
               return (
-                <li key={s.id} className="rounded-lg bg-white border border-zinc-200 p-4 shadow-sm">
+                <li key={s.id} className="card-3d card-3d-hover p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="truncate font-semibold text-zinc-800">{s.title}</h3>
+                      <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
                       {s.description && (
-                        <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-500">{s.description}</p>
                       )}
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="mt-1 text-xs text-slate-400">
                         投稿者 {s.author_nickname} ・残り {remaining}枠
                         {s.deadline && ` ・期限 ${s.deadline}`}
                       </p>
                     </div>
                     <Link
                       href={`/surveys/${s.id}`}
-                      className="shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                      className="btn-3d btn-3d-primary shrink-0 px-4 py-2 text-sm"
                     >
                       回答する
                     </Link>

@@ -27,7 +27,7 @@ export default function DeleteSurveyButton({
       }}
     >
       <input type="hidden" name="surveyId" value={surveyId} />
-      <button className="rounded-md px-3 py-1 text-red-600 hover:bg-red-50 cursor-pointer">
+      <button className="btn-3d btn-3d-ghost px-3 py-1 text-red-500 hover:text-red-600">
         削除
       </button>
     </form>
