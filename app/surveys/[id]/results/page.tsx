@@ -6,6 +6,7 @@ import { ResponseService } from '@/lib/services/responseService';
 import Header from '@/components/Header';
 import ResultChart from '@/components/ResultChart';
 import ResultStats from '@/components/ResultStats';
+import RefreshButton from '@/components/ui/RefreshButton';
 
 export default async function ResultsPage({
   params,
@@ -38,15 +39,18 @@ export default async function ResultsPage({
         <Link href="/" className="text-sm text-indigo-600 hover:underline">← ホームに戻る</Link>
         <h1 className="mt-2 mb-1 text-xl font-bold text-zinc-800">{survey.title}</h1>
         <div className="mb-6 flex items-center justify-between gap-4">
-          <p className="text-sm text-zinc-500">回答数：{responseCount}件</p>
-          {responseCount > 0 && (
-            <a
-              href={`/surveys/${survey.id}/results/export`}
-              className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
-            >
-              CSVダウンロード
-            </a>
-          )}
+          <p className="text-sm text-zinc-600">回答数：{responseCount}件</p>
+          <div className="flex items-center gap-2">
+            <RefreshButton />
+            {responseCount > 0 && (
+              <a
+                href={`/surveys/${survey.id}/results/export`}
+                className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+              >
+                CSVダウンロード
+              </a>
+            )}
+          </div>
         </div>
 
         {/* 表示モード切替タブ：集計グラフ / 統計解析（Pro） */}
