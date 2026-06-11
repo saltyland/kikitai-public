@@ -16,16 +16,21 @@ export interface EvaluationItem {
   question: QuestionWithOptions;
   answer: AnswerInput | undefined;
   /**
-   * アテンションチェックの正解選択肢テキスト（指定があれば）。
-   * 現行スキーマには正解欄がないため通常は undefined。将来 config 等で
-   * 正解を持たせた場合にルールベース評価が即座に対応できるよう用意している。
+   * アテンションチェックの正解選択肢テキスト。
+   * type='attention' の設問では config.correctOptionText から供給される。
    */
   correctOptionText?: string;
 }
 
+/** 回答全体に関する評価コンテキスト（設問単位の items とは別のメタ情報） */
+export interface EvaluationContext {
+  /** 回答開始〜送信までの所要秒数（クライアント計測。改ざん可能なため参考値） */
+  durationSec?: number;
+}
+
 /** 品質評価器の共通インターフェース（Strategyパターン） */
 export interface IQualityEvaluator {
-  evaluate(items: EvaluationItem[]): Promise<QualityResult>;
+  evaluate(items: EvaluationItem[], context?: EvaluationContext): Promise<QualityResult>;
 }
 
 /** スコアからポイント付与倍率を求める（DESIGN_SPEC §2）。 */

@@ -17,15 +17,26 @@ export interface IResponseRepository {
   /** 指定ユーザーが回答済みのアンケートidを1クエリでまとめて取得する（一覧表示のN+1対策） */
   findRespondedSurveyIds(userId: string, surveyIds: string[]): Promise<Set<string>>;
   /**
-   * 回答保存＋報酬ポイント付与＋信頼スコア更新＋上限到達時の自動closeを
-   * RPC（submit_survey_response）で1トランザクションとして実行する。
-   * 途中で失敗した場合はすべてロールバックされる（「回答済みなのに0pt」を防ぐ）。
+   * 回答保存＋報酬ポイント付与＋作成者への品質比例課金＋信頼スコア更新＋
+   * 上限到達時の自動closeを RPC（submit_survey_response）で1トランザクションとして
+   * 実行する。途中で失敗した場合はすべてロールバックされる（「回答済みなのに0pt」を防ぐ）。
    */
   submitWithRewards(
     surveyId: string,
     answers: AnswerInput[],
     earnedPoints: number,
-    trustDelta: number
+    trustDelta: number,
+    durationSec: number | null
+  ): Promise<SubmitOutcome>;
+  /**
+   * ゲスト回答（共有リンク経由）の保存。RPC（submit_guest_response）が
+   * 回答保存＋自動closeを1トランザクションで行う。ポイント付与はなし。
+   */
+  submitGuest(
+    shareToken: string,
+    answers: AnswerInput[],
+    guestKey: string,
+    durationSec: number | null
   ): Promise<SubmitOutcome>;
   /** あるアンケートの全回答（個別回答）を取得する。結果集計用。 */
   findAnswersBySurvey(surveyId: string): Promise<Answer[]>;
@@ -66,15 +77,33 @@ export class ResponseRepository
     surveyId: string,
     answers: AnswerInput[],
     earnedPoints: number,
-    trustDelta: number
+    trustDelta: number,
+    durationSec: number | null
   ): Promise<SubmitOutcome> {
     const { data, error } = await this.supabase.rpc('submit_survey_response', {
       p_survey_id: surveyId,
       p_answers: this.buildAnswerRows(answers),
       p_earned_points: earnedPoints,
       p_trust_delta: trustDelta,
+      p_duration_sec: durationSec,
     });
     if (error) throwRpcError(error, 'submit_survey_response');
+    return data as SubmitOutcome;
+  }
+
+  async submitGuest(
+    shareToken: string,
+    answers: AnswerInput[],
+    guestKey: string,
+    durationSec: number | null
+  ): Promise<SubmitOutcome> {
+    const { data, error } = await this.supabase.rpc('submit_guest_response', {
+      p_token: shareToken,
+      p_answers: this.buildAnswerRows(answers),
+      p_guest_key: guestKey,
+      p_duration_sec: durationSec,
+    });
+    if (error) throwRpcError(error, 'submit_guest_response');
     return data as SubmitOutcome;
   }
 

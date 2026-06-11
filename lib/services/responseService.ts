@@ -13,6 +13,7 @@ import {
   scoreToMultiplier,
   type EvaluationItem,
 } from '@/lib/domain/quality';
+import { AttentionCheckQuestion } from '@/lib/domain/questions/AttentionQuestion';
 
 /** 回答送信の結果（品質評価とポイント付与のサマリ） */
 export interface SubmitResult {
@@ -24,6 +25,22 @@ export interface SubmitResult {
   earnedPoints: number;
   /** この回答で必要回答数に到達し、アンケートが自動で締め切られたか */
   surveyClosed: boolean;
+  /**
+   * 低品質と判定され「保存せずに」差し戻したか。
+   * true の場合、回答者は内容を見直して再送信できる（一方的ペナルティの救済）。
+   */
+  rejected: boolean;
+}
+
+/** submitResponse の付帯オプション */
+export interface SubmitOptions {
+  /** 回答開始〜送信までの所要秒数（クライアント計測） */
+  durationSec?: number;
+  /**
+   * 低品質判定でもそのまま保存する（0pt＋信頼スコア減点を受け入れる）。
+   * 差し戻し後の再送信でユーザーが明示した場合のみ true。
+   */
+  acceptLowQuality?: boolean;
 }
 
 /** アンケート回答・結果集計のビジネスロジック */
@@ -61,26 +78,49 @@ export class ResponseService {
   }
 
   /**
-   * 回答送信。保存後に AI品質評価を行い、スコアに応じた倍率でポイントを付与する。
-   * スコア0（アテンションチェック誤答等）の場合は信頼スコアを5減点する（DESIGN_SPEC §2）。
+   * 共有リンク（ゲスト回答）用にアンケートを取得する。
+   * トークンを知っていれば未ログインでも回答できる（ポイント付与なし）。
+   * 重複回答の判定はゲストキー（Cookie）単位でDBの一意制約が行う。
    */
-  async submitResponse(
-    userId: string,
-    surveyId: string,
-    answers: AnswerInput[]
-  ): Promise<SubmitResult> {
-    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+  async getSurveyForGuest(shareToken: string): Promise<SurveyWithQuestions> {
+    const survey = await this.surveyRepo.findByShareToken(shareToken);
     if (!survey) throw new Error('アンケートが見つかりません');
-    if (survey.status !== 'open') throw new Error('このアンケートは回答を受け付けていません');
+    if (survey.status !== 'open') throw new Error('このアンケートは現在回答を受け付けていません');
     if (this.isExpired(survey)) throw new Error('このアンケートは回答期限を過ぎています');
-    if (survey.user_id === userId) throw new Error('自分のアンケートには回答できません');
+    return survey;
+  }
 
-    const already = await this.responseRepo.hasResponded(surveyId, userId);
-    if (already) throw new Error('すでに回答済みです');
+  /**
+   * ゲスト回答の送信（共有リンク経由・未ログイン可）。
+   * ログイン回答と同じ整合性検証・必須検証を行うが、AI品質評価・ポイント付与・
+   * 信頼スコア更新は行わない。保存と自動closeはRPCが1トランザクションで行う。
+   */
+  async submitGuestResponse(
+    shareToken: string,
+    answers: AnswerInput[],
+    guestKey: string,
+    durationSec?: number
+  ): Promise<{ surveyClosed: boolean }> {
+    const survey = await this.getSurveyForGuest(shareToken);
 
-    // 防御的検証：回答が「このアンケートの設問」と「その設問の選択肢」だけを
-    // 参照していることを確認する。他設問・他アンケートの option_id を混入させた
-    // 改ざんpayloadや、同一設問への重複回答をここで弾く。
+    this.assertAnswerIntegrity(survey, answers);
+    const visibleAnswers = this.validateAndFilterVisible(survey, answers);
+
+    const outcome = await this.responseRepo.submitGuest(
+      shareToken,
+      visibleAnswers,
+      guestKey,
+      durationSec ?? null
+    );
+    return { surveyClosed: outcome.closed };
+  }
+
+  /**
+   * 回答が「このアンケートの設問」と「その設問の選択肢」だけを参照していることを
+   * 確認する。他設問・他アンケートの option_id を混入させた改ざん payload や、
+   * 同一設問への重複回答をここで弾く。
+   */
+  private assertAnswerIntegrity(survey: SurveyWithQuestions, answers: AnswerInput[]): void {
     const questionById = new Map(survey.questions.map((q) => [q.id, q]));
     const seenQuestionIds = new Set<string>();
     for (const a of answers) {
@@ -93,6 +133,54 @@ export class ResponseService {
         if (!validOptionIds.has(id)) throw new Error('回答データの形式が不正です');
       }
     }
+  }
+
+  /**
+   * 条件付き表示を解決し、表示される設問のみ必須・形式検証して
+   * 保存対象（表示設問の回答だけ）を返す。
+   */
+  private validateAndFilterVisible(
+    survey: SurveyWithQuestions,
+    answers: AnswerInput[]
+  ): AnswerInput[] {
+    const optionTextById = new Map<string, string>();
+    survey.questions.forEach((q) =>
+      q.options.forEach((o) => optionTextById.set(o.id, o.text))
+    );
+    const selectedTexts = (questionId: string): string[] => {
+      const a = answers.find((x) => x.question_id === questionId);
+      return (a?.option_ids ?? []).map((id) => optionTextById.get(id) ?? '');
+    };
+    const visibleIds = computeVisibleQuestionIds(survey.questions, selectedTexts);
+
+    for (const q of survey.questions) {
+      if (!visibleIds.has(q.id)) continue;
+      const a = answers.find((x) => x.question_id === q.id);
+      QuestionTypeRegistry.get(q.type).validateAnswer(a, q);
+    }
+    return answers.filter((a) => visibleIds.has(a.question_id));
+  }
+
+  /**
+   * 回答送信。保存後に AI品質評価を行い、スコアに応じた倍率でポイントを付与する。
+   * スコア0（アテンションチェック誤答等）の場合は信頼スコアを5減点する（DESIGN_SPEC §2）。
+   */
+  async submitResponse(
+    userId: string,
+    surveyId: string,
+    answers: AnswerInput[],
+    options: SubmitOptions = {}
+  ): Promise<SubmitResult> {
+    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.status !== 'open') throw new Error('このアンケートは回答を受け付けていません');
+    if (this.isExpired(survey)) throw new Error('このアンケートは回答期限を過ぎています');
+    if (survey.user_id === userId) throw new Error('自分のアンケートには回答できません');
+
+    const already = await this.responseRepo.hasResponded(surveyId, userId);
+    if (already) throw new Error('すでに回答済みです');
+
+    this.assertAnswerIntegrity(survey, answers);
 
     // 条件付き表示：実際に表示される設問のみを必須・形式検証＆保存対象とする。
     // 回答者が選んだ選択肢のテキストは、送信された option_ids から逆引きする。
@@ -120,10 +208,30 @@ export class ResponseService {
     const visibleQuestions = survey.questions.filter((q) => visibleIds.has(q.id));
     const items: EvaluationItem[] = visibleQuestions.map((q) => ({
       question: q,
+      // アテンションチェック設問は config の正解選択肢を評価器へ供給する
+      correctOptionText:
+        q.type === 'attention'
+          ? AttentionCheckQuestion.correctOptionText(q.config) ?? undefined
+          : undefined,
       answer: answers.find((a) => a.question_id === q.id),
     }));
-    const result = await createQualityEvaluator().evaluate(items);
+    const result = await createQualityEvaluator().evaluate(items, {
+      durationSec: options.durationSec,
+    });
     const multiplier = scoreToMultiplier(result.score);
+
+    // 低品質（倍率0）の場合は即ペナルティを与えず、保存前に差し戻して
+    // 再回答を促す（B#11 の一方的ペナルティの救済）。
+    // ユーザーが acceptLowQuality を明示した再送信のみ、そのまま保存する。
+    if (multiplier === 0 && !options.acceptLowQuality) {
+      return {
+        score: result.score,
+        feedback: result.feedback,
+        earnedPoints: 0,
+        surveyClosed: false,
+        rejected: true,
+      };
+    }
 
     // 基本コスト＝表示設問のポイントコスト合計（最低1）
     const baseCost = Math.max(
@@ -133,14 +241,17 @@ export class ResponseService {
     const earnedPoints = Math.round(baseCost * multiplier);
     const trustDelta = result.score === 0 ? -5 : 0;
 
-    // 回答保存＋ポイント付与＋信頼スコア更新＋上限到達時の自動closeを
-    // 1トランザクション（RPC）で実行する。失敗時はすべてロールバックされるため、
-    // 「回答済みなのにポイント未付与・再回答不可」という不可逆状態にならない。
+    // 回答保存＋回答者への報酬付与＋作成者からの品質比例課金＋信頼スコア更新＋
+    // 上限到達時の自動closeを1トランザクション（RPC）で実行する。
+    // 作成者の消費額は付与額と同額（低品質0pt〜高品質×1.5）で、DB側が算出・消費する。
+    // 失敗時はすべてロールバックされるため、「回答済みなのにポイント未付与・
+    // 再回答不可」という不可逆状態にならない。
     const outcome = await this.responseRepo.submitWithRewards(
       surveyId,
       visibleAnswers,
       earnedPoints,
-      trustDelta
+      trustDelta,
+      options.durationSec ?? null
     );
 
     return {
@@ -148,6 +259,7 @@ export class ResponseService {
       feedback: result.feedback,
       earnedPoints,
       surveyClosed: outcome.closed,
+      rejected: false,
     };
   }
 
@@ -211,9 +323,17 @@ export class ResponseService {
   }
 }
 
-/** CSVの1セルをエスケープする（カンマ・改行・引用符を含む場合は引用符で囲む） */
+/**
+ * CSVの1セルをエスケープする。
+ *  - CSVインジェクション対策：= + - @ タブ CR で始まるセルは Excel が数式として
+ *    実行する恐れがあるため、先頭にシングルクォートを前置して無害化する
+ *  - カンマ・改行・引用符を含む場合は引用符で囲む
+ */
 function escapeCsv(value: string): string {
-  const v = value ?? '';
+  let v = value ?? '';
+  if (/^[=+\-@\t\r]/.test(v)) {
+    v = `'${v}`;
+  }
   if (/[",\r\n]/.test(v)) {
     return `"${v.replace(/"/g, '""')}"`;
   }

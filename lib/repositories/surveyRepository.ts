@@ -23,18 +23,24 @@ export interface ISurveyRepository {
     surveyIds: string[],
     perSurvey?: number
   ): Promise<Map<string, PreviewQuestionLite[]>>;
-  insertSurvey(data: Omit<Survey, 'id' | 'created_at'>): Promise<Survey>;
+  /** share_token はDBの default（乱数）で自動生成するため受け取らない */
+  insertSurvey(data: Omit<Survey, 'id' | 'created_at' | 'share_token'>): Promise<Survey>;
+  /** 共有トークンから設問つきアンケートを取得する（RPC・未ログイン可） */
+  findByShareToken(token: string): Promise<SurveyWithQuestions | null>;
   updateSurvey(
     id: string,
     data: Partial<Omit<Survey, 'id' | 'user_id' | 'created_at'>>
   ): Promise<Survey>;
   updateStatus(id: string, status: SurveyStatus): Promise<void>;
   /**
-   * 公開（draft→open）。RPC（publish_survey）が公開コスト
-   * （required_count×設問単価合計）の消費とopen化を1トランザクションで行う。
-   * 残高不足は BusinessRuleError（INSUFFICIENT_POINTS）。戻り値＝消費ポイント。
+   * 公開（draft→open）。RPC（publish_survey）がopen化を行う。ポイントは公開時には
+   * 消費せず、回答が届くたびに品質比例で消費される（submit_survey_response）。
+   * 公開時は最低残高（1回答分＝設問単価合計）のみチェックし、不足は
+   * BusinessRuleError（INSUFFICIENT_POINTS）。
    */
   publish(id: string): Promise<number>;
+  /** 複数アンケートの設問タイプ一覧を1クエリでまとめて取得する（報酬目安の算出用） */
+  findQuestionTypesBySurveyIds(surveyIds: string[]): Promise<Map<string, QuestionType[]>>;
   delete(id: string): Promise<void>;
   /** 設問と選択肢を一括で置き換える（既存削除 → 新規挿入） */
   replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void>;
@@ -152,6 +158,24 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
     return map;
   }
 
+  async findQuestionTypesBySurveyIds(
+    surveyIds: string[]
+  ): Promise<Map<string, QuestionType[]>> {
+    const map = new Map<string, QuestionType[]>();
+    if (surveyIds.length === 0) return map;
+    const { data, error } = await this.supabase
+      .from('questions')
+      .select('survey_id, type')
+      .in('survey_id', surveyIds);
+    if (error) throwDbError(error, 'questions');
+    for (const row of (data ?? []) as { survey_id: string; type: QuestionType }[]) {
+      const list = map.get(row.survey_id) ?? [];
+      list.push(row.type);
+      map.set(row.survey_id, list);
+    }
+    return map;
+  }
+
   async countResponses(surveyId: string): Promise<number> {
     const { count, error } = await this.supabase
       .from('responses')
@@ -161,7 +185,24 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
     return count ?? 0;
   }
 
-  async insertSurvey(data: Omit<Survey, 'id' | 'created_at'>): Promise<Survey> {
+  async findByShareToken(token: string): Promise<SurveyWithQuestions | null> {
+    // 共有リンクは未ログインでも開けるため、RLSを迂回する security definer RPC で取得する
+    const { data, error } = await this.supabase.rpc('get_shared_survey', { p_token: token });
+    if (error) throwRpcError(error, 'get_shared_survey');
+    if (!data) return null;
+
+    const survey = data as unknown as SurveyWithQuestions;
+    // RPC側でも並べているが、表示順の保証はアプリ側でも行う
+    survey.questions = (survey.questions ?? [])
+      .map((q: QuestionWithOptions) => ({
+        ...q,
+        options: (q.options ?? []).sort((a, b) => a.order_index - b.order_index),
+      }))
+      .sort((a, b) => a.order_index - b.order_index);
+    return survey;
+  }
+
+  async insertSurvey(data: Omit<Survey, 'id' | 'created_at' | 'share_token'>): Promise<Survey> {
     const { data: inserted, error } = await this.supabase
       .from('surveys')
       .insert(data)

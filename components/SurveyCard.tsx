@@ -125,9 +125,20 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
 
         {/* フッター */}
         <div className="mt-auto flex items-center justify-between gap-3 px-5 py-4">
-          <span className="truncate text-xs text-slate-400">
-            {preview.length > 0 ? `${preview.length}問のプレビュー` : '設問を見る'}
-          </span>
+          {survey.avg_reward_points != null ? (
+            <span className="inline-flex shrink items-center gap-1 truncate rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">
+              全問回答で平均 {survey.avg_reward_points}pt
+              {survey.max_reward_points != null && (
+                <span className="font-normal text-brand-500">
+                  （最高 {survey.max_reward_points}pt）
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="truncate text-xs text-slate-400">
+              {preview.length > 0 ? `${preview.length}問のプレビュー` : '設問を見る'}
+            </span>
+          )}
           <Link
             href={`/surveys/${survey.id}`}
             className="btn-3d btn-3d-primary shrink-0 px-5 py-2 text-sm"

@@ -5,6 +5,13 @@
 
 export type SurveyStatus = 'draft' | 'open' | 'closed';
 
+/**
+ * アンケートの公開範囲。
+ *  - public   : 回答一覧に表示される（従来どおり）
+ *  - unlisted : 一覧に出さず、共有リンクを知っている人のみアクセスできる
+ */
+export type SurveyVisibility = 'public' | 'unlisted';
+
 /** 料金プラン。pro のみ統計解析モードを利用できる。 */
 export type Plan = 'free' | 'pro';
 
@@ -21,7 +28,8 @@ export type QuestionType =
   | 'paragraph' // 段落（長文）
   | 'date' // 日付
   | 'scale' // 均等目盛り（可変段階＋両端ラベル）
-  | 'grid'; // 選択式／チェックボックスグリッド
+  | 'grid' // 選択式／チェックボックスグリッド
+  | 'attention'; // アテンションチェック（正解選択肢つき単一選択。不正解で品質スコア0）
 
 /** スケール設問の設定 */
 export interface ScaleConfig {
@@ -38,8 +46,14 @@ export interface GridConfig {
   multiple: boolean;
 }
 
+/** アテンションチェック設問の設定。正解以外を選んだ回答は品質スコア0になる。 */
+export interface AttentionConfig {
+  /** 正解の選択肢テキスト（options のいずれかと一致すること） */
+  correctOptionText: string;
+}
+
 /** 設問タイプ別の追加設定（DBには config jsonb として保存する） */
-export type QuestionConfig = ScaleConfig | GridConfig;
+export type QuestionConfig = ScaleConfig | GridConfig | AttentionConfig;
 
 /**
  * 設問の表示条件（分岐ロジック）。
@@ -125,6 +139,24 @@ export interface PublicProfile {
   created_at: string;
 }
 
+/** アプリ内通知の種別。発火点を増やす場合はここに追加する。 */
+export type NotificationType =
+  | 'survey_goal_reached' // 自分のアンケートが目標回答数に到達
+  | 'points_low' // 残高不足で公開に失敗
+  | 'points_expiring'; // ポイント失効14日前
+
+/** アプリ内通知（notifications テーブルの行） */
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: NotificationType | string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 /** ポイントの束（有効期限つき）。 */
 export interface PointLot {
   id: string;
@@ -143,6 +175,20 @@ export interface PointsSummary {
   expiringSoon: { amount: number; expires_at: string }[];
 }
 
+/**
+ * 属性マッチング配信の条件。null/全項目未設定＝全員に配信。
+ * 回答者が該当属性を非公開（private_fields）にしている場合は「不明」となり、
+ * 条件を満たさない扱いになる（逆インセンティブ設計）。
+ */
+export interface TargetConditions {
+  ageMin?: number | null;
+  ageMax?: number | null;
+  /** 許可する性別（空＝制限なし） */
+  genders?: string[];
+  /** 許可する職業（空＝制限なし） */
+  occupations?: string[];
+}
+
 export interface Survey {
   id: string;
   user_id: string;
@@ -153,6 +199,18 @@ export interface Survey {
   status: SurveyStatus;
   /** ページ分割。空配列＝単一ページ。 */
   sections: SectionMeta[];
+  /** インフォームドコンセント文。回答画面冒頭の同意ゲートに表示する。 */
+  consent_text: string | null;
+  /** 属性マッチング配信の条件。null＝全員に配信。 */
+  target_conditions: TargetConditions | null;
+  /** 回答者に要求する最低信頼スコア。null＝制限なし。 */
+  min_trust_score: number | null;
+  /** データ保持期限。超過した回答はバッチで自動削除される。null＝無期限。 */
+  retention_until: string | null;
+  /** 共有リンク用トークン（/s/<token>）。DBが自動生成する。 */
+  share_token: string;
+  /** 公開範囲。unlisted は一覧非表示（リンクを知っている人のみ）。 */
+  visibility: SurveyVisibility;
   created_at: string;
 }
 
@@ -181,7 +239,10 @@ export interface Option {
 export interface ResponseSession {
   id: string;
   survey_id: string;
-  user_id: string;
+  /** 回答者のユーザーID。ゲスト回答（共有リンク経由）は null。 */
+  user_id: string | null;
+  /** 回答所要時間（秒）。クライアント計測のため参考値。 */
+  duration_sec: number | null;
   created_at: string;
 }
 
@@ -220,6 +281,10 @@ export interface SurveyWithStats extends Survey {
   author_avatar_url?: string | null;
   /** カードに表示する設問プレビュー（先頭の数問のみ） */
   preview?: PreviewQuestionLite[];
+  /** 全問回答した場合の平均獲得ポイント（平均品質×1.0時の目安） */
+  avg_reward_points?: number;
+  /** 全問回答した場合の最高獲得ポイント（高品質×1.5時） */
+  max_reward_points?: number;
 }
 
 /** 編集フォームから受け取る設問の入力データ */
@@ -247,6 +312,16 @@ export interface SurveyInput {
   status: SurveyStatus;
   sections: SectionMeta[];
   questions: QuestionInput[];
+  /** インフォームドコンセント文（公開するアンケートでは必須） */
+  consent_text: string | null;
+  /** 属性マッチング配信の条件。null＝全員に配信。 */
+  target_conditions: TargetConditions | null;
+  /** 回答者に要求する最低信頼スコア。null＝制限なし。 */
+  min_trust_score: number | null;
+  /** データ保持期間（月数）。null＝無期限。retention_until はサーバーで算出する。 */
+  retention_months: number | null;
+  /** 公開範囲。unlisted は一覧非表示（リンクを知っている人のみ）。 */
+  visibility: SurveyVisibility;
 }
 
 /** グリッド設問の1行分の回答（行ラベル→選択した列） */

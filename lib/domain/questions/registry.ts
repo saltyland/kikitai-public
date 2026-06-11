@@ -12,6 +12,7 @@ import {
   DateQuestion,
 } from './TextQuestion';
 import { GridQuestion } from './GridQuestion';
+import { AttentionCheckQuestion } from './AttentionQuestion';
 
 /**
  * 設問タイプのレジストリ。
@@ -31,6 +32,7 @@ const DEFINITIONS: QuestionTypeDefinition[] = [
   new DateQuestion(),
   new ScaleQuestion(),
   new GridQuestion(),
+  new AttentionCheckQuestion(),
 ];
 
 const BY_TYPE: Record<QuestionType, QuestionTypeDefinition> = DEFINITIONS.reduce(

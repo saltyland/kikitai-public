@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
-import type { SurveyStatus } from '@/lib/types/database';
 import { parseJsonWith, surveyInputSchema } from '@/lib/domain/schemas';
+import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
+import { NotificationService } from '@/lib/services/notificationService';
+import { BusinessRuleError } from '@/lib/repositories/dbError';
 
 export interface SurveyActionState {
   error: string | null;
@@ -50,7 +52,14 @@ export async function saveSurveyAction(
 
 export async function changeStatusAction(formData: FormData): Promise<void> {
   const surveyId = String(formData.get('surveyId') ?? '');
-  const status = String(formData.get('status') ?? '') as SurveyStatus;
+  const statusRaw = String(formData.get('status') ?? '');
+
+  // 無検証の as キャストはしない。型ガードで正当な値だけ通す。
+  if (!SurveyStateMachine.isStatus(statusRaw)) {
+    redirect(`/?statusError=${encodeURIComponent('不正なステータス値です')}`);
+    return;
+  }
+  const status = statusRaw;
 
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
@@ -62,6 +71,10 @@ export async function changeStatusAction(formData: FormData): Promise<void> {
   try {
     await new SurveyService(supabase).changeStatus(user.id, surveyId, status);
   } catch (e) {
+    // 残高不足での公開失敗は通知センターにも残す（要件1-7）
+    if (e instanceof BusinessRuleError && e.code === 'INSUFFICIENT_POINTS') {
+      await new NotificationService(supabase).notifyPointsLow(user.id, e.details[0]);
+    }
     // 残高不足（INSUFFICIENT_POINTS）等はホームにメッセージ付きで戻す
     const message = e instanceof Error ? e.message : '操作に失敗しました';
     revalidatePath('/');

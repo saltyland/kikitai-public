@@ -11,6 +11,8 @@ import type {
   QuestionInput,
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
+import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
+import { isUnrestricted, matches } from '@/lib/domain/matching';
 
 /** アンケート作成・編集・一覧・状態管理のビジネスロジック */
 export class SurveyService {
@@ -29,6 +31,12 @@ export class SurveyService {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
     if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
+    // 学術倫理要件：回答者へのインフォームドコンセント文は必須
+    if (!input.consent_text?.trim()) {
+      throw new Error(
+        'インフォームドコンセント文（研究目的・データの取り扱い・任意性の説明）は必須です'
+      );
+    }
     input.questions.forEach((q: QuestionInput, i: number) => {
       if (!q.text.trim()) throw new Error(`設問${i + 1}の文章を入力してください`);
       QuestionTypeRegistry.get(q.type).validateDefinition(q, i + 1);
@@ -63,8 +71,9 @@ export class SurveyService {
 
   /**
    * 設問1セット分のポイントコスト（設問タイプ別単価の合計）を試算する。
-   * 公開時には これ × required_count（切り上げ）が消費される。
-   * 実際の消費はDB側の publish_survey RPC が同じコスト表で計算する
+   * 1回答が平均品質（×1.0）だった場合に作成者が消費するポイントの目安。
+   * 実際の消費は回答ごとにDB側の submit_survey_response RPC が品質倍率
+   * （低品質0〜高品質×1.5）で計算する
    * （supabase/migrations の question_point_cost と同期を保つこと）。
    */
   estimateCost(input: SurveyInput): number {
@@ -74,7 +83,7 @@ export class SurveyService {
     );
   }
 
-  /** 公開時に消費されるポイント総額（required_count × 設問コスト、切り上げ） */
+  /** 全回答が平均品質だった場合の総消費ポイントの目安（required_count × 設問コスト、切り上げ） */
   estimatePublishCost(input: SurveyInput): number {
     return Math.ceil(input.required_count * this.estimateCost(input));
   }
@@ -87,17 +96,38 @@ export class SurveyService {
     }));
   }
 
-  /** 新規作成 */
-  async createSurvey(userId: string, input: SurveyInput): Promise<Survey> {
-    this.validate(input);
-    const survey = await this.surveyRepo.insertSurvey({
-      user_id: userId,
+  /** 入力から保存用の共通カラム値を組み立てる（作成・更新で共用） */
+  private toSurveyColumns(input: SurveyInput) {
+    return {
       title: input.title.trim(),
       description: input.description?.trim() || null,
       required_count: input.required_count,
       deadline: input.deadline || null,
       status: input.status,
       sections: this.sanitizeSections(input),
+      consent_text: input.consent_text?.trim() || null,
+      // 実質未設定（全項目空）の条件は null に正規化して「全員に配信」とする
+      target_conditions: isUnrestricted(input.target_conditions) ? null : input.target_conditions,
+      min_trust_score: input.min_trust_score,
+      retention_until: this.computeRetentionUntil(input.retention_months),
+      visibility: input.visibility,
+    };
+  }
+
+  /** データ保持期間（月数）から保持期限日時を算出する。null＝無期限。 */
+  private computeRetentionUntil(months: number | null): string | null {
+    if (!months || months < 1) return null;
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString();
+  }
+
+  /** 新規作成 */
+  async createSurvey(userId: string, input: SurveyInput): Promise<Survey> {
+    this.validate(input);
+    const survey = await this.surveyRepo.insertSurvey({
+      user_id: userId,
+      ...this.toSurveyColumns(input),
     });
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
     return survey;
@@ -114,14 +144,7 @@ export class SurveyService {
       throw new Error('公開中・終了したアンケートは編集できません（下書きのみ編集可）');
     }
 
-    const survey = await this.surveyRepo.updateSurvey(surveyId, {
-      title: input.title.trim(),
-      description: input.description?.trim() || null,
-      required_count: input.required_count,
-      deadline: input.deadline || null,
-      status: input.status,
-      sections: this.sanitizeSections(input),
-    });
+    const survey = await this.surveyRepo.updateSurvey(surveyId, this.toSurveyColumns(input));
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
     return survey;
   }
@@ -141,9 +164,19 @@ export class SurveyService {
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('操作権限がありません');
 
-    // 公開（draft→open）は「回答者集めの対価」としてポイントを消費する。
-    // コスト計算・FIFO消費・open化はDB側のRPCが1トランザクションで行い、
-    // 残高不足時は BusinessRuleError（INSUFFICIENT_POINTS）で公開を拒否する。
+    // ステートマシン：draft→open / open→closed 以外の遷移
+    // （closed→open の再オープン等）を拒否する。DBトリガーでも二重に防護。
+    SurveyStateMachine.assertTransition(existing.status, status);
+
+    // 公開時は同意文の存在を最終チェック（旧データの公開漏れ防止）
+    if (status === 'open' && !existing.consent_text?.trim()) {
+      throw new Error('公開にはインフォームドコンセント文の設定が必要です（編集画面で設定してください）');
+    }
+
+    // 公開（draft→open）。ポイントは公開時には消費せず、回答が届くたびに
+    // 品質に応じて消費される（submit_survey_response）。公開時は最低残高
+    // （1回答分）のチェックのみDB側RPCが行い、不足時は BusinessRuleError
+    // （INSUFFICIENT_POINTS）で公開を拒否する。
     if (existing.status === 'draft' && status === 'open') {
       await this.surveyRepo.publish(surveyId);
       return;
@@ -170,28 +203,53 @@ export class SurveyService {
 
   /**
    * 回答可能なアンケート一覧：
-   * 公開中 / 自分が作成したもの除外 / 回答済み除外
+   * 公開中 / 自分が作成したもの除外 / 回答済み除外 /
+   * 属性マッチング（target_conditions）と最低信頼スコア（min_trust_score）を満たすもののみ。
    * 回答済み判定・回答数・作成者プロフィールはそれぞれ1クエリで一括取得する（N+1対策）。
    */
   async listAnswerableSurveys(userId: string): Promise<SurveyWithStats[]> {
+    const me = await this.profileRepo.findById(userId);
     const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
-      (s) => s.user_id !== userId
+      (s) =>
+        s.user_id !== userId &&
+        // 限定公開（unlisted）は一覧に出さない（共有リンクを知っている人のみ）
+        s.visibility !== 'unlisted' &&
+        // 属性マッチング配信：条件を満たす回答者にのみ表示する
+        (!me || matches(me, s.target_conditions)) &&
+        // 高信頼フィルター：信頼スコアが基準未満の回答者には配信しない
+        (s.min_trust_score == null || (me?.trust_score ?? 0) >= s.min_trust_score)
     );
     const ids = surveys.map((s) => s.id);
-    const [respondedIds, counts, authors, previews] = await Promise.all([
+    const [respondedIds, counts, authors, previews, questionTypes] = await Promise.all([
       this.responseRepo.findRespondedSurveyIds(userId, ids),
       this.surveyRepo.countResponsesBySurveyIds(ids),
       this.profileRepo.findByIds(surveys.map((s) => s.user_id)),
       this.surveyRepo.findPreviewQuestionsBySurveyIds(ids),
+      this.surveyRepo.findQuestionTypesBySurveyIds(ids),
     ]);
     return surveys
       .filter((s) => !respondedIds.has(s.id))
-      .map((s) => ({
-        ...s,
-        response_count: counts.get(s.id) ?? 0,
-        author_nickname: authors.get(s.user_id)?.nickname ?? '不明',
-        author_avatar_url: authors.get(s.user_id)?.avatar_url ?? null,
-        preview: previews.get(s.id) ?? [],
-      }));
+      .map((s) => {
+        // 全問回答で得られるポイントの目安。平均品質（×1.0）＝設問コスト合計（最低1）、
+        // 最高は×1.5。DB側（submit_survey_response）と同じ計算式。
+        const base = Math.max(
+          1,
+          Math.ceil(
+            (questionTypes.get(s.id) ?? []).reduce(
+              (sum, t) => sum + QuestionTypeRegistry.get(t).pointCost,
+              0
+            )
+          )
+        );
+        return {
+          ...s,
+          response_count: counts.get(s.id) ?? 0,
+          author_nickname: authors.get(s.user_id)?.nickname ?? '不明',
+          author_avatar_url: authors.get(s.user_id)?.avatar_url ?? null,
+          preview: previews.get(s.id) ?? [],
+          avg_reward_points: base,
+          max_reward_points: Math.ceil(base * 1.5),
+        };
+      });
   }
 }

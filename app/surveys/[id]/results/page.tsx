@@ -39,14 +39,22 @@ export default async function ResultsPage({
         <h1 className="mt-2 mb-1 text-xl font-bold text-zinc-800">{survey.title}</h1>
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="text-sm text-zinc-500">回答数：{responseCount}件</p>
-          {responseCount > 0 && (
-            <a
-              href={`/surveys/${survey.id}/results/export`}
-              className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/surveys/${survey.id}/results/summary`}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
             >
-              CSVダウンロード
-            </a>
-          )}
+              倫理審査用サマリー
+            </Link>
+            {responseCount > 0 && (
+              <a
+                href={`/surveys/${survey.id}/results/export`}
+                className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+              >
+                CSVダウンロード
+              </a>
+            )}
+          </div>
         </div>
 
         {/* 表示モード切替タブ：集計グラフ / 統計解析（Pro） */}

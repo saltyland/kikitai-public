@@ -34,6 +34,7 @@ const LABEL: Record<QuestionType, string> = {
   date: '日付',
   scale: '段階評価',
   grid: 'グリッド',
+  attention: '注意チェック',
 };
 
 export default function BranchFlow({

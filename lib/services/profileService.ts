@@ -16,6 +16,52 @@ const PRIVACY_BONUS_PER_FIELD = 10;
 const PRIVACY_BONUS_CAP = 50;
 const EXPIRY_WARNING_DAYS = 14;
 
+/**
+ * アバター画像の検証（Stored XSS 防止）。
+ *  - 許可MIME：jpeg / png / webp / gif のラスタ画像のみ（SVGは明示的に拒否）
+ *  - 宣言MIMEと先頭バイトのシグネチャ（マジックバイト）の一致を必須にする
+ *    （Content-Type偽装で HTML/SVG/スクリプトを画像として配信させない）
+ */
+class AvatarImageValidator {
+  /** MIME → {拡張子, シグネチャ判定} のホワイトリスト */
+  private static readonly ALLOWED: Record<
+    string,
+    { ext: string; matches: (b: Uint8Array) => boolean }
+  > = {
+    'image/jpeg': {
+      ext: 'jpg',
+      matches: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+    },
+    'image/png': {
+      ext: 'png',
+      matches: (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47,
+    },
+    'image/gif': {
+      ext: 'gif',
+      matches: (b) => b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38,
+    },
+    'image/webp': {
+      ext: 'webp',
+      // RIFF....WEBP
+      matches: (b) =>
+        b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+        b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50,
+    },
+  };
+
+  static async validate(file: File): Promise<{ mime: string; ext: string }> {
+    const spec = AvatarImageValidator.ALLOWED[file.type];
+    if (!spec) {
+      throw new Error('画像は JPEG / PNG / WebP / GIF のみアップロードできます');
+    }
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (head.length < 12 || !spec.matches(head)) {
+      throw new Error('画像ファイルの内容が不正です（形式が一致しません）');
+    }
+    return { mime: file.type, ext: spec.ext };
+  }
+}
+
 /** プロフィール編集・退会・ポイント／信頼スコアのビジネスロジック */
 export class ProfileService {
   private readonly profileRepo: ProfileRepository;
@@ -64,17 +110,17 @@ export class ProfileService {
    */
   async uploadAvatar(userId: string, file: File): Promise<string> {
     const MAX_BYTES = 5 * 1024 * 1024; // 5MB
-    if (!file.type.startsWith('image/')) {
-      throw new Error('画像ファイルを選択してください');
-    }
     if (file.size > MAX_BYTES) {
       throw new Error('画像サイズは5MBまでです');
     }
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const path = `${userId}/avatar.${ext || 'png'}`;
+    // SVGはスクリプトを内包できる（公開バケット配信でStored XSSになる）ため拒否し、
+    // ラスタ画像のホワイトリスト＋マジックバイト検証で実体を確認する。
+    const validated = await AvatarImageValidator.validate(file);
+    // 拡張子はユーザーのファイル名を信用せず、検証済みMIMEから決定する
+    const path = `${userId}/avatar.${validated.ext}`;
     const { error } = await this.supabase.storage
       .from('avatars')
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, file, { upsert: true, contentType: validated.mime });
     if (error) {
       console.error('[uploadAvatar]', error.message);
       throw new Error('画像のアップロードに失敗しました');
@@ -103,6 +149,11 @@ export class ProfileService {
    */
   private async syncPointsBalance(userId: string): Promise<void> {
     await this.pointLotRepo.syncBalance(userId);
+  }
+
+  /** 保有ポイントの内訳（有効な束の一覧。プロフィールの履歴表示用） */
+  async getPointLots(userId: string) {
+    return this.pointLotRepo.listActive(userId);
   }
 
   /** 表示用のポイントサマリ（有効残高＋まもなく失効する束）を返す。 */

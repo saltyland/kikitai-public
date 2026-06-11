@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
 import { changeStatusAction } from '@/app/actions/survey';
 import DeleteSurveyButton from '@/components/DeleteSurveyButton';
+import ShareLinkButton from '@/components/ShareLinkButton';
 import LandingPage from '@/components/LandingPage';
 
 export default async function HomePage({
@@ -103,6 +104,11 @@ export default async function HomePage({
                     <div className="flex items-center gap-2">
                       <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
                       <SurveyStatusBadge status={s.status} />
+                      {s.visibility === 'unlisted' && (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                          限定公開
+                        </span>
+                      )}
                     </div>
                     <p className="mt-1 text-sm text-slate-500">
                       回答数 {s.response_count} / {s.required_count}
@@ -144,6 +150,7 @@ export default async function HomePage({
                       </button>
                     </form>
                   )}
+                  {s.status === 'open' && <ShareLinkButton token={s.share_token} />}
                   <DeleteSurveyButton surveyId={s.id} title={s.title} />
                 </div>
               </li>
