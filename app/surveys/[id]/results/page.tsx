@@ -6,6 +6,7 @@ import { ResponseService } from '@/lib/services/responseService';
 import Header from '@/components/Header';
 import ResultChart from '@/components/ResultChart';
 import ResultStats from '@/components/ResultStats';
+import ResultPerUser from '@/components/ResultPerUser';
 import RefreshButton from '@/components/ui/RefreshButton';
 
 export default async function ResultsPage({
@@ -31,6 +32,18 @@ export default async function ResultsPage({
   const { survey, responseCount, aggregates } = data;
   const isPro = profile.plan === 'pro';
   const statsMode = mode === 'stats';
+  const usersMode = mode === 'users';
+
+  // ユーザー別モードのみ追加データを取得
+  let userResponses = null;
+  if (usersMode && isPro) {
+    try {
+      const perUser = await new ResponseService(supabase).getPerUserResults(profile.id, id);
+      userResponses = perUser.userResponses;
+    } catch {
+      // フォールバック：集計グラフに戻す
+    }
+  }
 
   return (
     <>
@@ -82,13 +95,28 @@ export default async function ResultsPage({
             統計解析
             <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
           </Link>
+          <Link
+            href={`/surveys/${survey.id}/results?mode=users`}
+            className={`-mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-sm font-medium ${
+              usersMode
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            ユーザー別
+            <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
+          </Link>
         </div>
 
-        {statsMode && !isPro ? (
+        {(statsMode || usersMode) && !isPro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
-            <p className="mt-2 font-bold text-amber-800">統計解析モードはProプラン限定です</p>
+            <p className="mt-2 font-bold text-amber-800">
+              {statsMode ? '統計解析モード' : 'ユーザー別回答モード'}はProプラン限定です
+            </p>
             <p className="mt-1 text-sm text-amber-700">
-              平均・中央値・標準偏差などの基礎統計量を確認できます。
+              {statsMode
+                ? '平均・中央値・標準偏差などの基礎統計量を確認できます。'
+                : '回答者ごとの個別回答内容を確認できます。'}
             </p>
             <Link
               href="/profile"
@@ -97,6 +125,8 @@ export default async function ResultsPage({
               Proプランに加入する
             </Link>
           </div>
+        ) : usersMode && userResponses !== null ? (
+          <ResultPerUser survey={survey} userResponses={userResponses} />
         ) : responseCount === 0 ? (
           <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
             <p className="text-4xl" aria-hidden="true">📊</p>

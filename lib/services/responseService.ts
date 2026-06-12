@@ -5,7 +5,9 @@ import type {
   AnswerInput,
   QuestionAggregate,
   SurveyWithQuestions,
+  UserResponse,
 } from '@/lib/types/database';
+import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
@@ -47,10 +49,12 @@ export interface SubmitOptions {
 export class ResponseService {
   private readonly surveyRepo: SurveyRepository;
   private readonly responseRepo: ResponseRepository;
+  private readonly profileRepo: ProfileRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
+    this.profileRepo = new ProfileRepository(supabase);
   }
 
   /** 期限切れ（deadlineが過去）かどうか */
@@ -337,6 +341,46 @@ export class ResponseService {
     );
 
     return { survey, responseCount, aggregates };
+  }
+
+  /**
+   * ユーザー別回答一覧を取得する（作成者のみ・Proプラン用）。
+   * ゲスト回答（user_id null）は「ゲスト」として含める。
+   */
+  async getPerUserResults(
+    userId: string,
+    surveyId: string
+  ): Promise<{ survey: SurveyWithQuestions; userResponses: UserResponse[] }> {
+    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.user_id !== userId) throw new Error('結果を閲覧する権限がありません');
+
+    const sessions = await this.responseRepo.findSessionsBySurvey(surveyId);
+    const answers = await this.responseRepo.findAnswersBySurvey(surveyId);
+
+    const userIds = [...new Set(sessions.map((s) => s.user_id).filter((id): id is string => id !== null))];
+    const profiles = await this.profileRepo.findByIds(userIds);
+
+    const byResponse = new Map<string, typeof answers>();
+    for (const a of answers) {
+      const list = byResponse.get(a.response_id) ?? [];
+      list.push(a);
+      byResponse.set(a.response_id, list);
+    }
+
+    const userResponses: UserResponse[] = sessions.map((s) => {
+      const profile = s.user_id ? profiles.get(s.user_id) : undefined;
+      return {
+        responseId: s.id,
+        userId: s.user_id,
+        nickname: profile?.nickname ?? 'ゲスト',
+        avatarUrl: profile?.avatar_url ?? null,
+        createdAt: s.created_at,
+        answers: byResponse.get(s.id) ?? [],
+      };
+    });
+
+    return { survey, userResponses };
   }
 
   /**

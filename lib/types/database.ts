@@ -360,6 +360,17 @@ export interface AnswerInput {
   grid_answers?: GridRowAnswer[];
 }
 
+/** ユーザー別回答（Proプラン結果ページ用） */
+export interface UserResponse {
+  responseId: string;
+  userId: string | null;
+  nickname: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  /** response_id に紐づく全回答行 */
+  answers: Answer[];
+}
+
 /** 結果集計：設問ごとの集計 */
 export interface QuestionAggregate {
   question: QuestionWithOptions;
