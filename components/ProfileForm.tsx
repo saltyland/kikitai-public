@@ -9,7 +9,7 @@ import {
 } from '@/app/actions/profile';
 import Avatar from '@/components/Avatar';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import type { PointsSummary, PrivateField, Profile } from '@/lib/types/database';
+import type { PointsSummary, PrivateField, Profile, SnsLinks } from '@/lib/types/database';
 
 const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
@@ -51,6 +51,59 @@ function AttrRow({
   );
 }
 
+/** SNSリンクの入力セクション */
+function SnsLinksSection({ sns }: { sns: SnsLinks }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-slate-700">SNS・リンク（公開プロフィールに表示されます）</p>
+      <div>
+        <label className={labelClass} htmlFor="sns_twitter">Twitter / X の URL</label>
+        <input
+          id="sns_twitter"
+          name="sns_twitter"
+          type="url"
+          placeholder="https://x.com/yourname"
+          defaultValue={sns.twitter ?? ''}
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label className={labelClass} htmlFor="sns_instagram">Instagram の URL</label>
+        <input
+          id="sns_instagram"
+          name="sns_instagram"
+          type="url"
+          placeholder="https://instagram.com/yourname"
+          defaultValue={sns.instagram ?? ''}
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label className={labelClass} htmlFor="sns_github">GitHub の URL</label>
+        <input
+          id="sns_github"
+          name="sns_github"
+          type="url"
+          placeholder="https://github.com/yourname"
+          defaultValue={sns.github ?? ''}
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label className={labelClass} htmlFor="sns_website">ウェブサイト・研究室ページ</label>
+        <input
+          id="sns_website"
+          name="sns_website"
+          type="url"
+          placeholder="https://example.com"
+          defaultValue={sns.website ?? ''}
+          className={inputClass}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileForm({
   profile,
   points,
@@ -86,6 +139,8 @@ export default function ProfileForm({
         <AttrRow name="occupation" label="職業" defaultValue={profile.occupation ?? ''} defaultPrivate={isPrivate('occupation')} />
         <AttrRow name="grade" label="学年" defaultValue={profile.grade ?? ''} defaultPrivate={isPrivate('grade')} />
         <AttrRow name="major" label="専攻" defaultValue={profile.major ?? ''} defaultPrivate={isPrivate('major')} />
+
+        <SnsLinksSection sns={profile.sns_links ?? {}} />
 
         {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
         {state.success && <p role="status" className="text-sm text-green-600">保存しました。</p>}

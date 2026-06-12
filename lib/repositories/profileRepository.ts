@@ -17,12 +17,15 @@ export type ProfileEditable = Partial<
     | 'major'
     | 'private_fields'
     | 'avatar_url'
+    | 'sns_links'
   >
 >;
 
 /** プロフィールのDBアクセスを抽象化するインターフェース */
 export interface IProfileRepository {
   findById(id: string): Promise<Profile | null>;
+  /** 単一ユーザーの公開プロフィールを取得する（他人閲覧用）。 */
+  findPublicById(id: string): Promise<PublicProfile | null>;
   /**
    * 複数idの「公開プロフィール」を1クエリでまとめて取得する（一覧表示のN+1対策）。
    * RLSにより profiles 本体は本人しか読めないため、他人の情報は
@@ -40,6 +43,16 @@ export class ProfileRepository extends BaseRepository<Profile> implements IProfi
   }
 
   // findById は BaseRepository から継承
+
+  async findPublicById(id: string): Promise<PublicProfile | null> {
+    const { data, error } = await this.supabase
+      .from('public_profiles')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throwDbError(error, 'public_profiles');
+    return (data as PublicProfile | null);
+  }
 
   async findByIds(ids: string[]): Promise<Map<string, PublicProfile>> {
     if (ids.length === 0) return new Map();

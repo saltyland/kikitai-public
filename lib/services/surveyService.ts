@@ -31,12 +31,8 @@ export class SurveyService {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
     if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
-    // 学術倫理要件：回答者へのインフォームドコンセント文は必須
-    if (!input.consent_text?.trim()) {
-      throw new Error(
-        'インフォームドコンセント文（研究目的・データの取り扱い・任意性の説明）は必須です'
-      );
-    }
+    // インフォームドコンセント文は「あり/なし」を作成者が選べる（任意）。
+    // 「なし」の場合は consent_text が null となり、回答画面では汎用の説明文を表示する。
     input.questions.forEach((q: QuestionInput, i: number) => {
       if (!q.text.trim()) throw new Error(`設問${i + 1}の文章を入力してください`);
       QuestionTypeRegistry.get(q.type).validateDefinition(q, i + 1);
@@ -168,10 +164,7 @@ export class SurveyService {
     // （closed→open の再オープン等）を拒否する。DBトリガーでも二重に防護。
     SurveyStateMachine.assertTransition(existing.status, status);
 
-    // 公開時は同意文の存在を最終チェック（旧データの公開漏れ防止）
-    if (status === 'open' && !existing.consent_text?.trim()) {
-      throw new Error('公開にはインフォームドコンセント文の設定が必要です（編集画面で設定してください）');
-    }
+    // インフォームドコンセント文は任意（あり/なし選択可）のため、公開時の必須チェックは行わない。
 
     // 公開（draft→open）。ポイントは公開時には消費せず、回答が届くたびに
     // 品質に応じて消費される（submit_survey_response）。公開時は最低残高
@@ -189,6 +182,18 @@ export class SurveyService {
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('削除権限がありません');
     await this.surveyRepo.delete(surveyId);
+  }
+
+  /** 他人のプロフィールページ：公開中アンケートのみ（回答数つき）。 */
+  async listSurveysByUser(targetUserId: string): Promise<SurveyWithStats[]> {
+    const surveys = (await this.surveyRepo.findByOwner(targetUserId)).filter(
+      (s) => s.status === 'open' && s.visibility === 'public'
+    );
+    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
+    return surveys.map((s) => ({
+      ...s,
+      response_count: counts.get(s.id) ?? 0,
+    }));
   }
 
   /** ホーム画面：自分が作成したアンケート一覧（回答数つき）。回答数は1クエリで一括取得する。 */
@@ -244,6 +249,7 @@ export class SurveyService {
         return {
           ...s,
           response_count: counts.get(s.id) ?? 0,
+          author_id: s.user_id,
           author_nickname: authors.get(s.user_id)?.nickname ?? '不明',
           author_avatar_url: authors.get(s.user_id)?.avatar_url ?? null,
           preview: previews.get(s.id) ?? [],
