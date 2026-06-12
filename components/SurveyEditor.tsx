@@ -484,9 +484,15 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           <button
             type="button"
             onClick={() => setShowRight(true)}
-            className="hidden lg:inline-flex items-center gap-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+            aria-pressed={showRight}
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer"
           >
-            ◀ プレビューを表示
+            {/* 目を開く（プレビューを表示）アイコン */}
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            プレビューを表示
           </button>
         )}
       </div>

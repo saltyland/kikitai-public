@@ -205,20 +205,25 @@ function PreviewInput({
     const max = q.config.max ?? 5;
     const nums = Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
     return (
-      <div className="flex flex-wrap items-center gap-3">
-        {q.config.minLabel && <span className="text-xs text-zinc-400">{q.config.minLabel}</span>}
-        {nums.map((n) => (
-          <label key={n} className="flex flex-col items-center text-xs text-zinc-700 cursor-pointer">
-            <span className="mb-1">{n}</span>
-            <input
-              type="radio"
-              name={q.key}
-              checked={answer.options[0] === String(n)}
-              onChange={() => patch({ options: [String(n)] })}
-            />
-          </label>
-        ))}
-        {q.config.maxLabel && <span className="text-xs text-zinc-400">{q.config.maxLabel}</span>}
+      <div className="space-y-2">
+        {q.config.minLabel && <p className="text-xs text-zinc-400">{q.config.minLabel}</p>}
+        <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+          {nums.map((n) => (
+            <label
+              key={n}
+              className="flex h-11 min-w-11 cursor-pointer flex-col items-center justify-center gap-1 text-xs text-zinc-700"
+            >
+              <span>{n}</span>
+              <input
+                type="radio"
+                name={q.key}
+                checked={answer.options[0] === String(n)}
+                onChange={() => patch({ options: [String(n)] })}
+              />
+            </label>
+          ))}
+        </div>
+        {q.config.maxLabel && <p className="text-right text-xs text-zinc-400">{q.config.maxLabel}</p>}
       </div>
     );
   }
