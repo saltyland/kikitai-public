@@ -49,7 +49,7 @@ export default async function ResultsPage({
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-        <Link href="/" className="text-sm text-indigo-600 hover:underline">← ホームに戻る</Link>
+        <Link href="/" className="text-sm text-brand-600 hover:underline">← ホームに戻る</Link>
         <h1 className="mt-2 mb-1 text-xl font-bold text-zinc-800">{survey.title}</h1>
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="text-sm text-zinc-600">回答数：{responseCount}件</p>
@@ -65,7 +65,7 @@ export default async function ResultsPage({
               <>
                 <a
                   href={`/surveys/${survey.id}/results/export`}
-                  className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                  className="rounded-md border border-brand-300 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
                 >
                   CSV
                 </a>
@@ -86,7 +86,7 @@ export default async function ResultsPage({
             href={`/surveys/${survey.id}/results`}
             className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
               !statsMode
-                ? 'border-indigo-500 text-indigo-600'
+                ? 'border-brand-500 text-brand-600'
                 : 'border-transparent text-zinc-500 hover:text-zinc-700'
             }`}
           >
@@ -152,7 +152,7 @@ export default async function ResultsPage({
               return (
                 <section key={agg.question.id} className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm">
                   <p className="mb-3 font-medium text-zinc-800">
-                    <span className="text-indigo-600 mr-1">Q{i + 1}.</span>
+                    <span className="text-brand-600 mr-1">Q{i + 1}.</span>
                     {agg.question.text}
                   </p>
 

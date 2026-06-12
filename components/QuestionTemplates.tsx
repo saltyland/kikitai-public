@@ -82,7 +82,7 @@ export default function QuestionTemplates({
         <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
           {/* マイテンプレート */}
           <section>
-            <h3 className="mb-2 text-sm font-bold text-indigo-700">マイテンプレート</h3>
+            <h3 className="mb-2 text-sm font-bold text-brand-700">マイテンプレート</h3>
             {loaded && myTemplates.length === 0 && (
               <p className="text-xs text-zinc-400">まだありません。下のフォームから現在の設問群を保存できます。</p>
             )}
@@ -112,13 +112,13 @@ export default function QuestionTemplates({
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
                 placeholder="現在の設問群をマイテンプレートとして保存（名前）"
-                className="flex-1 rounded-md border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-500 focus:outline-none"
+                className="flex-1 rounded-md border border-zinc-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={saveCurrent}
                 disabled={!saveName.trim() || currentQuestions.filter((q) => q.text.trim()).length === 0}
-                className="shrink-0 rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-40 cursor-pointer"
+                className="shrink-0 rounded-md bg-brand-600 px-3 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-40 cursor-pointer"
               >
                 保存
               </button>
@@ -135,11 +135,11 @@ export default function QuestionTemplates({
                     key={t.id}
                     type="button"
                     onClick={() => insert(t)}
-                    className="rounded-lg border border-zinc-200 p-2.5 text-left hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer"
+                    className="rounded-lg border border-zinc-200 p-2.5 text-left hover:border-brand-400 hover:bg-brand-50/40 cursor-pointer"
                   >
                     <span className="flex items-center justify-between">
                       <span className="text-sm font-medium text-zinc-800">{t.name}</span>
-                      <span className="text-[10px] text-indigo-500">＋挿入</span>
+                      <span className="text-[10px] text-brand-500">＋挿入</span>
                     </span>
                     <span className="mt-0.5 block text-[11px] text-zinc-400">{t.hint}</span>
                   </button>

@@ -36,7 +36,7 @@ export default async function AnswerSurveyPage({
             <p className="mt-1 text-xs text-zinc-600">
               アンケートが削除・終了されたか、すでに回答済みの可能性があります。
             </p>
-            <Link href="/surveys" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:underline">
+            <Link href="/surveys" className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline">
               回答できるアンケート一覧に戻る →
             </Link>
           </div>

@@ -18,7 +18,7 @@ type QState = { optionIds: string[]; text: string; grid: Record<string, string[]
 type AnswerState = Record<string, QState>;
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
+  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /** 1設問分の状態を AnswerInput に変換する */
 function buildAnswer(q: QuestionWithOptions, s: QState): AnswerInput {
@@ -430,7 +430,7 @@ export default function AnswerForm({
     return (
       <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-zinc-800">回答にあたってのご説明</h2>
-        <p className="rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+        <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">
           全{survey.questions.length}問・所要時間 約{estMin}分
         </p>
         {/* 作成者が設定したインフォームドコンセント文（8位）。同意した人だけ設問へ進める */}
@@ -455,7 +455,7 @@ export default function AnswerForm({
             startedAt.current = Date.now();
             setConsented(true);
           }}
-          className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+          className="rounded-md bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
         >
           同意して回答を始める
         </button>
@@ -492,7 +492,7 @@ export default function AnswerForm({
                 </button>
                 <button
                   onClick={reviseAnswers}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+                  className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
                 >
                   回答を見直す
                 </button>
@@ -512,7 +512,7 @@ export default function AnswerForm({
               const empty = !summary;
               return (
                 <li key={q.id} className="flex items-start gap-3 py-3">
-                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -557,7 +557,7 @@ export default function AnswerForm({
           <button
             onClick={() => submit()}
             disabled={pending}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+            className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 cursor-pointer"
           >
             {pending ? '送信中…' : queued ? '再送信する' : '回答を送信する'}
           </button>
@@ -610,7 +610,7 @@ export default function AnswerForm({
           className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden"
         >
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all"
+            className="h-full rounded-full bg-brand-500 transition-all"
             style={{ width: `${total > 0 ? ((safeStep + 1) / total) * 100 : 0}%` }}
           />
         </div>
@@ -624,9 +624,9 @@ export default function AnswerForm({
                 onClick={() => i <= safeStep && setStep(i)}
                 className={`h-2 w-2 rounded-full transition ${
                   i < safeStep
-                    ? 'bg-indigo-500 cursor-pointer'
+                    ? 'bg-brand-500 cursor-pointer'
                     : i === safeStep
-                    ? 'bg-indigo-600 ring-2 ring-indigo-200'
+                    ? 'bg-brand-600 ring-2 ring-brand-200'
                     : 'bg-zinc-200 cursor-default'
                 }`}
               />
@@ -645,10 +645,10 @@ export default function AnswerForm({
       )}
 
       {isSectionStart && section && (section.title || section.description) && (
-        <section className="rounded-xl bg-indigo-50 border border-indigo-200 p-4">
-          {section.title && <h2 className="font-bold text-indigo-800">{section.title}</h2>}
+        <section className="rounded-xl bg-brand-50 border border-brand-200 p-4">
+          {section.title && <h2 className="font-bold text-brand-800">{section.title}</h2>}
           {section.description && (
-            <p className="mt-1 text-sm text-indigo-700 whitespace-pre-wrap">{section.description}</p>
+            <p className="mt-1 text-sm text-brand-700 whitespace-pre-wrap">{section.description}</p>
           )}
         </section>
       )}
@@ -667,7 +667,7 @@ export default function AnswerForm({
             </div>
           )}
           <p className="font-medium text-zinc-800">
-            <span className="text-indigo-600 mr-1">Q{safeStep + 1}.</span>
+            <span className="text-brand-600 mr-1">Q{safeStep + 1}.</span>
             {current.text}
             {current.required && (
               <>
@@ -706,20 +706,20 @@ export default function AnswerForm({
           {safeStep < total - 1 ? (
             <button
               onClick={goNext}
-              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+              className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
             >
               次へ
             </button>
           ) : (
             <button
               onClick={goReview}
-              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+              className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
             >
               回答内容を確認する
             </button>
           )}
           <span
-            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
+            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-brand-500' : 'text-zinc-400'}`}
           >
             {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
           </span>
@@ -798,8 +798,8 @@ function QuestionInputView({
               key={o.id}
               className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm cursor-pointer transition ${
                 checked
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
-                  : 'border-zinc-200 bg-white text-zinc-700 hover:border-indigo-300 hover:bg-indigo-50/40'
+                  ? 'border-brand-500 bg-brand-50 text-brand-900'
+                  : 'border-zinc-200 bg-white text-zinc-700 hover:border-brand-300 hover:bg-brand-50/40'
               }`}
             >
               <input
@@ -851,12 +851,12 @@ function QuestionInputView({
                 key={o.id}
                 className="flex flex-col items-center gap-1 cursor-pointer select-none"
               >
-                <span className={`text-sm font-medium transition ${checked ? 'text-indigo-600' : 'text-zinc-600'}`}>
+                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-zinc-600'}`}>
                   {o.text}
                 </span>
                 <span
                   className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
-                    checked ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-400 bg-white hover:border-indigo-400'
+                    checked ? 'border-brand-500 bg-brand-500' : 'border-zinc-400 bg-white hover:border-brand-400'
                   }`}
                 >
                   {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}

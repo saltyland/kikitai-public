@@ -26,7 +26,7 @@ export interface PreviewData {
 type LocalAnswer = { options: string[]; text: string; grid: Record<string, string[]> };
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
+  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /**
  * 回答者ビューのリアルタイムプレビュー。
@@ -79,14 +79,14 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
           <button
             type="button"
             onClick={() => setDevice('pc')}
-            className={`px-3 py-1 ${device === 'pc' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+            className={`px-3 py-1 ${device === 'pc' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
           >
             PC
           </button>
           <button
             type="button"
             onClick={() => setDevice('mobile')}
-            className={`px-3 py-1 ${device === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+            className={`px-3 py-1 ${device === 'mobile' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
           >
             スマホ
           </button>
@@ -113,16 +113,16 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
             return (
               <div key={q.key} className="space-y-3">
                 {showSectionHead && section && (section.title || section.description) && (
-                  <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3">
-                    {section.title && <p className="font-bold text-indigo-800">{section.title}</p>}
+                  <div className="rounded-lg bg-brand-50 border border-brand-200 p-3">
+                    {section.title && <p className="font-bold text-brand-800">{section.title}</p>}
                     {section.description && (
-                      <p className="mt-0.5 text-xs text-indigo-700 whitespace-pre-wrap">{section.description}</p>
+                      <p className="mt-0.5 text-xs text-brand-700 whitespace-pre-wrap">{section.description}</p>
                     )}
                   </div>
                 )}
                 <div className="rounded-lg border border-zinc-200 p-4 space-y-2">
                   <p className="text-sm font-medium text-zinc-800">
-                    <span className="text-indigo-600 mr-1">Q{i + 1}.</span>
+                    <span className="text-brand-600 mr-1">Q{i + 1}.</span>
                     {q.text || '（設問文未入力）'}
                     {q.required && <span className="text-red-500 ml-1">*</span>}
                   </p>
@@ -217,12 +217,12 @@ function PreviewInput({
             const checked = answer.options[0] === String(n);
             return (
               <label key={n} className="flex flex-col items-center gap-1 cursor-pointer select-none">
-                <span className={`text-sm font-medium transition ${checked ? 'text-indigo-600' : 'text-zinc-600'}`}>
+                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-zinc-600'}`}>
                   {n}
                 </span>
                 <span
                   className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
-                    checked ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-400 bg-white hover:border-indigo-400'
+                    checked ? 'border-brand-500 bg-brand-500' : 'border-zinc-400 bg-white hover:border-brand-400'
                   }`}
                 >
                   {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}

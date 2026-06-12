@@ -4,7 +4,7 @@
  */
 
 const PALETTE = [
-  '#6366f1', // indigo-500
+  '#26a69a', // brand-500
   '#22c55e', // green-500
   '#f59e0b', // amber-500
   '#ec4899', // pink-500
