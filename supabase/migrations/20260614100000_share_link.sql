@@ -32,6 +32,9 @@ create unique index if not exists responses_survey_guest_key
 -- トークンを知らなければ取得できない（推測困難な128bit乱数）。
 -- 見つからなければ null を返す。
 -- -------------------------------------------------------------
+-- 戻り型をjson→jsonbに変更したため、再実行時に既存関数の型が一致しないことがある
+drop function if exists public.get_shared_survey(text);
+
 create or replace function public.get_shared_survey(p_token text)
 returns jsonb
 language sql
