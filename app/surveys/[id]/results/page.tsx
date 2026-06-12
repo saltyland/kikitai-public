@@ -62,12 +62,20 @@ export default async function ResultsPage({
               倫理審査用サマリー
             </Link>
             {responseCount > 0 && (
-              <a
-                href={`/surveys/${survey.id}/results/export`}
-                className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
-              >
-                CSVダウンロード
-              </a>
+              <>
+                <a
+                  href={`/surveys/${survey.id}/results/export`}
+                  className="rounded-md border border-indigo-300 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                >
+                  CSV
+                </a>
+                <a
+                  href={`/surveys/${survey.id}/results/export?format=xlsx`}
+                  className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                >
+                  Excel
+                </a>
+              </>
             )}
           </div>
         </div>
