@@ -1,6 +1,5 @@
 import type { Answer, UserResponse, SurveyWithQuestions } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
-import Avatar from '@/components/Avatar';
 
 function renderAnswer(answers: Answer[], survey: SurveyWithQuestions, questionId: string): string {
   const q = survey.questions.find((x) => x.id === questionId);
@@ -39,27 +38,18 @@ export default function ResultPerUser({
           key={ur.responseId}
           className="rounded-xl bg-white border border-zinc-200 shadow-sm overflow-hidden"
         >
-          {/* ヘッダー：アバター・ニックネーム・回答日時 */}
+          {/* ヘッダー：匿名番号・回答日時 */}
           <div className="flex items-center gap-3 bg-zinc-50 border-b border-zinc-200 px-5 py-3">
-            <Avatar name={ur.nickname} src={ur.avatarUrl} className="h-8 w-8 text-sm" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-500">
+              {idx + 1}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-800 truncate">
-                {ur.userId ? (
-                  <a
-                    href={`/users/${ur.userId}`}
-                    className="hover:underline text-indigo-600"
-                  >
-                    {ur.nickname}
-                  </a>
-                ) : (
-                  <span className="text-zinc-500">{ur.nickname}</span>
-                )}
-              </p>
+              <p className="text-sm font-medium text-zinc-700">回答者 #{idx + 1}</p>
               <p className="text-xs text-zinc-400">
                 {new Date(ur.createdAt).toLocaleString('ja-JP')}
               </p>
             </div>
-            <span className="text-xs text-zinc-400">#{idx + 1}</span>
+            <span className="text-xs text-zinc-400">{ur.userId ? 'ログイン済み' : 'ゲスト'}</span>
           </div>
 
           {/* 回答一覧 */}
