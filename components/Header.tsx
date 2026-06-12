@@ -3,6 +3,7 @@ import { logoutAction } from '@/app/actions/auth';
 import Avatar from '@/components/Avatar';
 import Logo from '@/components/Logo';
 import NotificationBell from '@/components/NotificationBell';
+import HeaderMobileMenu from '@/components/HeaderMobileMenu';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { NotificationService } from '@/lib/services/notificationService';
@@ -11,6 +12,7 @@ import type { AppNotification } from '@/lib/types/database';
 /**
  * ログイン後の共通ヘッダー。
  * 通知（ベル）はページ側の props を増やさないよう、Header 自身がサーバーで取得する。
+ * sm以上は横並びナビ、sm未満はハンバーガー（HeaderMobileMenu／クライアント）に畳む。
  */
 export default async function Header({
   nickname,
@@ -40,7 +42,9 @@ export default async function Header({
         <Link href="/" aria-label="キキタイ ホーム">
           <Logo />
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
+
+        {/* sm以上：横並びナビ */}
+        <nav className="hidden sm:flex items-center gap-4 text-sm">
           <Link href="/" className="text-slate-600 hover:text-brand-600">
             ホーム
           </Link>
@@ -56,7 +60,7 @@ export default async function Header({
             className="flex items-center gap-2 font-medium text-slate-600 hover:text-brand-600"
           >
             <Avatar name={nickname} src={avatarUrl} className="h-7 w-7 text-xs" />
-            <span className="hidden sm:inline">{nickname}</span>
+            <span className="max-w-[12rem] truncate">{nickname}</span>
           </Link>
           <form action={logoutAction}>
             <button
@@ -67,6 +71,12 @@ export default async function Header({
             </button>
           </form>
         </nav>
+
+        {/* sm未満：ベル＋ハンバーガー */}
+        <div className="flex items-center gap-1 sm:hidden">
+          <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+          <HeaderMobileMenu nickname={nickname} />
+        </div>
       </div>
     </header>
   );

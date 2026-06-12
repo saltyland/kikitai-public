@@ -8,6 +8,7 @@ import {
   type ProfileActionState,
 } from '@/app/actions/profile';
 import Avatar from '@/components/Avatar';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import type { PointsSummary, PrivateField, Profile } from '@/lib/types/database';
 
 const inputClass =
@@ -86,8 +87,8 @@ export default function ProfileForm({
         <AttrRow name="grade" label="学年" defaultValue={profile.grade ?? ''} defaultPrivate={isPrivate('grade')} />
         <AttrRow name="major" label="専攻" defaultValue={profile.major ?? ''} defaultPrivate={isPrivate('major')} />
 
-        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-        {state.success && <p className="text-sm text-green-600">保存しました。</p>}
+        {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
+        {state.success && <p role="status" className="text-sm text-green-600">保存しました。</p>}
         <button
           type="submit"
           disabled={pending}
@@ -175,9 +176,10 @@ function PointsCard({ profile, points }: { profile: Profile; points: PointsSumma
   );
 }
 
-/** 退会セクション。サーバー側のエラー（設定不足など）を表示できるようにする。 */
+/** 退会セクション。確認モーダルを挟み、サーバー側のエラー（設定不足など）も表示する。 */
 function DeleteAccountSection() {
   const [state, action, pending] = useActionState(deleteAccountAction, initial);
+  const [open, setOpen] = useState(false);
 
   return (
     <form action={action} className="card-3d border border-red-200 p-6">
@@ -185,14 +187,31 @@ function DeleteAccountSection() {
       <p className="mt-1 mb-3 text-sm text-slate-500">
         退会するとプロフィールと作成したアンケートが削除されます。この操作は取り消せません。
       </p>
-      {state.error && <p className="mb-3 text-sm text-red-600">{state.error}</p>}
+      {state.error && <p role="alert" className="mb-3 text-sm text-red-600">{state.error}</p>}
       <button
-        type="submit"
+        type="button"
+        onClick={() => setOpen(true)}
         disabled={pending}
         className="btn-3d btn-3d-ghost border border-red-300 px-5 py-2 text-sm text-red-500 hover:text-red-600"
       >
         {pending ? '退会処理中…' : '退会する'}
       </button>
+      {/* 確認後、フォームのsubmit（サーバーアクション）を実行する */}
+      <ConfirmDialog
+        open={open}
+        danger
+        title="本当に退会しますか？"
+        message="プロフィールと、あなたが作成したアンケート・集まった回答がすべて削除されます。この操作は取り消せません。"
+        confirmLabel="退会する"
+        pending={pending}
+        onConfirm={() => {
+          setOpen(false);
+          // useActionState の form を submit してサーバーアクションを起動する
+          (document.getElementById('delete-account-submit') as HTMLButtonElement | null)?.click();
+        }}
+        onCancel={() => setOpen(false)}
+      />
+      <button id="delete-account-submit" type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
     </form>
   );
 }
@@ -228,8 +247,8 @@ function PlanManager({ plan }: { plan: Profile['plan'] }) {
       </div>
 
       <input type="hidden" name="plan" value={isPro ? 'free' : 'pro'} />
-      {state.error && <p className="mt-3 text-sm text-red-600">{state.error}</p>}
-      {state.success && <p className="mt-3 text-sm text-green-600">プランを変更しました。</p>}
+      {state.error && <p role="alert" className="mt-3 text-sm text-red-600">{state.error}</p>}
+      {state.success && <p role="status" className="mt-3 text-sm text-green-700">プランを変更しました。</p>}
       <button
         type="submit"
         disabled={pending}

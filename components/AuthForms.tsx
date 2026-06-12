@@ -3,31 +3,31 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction, registerAction, type ActionState } from '@/app/actions/auth';
+import { inputClass } from '@/lib/ui/styles';
+import { FormLabel } from '@/components/ui/FormLabel';
+import { Spinner } from '@/components/ui/Spinner';
 
 const initial: ActionState = { error: null };
-
-const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
-const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
   return (
     <form action={action} className="space-y-4">
       <div>
-        <label className={labelClass} htmlFor="email">メールアドレス</label>
+        <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
         <input id="email" name="email" type="email" required className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="password">パスワード</label>
+        <FormLabel htmlFor="password" required>パスワード</FormLabel>
         <input id="password" name="password" type="password" required className={inputClass} />
       </div>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="btn-3d btn-3d-primary w-full py-2 text-sm"
+        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
       >
+        {pending && <Spinner className="h-4 w-4" />}
         {pending ? 'ログイン中…' : 'ログイン'}
       </button>
       <p className="text-center text-sm text-slate-600">
@@ -43,39 +43,44 @@ export function RegisterForm() {
   return (
     <form action={action} className="space-y-4">
       <div>
-        <label className={labelClass} htmlFor="email">メールアドレス <span className="text-red-500">*</span></label>
+        <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
         <input id="email" name="email" type="email" required className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="password">パスワード（8文字以上・英小文字と数字を含む）<span className="text-red-500">*</span></label>
+        <FormLabel htmlFor="password" required>パスワード（8文字以上・英小文字と数字を含む）</FormLabel>
         <input
           id="password"
           name="password"
           type="password"
           required
           minLength={8}
+          aria-describedby="password-hint"
           title="8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください"
           className={inputClass}
         />
+        <p id="password-hint" className="mt-1 text-xs text-zinc-600">
+          8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください。
+        </p>
       </div>
       <div>
-        <label className={labelClass} htmlFor="nickname">ニックネーム <span className="text-red-500">*</span></label>
+        <FormLabel htmlFor="nickname" required>ニックネーム</FormLabel>
         <input id="nickname" name="nickname" type="text" required className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="affiliation">所属機関（任意）</label>
+        <FormLabel htmlFor="affiliation" optional>所属機関</FormLabel>
         <input id="affiliation" name="affiliation" type="text" className={inputClass} />
       </div>
       <div>
-        <label className={labelClass} htmlFor="field">研究分野（任意）</label>
+        <FormLabel htmlFor="field" optional>研究分野</FormLabel>
         <input id="field" name="field" type="text" className={inputClass} />
       </div>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="btn-3d btn-3d-primary w-full py-2 text-sm"
+        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
       >
+        {pending && <Spinner className="h-4 w-4" />}
         {pending ? '登録中…' : '登録する'}
       </button>
       <p className="text-center text-sm text-slate-600">

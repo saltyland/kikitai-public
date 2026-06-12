@@ -25,6 +25,17 @@
   --animate-fade-in-up: fade-in-up 0.3s ease-out;
 }
 
+@theme inline {
+  /* セマンティックカラーの下地（今後ハードコードのindigo/red等を段階的に置き換える土台）。
+     primary=indigo-600 / danger=red-600 / success=green-600 / accent(Pro)=amber-500。
+     ※ フォント/背景は上の @theme（brand/rounded）を正とし、geist 系の上書きは行わない。 */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-accent: #f59e0b;
+}
+
 @keyframes fade-in-up {
   0% { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -159,6 +170,14 @@ body {
   animation: kikitai-save-blink 0.8s ease-in-out;
 }
 
+/* ローディング用スピナーの回転 */
+@keyframes kikitai-spin {
+  to { transform: rotate(360deg); }
+}
+.kikitai-spin {
+  animation: kikitai-spin 0.7s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kikitai-check-pop,
   .kikitai-slide-in,
@@ -167,5 +186,9 @@ body {
   .btn-3d {
     animation: none;
     transition: none;
+  }
+  /* スピナーは「処理中」を伝える機能的アニメのため、低速にして残す */
+  .kikitai-spin {
+    animation-duration: 1.4s;
   }
 }

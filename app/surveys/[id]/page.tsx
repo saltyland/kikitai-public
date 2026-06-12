@@ -29,10 +29,15 @@ export default async function AnswerSurveyPage({
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
         {errorMsg || !survey ? (
-          <div className="rounded-lg bg-white border border-zinc-200 p-8 text-center">
-            <p className="text-sm text-zinc-600">{errorMsg ?? 'アンケートが見つかりません'}</p>
-            <Link href="/surveys" className="mt-4 inline-block text-sm text-indigo-600 hover:underline">
-              一覧に戻る
+          <div role="alert" className="rounded-lg bg-red-50 border border-red-200 p-8 text-center">
+            <p className="text-sm font-medium text-red-700">
+              {errorMsg ?? 'アンケートが見つかりません'}
+            </p>
+            <p className="mt-1 text-xs text-zinc-600">
+              アンケートが削除・終了されたか、すでに回答済みの可能性があります。
+            </p>
+            <Link href="/surveys" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:underline">
+              回答できるアンケート一覧に戻る →
             </Link>
           </div>
         ) : (

@@ -81,7 +81,7 @@ export default function ResultChart({
                 <li key={i} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PALETTE[i % PALETTE.length] }} />
                   <span className="text-zinc-600">{it.label}</span>
-                  <span className="text-zinc-400">{pct}%</span>
+                  <span className="text-zinc-600">{pct}%</span>
                 </li>
               );
             })}
