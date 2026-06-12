@@ -30,12 +30,35 @@ export default async function SharedSurveyPage({
     return (
       <SharedShell token={token} user={user}>
         <div className="card-3d p-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50">
+            <svg className="h-9 w-9 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
           <p className="text-lg font-bold text-slate-800">回答を送信しました</p>
           <p className="mt-2 text-sm text-slate-600">
             ご協力ありがとうございました。
             {closed && '（このアンケートは必要回答数に到達したため締め切られました）'}
           </p>
-          <Link href="/" className="mt-6 inline-block text-sm text-brand-600 hover:underline">
+          {!user && (
+            /* ゲスト回答者を会員登録／ログインへ誘導する（#21） */
+            <div className="mt-6 rounded-xl bg-brand-50/60 p-5 text-left">
+              <p className="text-sm font-bold text-slate-800">キキタイをはじめてみませんか？</p>
+              <p className="mt-1 text-xs text-slate-600">
+                会員登録すると、こんなアンケートを自分でも作って回答を集められます。回答するとポイントも貯まります。
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Link href="/register" className="btn-3d btn-3d-primary px-6 py-3 text-sm">
+                  無料ではじめる
+                </Link>
+                <Link href="/login" className="btn-3d btn-3d-secondary px-6 py-3 text-sm">
+                  ログイン
+                </Link>
+              </div>
+            </div>
+          )}
+
+          <Link href="/" className="mt-4 inline-block text-sm text-brand-600 hover:underline">
             {user ? 'ホームへ戻る' : 'キキタイについて見る'}
           </Link>
         </div>

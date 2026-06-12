@@ -834,6 +834,7 @@ function QuestionInputView({
 
   if (q.type === 'scale') {
     const cfg = (q.config ?? {}) as ScaleConfig;
+    // 両端ラベルは選択肢の行に混ぜず上に独立配置し、各段階は数字+○のシンプル表示にする。
     return (
       <div className="flex flex-col gap-1">
         {(cfg.minLabel || cfg.maxLabel) && (
