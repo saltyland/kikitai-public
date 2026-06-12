@@ -1,18 +1,34 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f6f7f9;
-  --foreground: #1a1a1a;
+/*
+ * キキタイ デザインシステム（design_export 準拠 / Tailwind v4 適合版）
+ * AI感のない、丸みがあり柔らかく奥行きのある立体UI。
+ * メインカラーは brand（青）系、フォントは M PLUS Rounded 1c。
+ */
+
+@theme {
+  /* ブランドカラー（ロゴと同じティール系） */
+  --color-brand-50: #effbf9;
+  --color-brand-100: #d6f5f0;
+  --color-brand-200: #b0eae2;
+  --color-brand-300: #7cd8cd;
+  --color-brand-400: #45beb2;
+  --color-brand-500: #26a69a;
+  --color-brand-600: #19857d;
+  --color-brand-700: #176b66;
+  --color-brand-800: #165653;
+  --color-brand-900: #164845;
+  --color-brand-950: #062a2a;
+
+  --font-sans: var(--font-rounded), "Hiragino Maru Gothic ProN", sans-serif;
+
+  --animate-fade-in-up: fade-in-up 0.3s ease-out;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
   /* セマンティックカラーの下地（今後ハードコードのindigo/red等を段階的に置き換える土台）。
-     primary=indigo-600 / danger=red-600 / success=green-600 / accent(Pro)=amber-500 */
+     primary=indigo-600 / danger=red-600 / success=green-600 / accent(Pro)=amber-500。
+     ※ フォント/背景は上の @theme（brand/rounded）を正とし、geist 系の上書きは行わない。 */
   --color-primary: #4f46e5;
   --color-primary-hover: #4338ca;
   --color-danger: #dc2626;
@@ -20,10 +36,110 @@
   --color-accent: #f59e0b;
 }
 
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: linear-gradient(to bottom, var(--color-brand-50) 0%, #ffffff 55%, color-mix(in srgb, var(--color-brand-100) 60%, transparent) 100%);
+  background-attachment: fixed;
+  color: var(--color-slate-800);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-brand-200);
+}
+
+@layer utilities {
+  /* 立体カード：多層シャドウ＋うっすら白ハイライト。
+     Card コンポーネントを使わない素の要素でも成立するよう、背景・角丸・境界も内包する。 */
+  .card-3d {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 1rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(13, 84, 79, 0.06),
+      0 8px 24px -8px rgba(13, 84, 79, 0.18),
+      0 2px 0 rgba(13, 84, 79, 0.04);
+  }
+  .card-3d-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-3d-hover:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 2px 4px rgba(13, 84, 79, 0.06),
+      0 18px 36px -10px rgba(13, 84, 79, 0.25),
+      0 3px 0 rgba(13, 84, 79, 0.05);
+  }
+
+  /* 押し込みボタン：下に「厚み」を持たせ、押すと沈む */
+  .btn-3d {
+    --btn-edge: var(--color-brand-800);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 4px 0 var(--btn-edge),
+      0 8px 16px -4px rgba(13, 84, 79, 0.35);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn-3d:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 1px 0 var(--btn-edge),
+      0 3px 8px -2px rgba(13, 84, 79, 0.3);
+  }
+  .btn-3d:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* クラスだけで完結させたい箇所向けのバリアント（Button未使用の素のbutton/Link用） */
+  .btn-3d-primary {
+    --btn-edge: var(--color-brand-800);
+    background: linear-gradient(to bottom, var(--color-brand-500), var(--color-brand-600));
+    color: #fff;
+  }
+  .btn-3d-secondary {
+    --btn-edge: var(--color-brand-200);
+    background: linear-gradient(to bottom, #ffffff, var(--color-brand-50));
+    color: var(--color-brand-700);
+  }
+  .btn-3d-danger {
+    --btn-edge: var(--color-red-800);
+    background: linear-gradient(to bottom, var(--color-red-500), var(--color-red-600));
+    color: #fff;
+  }
+  .btn-3d-ghost {
+    box-shadow: none;
+    background: transparent;
+    color: var(--color-slate-600);
+  }
+  .btn-3d-ghost:active:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-3d-ghost:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 }
 
 /* マイクロフィードバック：「次へ」進行時の✓ポップ */
@@ -65,8 +181,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .kikitai-check-pop,
   .kikitai-slide-in,
-  .kikitai-saving {
+  .kikitai-saving,
+  .card-3d-hover,
+  .btn-3d {
     animation: none;
+    transition: none;
   }
   /* スピナーは「処理中」を伝える機能的アニメのため、低速にして残す */
   .kikitai-spin {

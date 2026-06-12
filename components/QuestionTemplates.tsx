@@ -70,7 +70,7 @@ export default function QuestionTemplates({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
       <div className="my-8 w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-zinc-800">📚 設問テンプレートライブラリ</h2>
+          <h2 className="text-base font-bold text-zinc-800">設問テンプレートライブラリ</h2>
           <button type="button" onClick={onClose} className="rounded px-2 py-1 text-zinc-400 hover:bg-zinc-100 cursor-pointer">
             ✕
           </button>
@@ -82,7 +82,7 @@ export default function QuestionTemplates({
         <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
           {/* マイテンプレート */}
           <section>
-            <h3 className="mb-2 text-sm font-bold text-indigo-700">⭐ マイテンプレート</h3>
+            <h3 className="mb-2 text-sm font-bold text-indigo-700">マイテンプレート</h3>
             {loaded && myTemplates.length === 0 && (
               <p className="text-xs text-zinc-400">まだありません。下のフォームから現在の設問群を保存できます。</p>
             )}

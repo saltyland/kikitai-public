@@ -18,6 +18,8 @@ import type {
   SurveyWithQuestions,
   GridConfig,
   ScaleConfig,
+  AttentionConfig,
+  TargetConditions,
 } from '@/lib/types/database';
 
 /** 編集中の設問。config はタイプ別の緩い形で保持し、保存時にサービス層が正規化する。 */
@@ -28,7 +30,7 @@ interface EditorQuestion {
   description: string;
   required: boolean;
   options: string[];
-  config: Partial<ScaleConfig & GridConfig>;
+  config: Partial<ScaleConfig & GridConfig & AttentionConfig>;
   section_index: number;
   /** 表示条件。sourceKey の設問で optionText が選ばれた時だけ表示。null は常に表示。 */
   condition: { sourceKey: string; optionText: string } | null;
@@ -84,6 +86,11 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
   deadline: string;
   sections: SectionMeta[];
   questions: EditorQuestion[];
+  consentText: string;
+  targetConditions: TargetConditions;
+  minTrustScore: number | null;
+  retentionMonths: number | null;
+  unlisted: boolean;
 } {
   if (!survey) {
     return {
@@ -93,6 +100,11 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
       deadline: '',
       sections: [{ title: '', description: '' }],
       questions: [newQuestion(0)],
+      consentText: '',
+      targetConditions: {},
+      unlisted: false,
+      minTrustScore: null,
+      retentionMonths: null,
     };
   }
   const sections = survey.sections.length ? survey.sections : [{ title: '', description: '' }];
@@ -127,6 +139,12 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     deadline: survey.deadline ?? '',
     sections,
     questions,
+    consentText: survey.consent_text ?? '',
+    targetConditions: survey.target_conditions ?? {},
+    unlisted: survey.visibility === 'unlisted',
+    minTrustScore: survey.min_trust_score,
+    // retention_until（日時）から残り月数は復元できないため、編集時は再設定式にする
+    retentionMonths: null,
   };
 }
 
@@ -139,6 +157,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [deadline, setDeadline] = useState(initial.deadline);
   const [sections, setSections] = useState<SectionMeta[]>(initial.sections);
   const [questions, setQuestions] = useState<EditorQuestion[]>(initial.questions);
+  const [consentText, setConsentText] = useState(initial.consentText);
+  const [targetConditions, setTargetConditions] = useState<TargetConditions>(
+    initial.targetConditions
+  );
+  const [unlisted, setUnlisted] = useState(initial.unlisted);
+  const [minTrustScore, setMinTrustScore] = useState<number | null>(initial.minTrustScore);
+  const [retentionMonths, setRetentionMonths] = useState<number | null>(initial.retentionMonths);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -151,6 +176,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
 
   // セクション順に並べた表示順（条件の「先行設問」候補算出に使う）
   const orderedQuestions = [...questions].sort((a, b) => a.section_index - b.section_index);
+
+  // 1回答あたりのポイントコスト目安（平均品質×1.0時。DB側の計算式と同じ：最低1pt）
+  // 実際の消費は回答ごとに品質倍率（0〜×1.5）が掛かる。
+  const costPerAnswer = Math.max(
+    1,
+    Math.ceil(
+      questions.reduce((sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost, 0)
+    )
+  );
+  const maxCostPerAnswer = Math.ceil(costPerAnswer * 1.5);
 
   // 設問単位のバリデーション警告（key → 警告一覧）
   const warningsByKey = useMemo(() => {
@@ -248,7 +283,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   };
 
   // ---- config（行・列）操作 ----
-  const updateConfig = (key: string, patch: Partial<ScaleConfig & GridConfig>) => {
+  const updateConfig = (key: string, patch: Partial<ScaleConfig & GridConfig & AttentionConfig>) => {
     const q = questions.find((x) => x.key === key)!;
     updateQuestion(key, { config: { ...q.config, ...patch } });
   };
@@ -296,6 +331,10 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       setError('タイトルを入力してください');
       return;
     }
+    if (!consentText.trim()) {
+      setError('インフォームドコンセント文（研究目的・データの取り扱い・任意性の説明）を入力してください');
+      return;
+    }
     // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
     if (status === 'open') {
       const ordered0 = [...questions].sort((a, b) => a.section_index - b.section_index);
@@ -324,6 +363,11 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       deadline: deadline || null,
       status,
       sections: sectionsPayload,
+      visibility: unlisted ? 'unlisted' : 'public',
+      consent_text: consentText.trim() || null,
+      target_conditions: targetConditions,
+      min_trust_score: minTrustScore,
+      retention_months: retentionMonths,
       questions: ordered.map((q, qi) => {
         // 条件元が自分より前にある場合のみ有効
         const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
@@ -367,7 +411,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           }}
           className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
         >
-          📚 テンプレートから追加
+          テンプレートから追加
         </button>
         <button
           type="button"
@@ -414,6 +458,154 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
             />
+          </div>
+        </div>
+        <label className="flex items-start gap-2 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={unlisted}
+            onChange={(e) => setUnlisted(e.target.checked)}
+          />
+          <span>
+            限定公開（リンクを知っている人のみ）
+            <span className="block text-xs text-zinc-500">
+              回答一覧には表示されません。共有リンクからはログインなしのゲストとして回答できます
+              （ゲスト回答にはポイントが付与されません）。
+            </span>
+          </span>
+        </label>
+      </section>
+
+      {/* 研究倫理・配信設定 */}
+      <section className="rounded-xl bg-white border-t-8 border-t-emerald-500 border border-zinc-200 p-5 shadow-sm space-y-4">
+        <h2 className="text-sm font-bold text-zinc-700">研究倫理・配信設定</h2>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
+            インフォームドコンセント文 <span className="text-red-500">*</span>
+          </label>
+          <p className="mb-1 text-xs text-zinc-500">
+            研究目的・データの取り扱い（保存期間/公開範囲）・回答の任意性と中断の自由を説明してください。
+            回答者には回答開始前に表示され、同意した人だけが回答できます。
+          </p>
+          <textarea
+            className={inputClass}
+            rows={5}
+            placeholder={
+              '例：本調査は◯◯の研究を目的としています。回答は統計的に処理され、個人が特定される形で公開されることはありません。回答は任意であり、いつでも中断できます。'
+            }
+            value={consentText}
+            onChange={(e) => setConsentText(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">対象年齢（任意）</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                className={inputClass}
+                placeholder="下限"
+                value={targetConditions.ageMin ?? ''}
+                onChange={(e) =>
+                  setTargetConditions((c) => ({
+                    ...c,
+                    ageMin: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
+              <span className="text-sm text-zinc-400">〜</span>
+              <input
+                type="number"
+                min={0}
+                className={inputClass}
+                placeholder="上限"
+                value={targetConditions.ageMax ?? ''}
+                onChange={(e) =>
+                  setTargetConditions((c) => ({
+                    ...c,
+                    ageMax: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">対象の性別（任意）</label>
+            <input
+              className={inputClass}
+              placeholder="カンマ区切り（例：男性,女性）。空欄＝制限なし"
+              value={(targetConditions.genders ?? []).join(',')}
+              onChange={(e) =>
+                setTargetConditions((c) => ({
+                  ...c,
+                  genders: e.target.value
+                    .split(',')
+                    .map((v) => v.trim())
+                    .filter(Boolean),
+                }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">対象の職業（任意）</label>
+            <input
+              className={inputClass}
+              placeholder="カンマ区切り（例：大学生,大学院生）。空欄＝制限なし"
+              value={(targetConditions.occupations ?? []).join(',')}
+              onChange={(e) =>
+                setTargetConditions((c) => ({
+                  ...c,
+                  occupations: e.target.value
+                    .split(',')
+                    .map((v) => v.trim())
+                    .filter(Boolean),
+                }))
+              }
+            />
+            <p className="mt-1 text-xs text-zinc-400">
+              条件を設定すると、該当する属性を公開している回答者にのみ配信されます。
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">
+              回答者の最低信頼スコア（任意）
+            </label>
+            <select
+              className={inputClass}
+              value={minTrustScore ?? ''}
+              onChange={(e) =>
+                setMinTrustScore(e.target.value === '' ? null : Number(e.target.value))
+              }
+            >
+              <option value="">制限なし</option>
+              <option value={50}>50以上（標準）</option>
+              <option value={70}>70以上（信頼）</option>
+              <option value={90}>90以上（高信頼のみ）</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">
+              回答データの保持期間（任意）
+            </label>
+            <select
+              className={inputClass}
+              value={retentionMonths ?? ''}
+              onChange={(e) =>
+                setRetentionMonths(e.target.value === '' ? null : Number(e.target.value))
+              }
+            >
+              <option value="">無期限</option>
+              <option value={3}>3ヶ月</option>
+              <option value={6}>6ヶ月</option>
+              <option value={12}>1年</option>
+              <option value={24}>2年</option>
+            </select>
+            <p className="mt-1 text-xs text-zinc-400">
+              期間を過ぎた回答データは自動削除されます（個人情報保護法/GDPR対応）。
+            </p>
           </div>
         </div>
       </section>
@@ -644,6 +836,34 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     </div>
                   )}
 
+                  {/* アテンションチェック：正解選択肢の指定 */}
+                  {q.type === 'attention' && (
+                    <div className="space-y-2 rounded-lg border border-dashed border-red-300 bg-red-50/50 p-3 text-sm">
+                      <p className="text-xs text-red-700">
+                        回答者が設問を読んでいるか確認する設問です。指定した正解以外を選んだ回答は
+                        品質スコア0（報酬なし）になります。例：「この設問では『3番目』を選んでください」
+                      </p>
+                      <label className="flex items-center gap-2 text-zinc-700">
+                        正解の選択肢：
+                        <select
+                          className="rounded-md border border-zinc-300 px-2 py-1"
+                          value={q.config.correctOptionText ?? ''}
+                          onChange={(e) => updateConfig(q.key, { correctOptionText: e.target.value })}
+                        >
+                          <option value="">（選択してください）</option>
+                          {q.options
+                            .map((o) => o.trim())
+                            .filter(Boolean)
+                            .map((o, i) => (
+                              <option key={i} value={o}>
+                                {o}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                    </div>
+                  )}
+
                   {q.type === 'paragraph' && (
                     <p className="text-xs text-zinc-500 pl-1">回答者は長文で回答します。</p>
                   )}
@@ -701,7 +921,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 }}
                 className="rounded-xl border-2 border-dashed border-indigo-300 px-4 py-3 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
               >
-                📚 テンプレート
+                テンプレート
               </button>
             </div>
           </div>
@@ -715,6 +935,22 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       >
         ＋ セクションを追加（ページ分割）
       </button>
+
+      {/* ポイントコストの目安（回答ごとの品質比例課金） */}
+      <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4 text-sm text-slate-700">
+        <p className="font-bold text-brand-700">
+          1回答あたり 平均 {costPerAnswer}pt
+          <span className="ml-1 font-normal text-slate-500">
+            （回答品質により 0〜{maxCostPerAnswer}pt）
+          </span>
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          ポイントは公開時ではなく、回答が届くたびにその回答の品質に応じて消費されます。
+          必要回答数 {Number(requiredCount) || 0} 件がすべて平均品質なら合計 約
+          {costPerAnswer * (Number(requiredCount) || 0)}pt の消費見込みです
+          （公開には最低 {costPerAnswer}pt の残高が必要）。
+        </p>
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -756,14 +992,14 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 onClick={() => setRightTab('preview')}
                 className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                👁 プレビュー
+                プレビュー
               </button>
               <button
                 type="button"
                 onClick={() => setRightTab('flow')}
                 className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
               >
-                🔀 分岐フロー
+                分岐フロー
               </button>
             </div>
             {rightTab === 'preview' ? (
@@ -824,9 +1060,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   );
 }
 
-/** scale/grid のみ config を持つ */
+/** scale/grid/attention のみ config を持つ */
 function needsConfig(type: QuestionType) {
-  return type === 'scale' || type === 'grid';
+  return type === 'scale' || type === 'grid' || type === 'attention';
 }
 
 /**
@@ -870,7 +1106,7 @@ function ConditionEditor({
             }
           }}
         />
-        🔀 条件付きで表示する（特定の回答をした人だけに見せる）
+        条件付きで表示する（特定の回答をした人だけに見せる）
       </label>
 
       {enabled && cond && (

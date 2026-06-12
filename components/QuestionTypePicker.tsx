@@ -22,6 +22,7 @@ const FRIENDLY: Record<QuestionType, { name: string; hint: string }> = {
   date: { name: '日付を選ぶ', hint: 'カレンダー' },
   scale: { name: '段階で評価', hint: '5段階など' },
   grid: { name: '表で答える', hint: 'グリッド' },
+  attention: { name: '注意チェック', hint: '正解つき確認設問' },
 };
 
 /** 各タイプの完成イメージ図（SVGミニプレビュー）。文字なしで形だけ見せる。 */
@@ -106,6 +107,20 @@ function TypePreview({ type }: { type: QuestionType }) {
             ))
           )}
           {[10, 22, 34].map((y) => <rect key={y} x="2" y={y - 2} width="9" height="4" rx="2" fill={line} opacity="0.45" />)}
+        </svg>
+      );
+    case 'attention':
+      // 単一選択＋正解（チェックマーク）のイメージ
+      return (
+        <svg viewBox="0 0 64 40" className="h-full w-full">
+          {[8, 22, 36].map((y, i) => (
+            <g key={y}>
+              <circle cx="12" cy={y} r="5" fill="none" stroke={i === 1 ? fill : line} strokeWidth="2" />
+              {i === 1 && <circle cx="12" cy={y} r="2.4" fill={fill} />}
+              <rect x="22" y={y - 2.5} width="26" height="5" rx="2.5" fill={line} opacity="0.5" />
+            </g>
+          ))}
+          <path d="M52 19 l3.5 3.5 l6 -7" fill="none" stroke={fill} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     default:

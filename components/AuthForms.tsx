@@ -9,9 +9,6 @@ import { Spinner } from '@/components/ui/Spinner';
 
 const initial: ActionState = { error: null };
 
-const submitButtonClass =
-  'w-full rounded-md bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2';
-
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
   return (
@@ -25,13 +22,17 @@ export function LoginForm() {
         <input id="password" name="password" type="password" required className={inputClass} />
       </div>
       {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-      <button type="submit" disabled={pending} className={`${submitButtonClass} flex items-center justify-center gap-2`}>
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
+      >
         {pending && <Spinner className="h-4 w-4" />}
         {pending ? 'ログイン中…' : 'ログイン'}
       </button>
-      <p className="text-center text-sm text-zinc-600">
+      <p className="text-center text-sm text-slate-600">
         アカウントをお持ちでない方は{' '}
-        <Link href="/register" className="text-indigo-600 hover:underline">新規登録</Link>
+        <Link href="/register" className="text-brand-600 hover:underline">新規登録</Link>
       </p>
     </form>
   );
@@ -74,13 +75,17 @@ export function RegisterForm() {
         <input id="field" name="field" type="text" className={inputClass} />
       </div>
       {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-      <button type="submit" disabled={pending} className={`${submitButtonClass} flex items-center justify-center gap-2`}>
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
+      >
         {pending && <Spinner className="h-4 w-4" />}
         {pending ? '登録中…' : '登録する'}
       </button>
-      <p className="text-center text-sm text-zinc-600">
+      <p className="text-center text-sm text-slate-600">
         すでにアカウントをお持ちの方は{' '}
-        <Link href="/login" className="text-indigo-600 hover:underline">ログイン</Link>
+        <Link href="/login" className="text-brand-600 hover:underline">ログイン</Link>
       </p>
     </form>
   );

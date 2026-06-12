@@ -33,15 +33,36 @@ const gridConfigSchema = z.object({
   multiple: z.boolean(),
 });
 
+const attentionConfigSchema = z.object({
+  correctOptionText: z.string().max(500),
+});
+
 const questionInputSchema = z.object({
-  type: z.enum(['single', 'multiple', 'dropdown', 'text', 'paragraph', 'date', 'scale', 'grid']),
+  type: z.enum([
+    'single',
+    'multiple',
+    'dropdown',
+    'text',
+    'paragraph',
+    'date',
+    'scale',
+    'grid',
+    'attention',
+  ]),
   text: z.string().max(1000),
   description: z.string().max(2000).nullable(),
   required: z.boolean(),
   options: z.array(z.string().max(500)).max(100),
-  config: z.union([scaleConfigSchema, gridConfigSchema]).nullable(),
+  config: z.union([scaleConfigSchema, gridConfigSchema, attentionConfigSchema]).nullable(),
   section_index: z.number().int().min(0),
   condition: questionConditionSchema.nullable(),
+});
+
+const targetConditionsSchema = z.object({
+  ageMin: z.number().int().min(0).max(150).nullable().optional(),
+  ageMax: z.number().int().min(0).max(150).nullable().optional(),
+  genders: z.array(z.string().max(50)).max(20).optional(),
+  occupations: z.array(z.string().max(100)).max(50).optional(),
 });
 
 export const surveyInputSchema = z.object({
@@ -52,6 +73,11 @@ export const surveyInputSchema = z.object({
   status: z.enum(['draft', 'open', 'closed']),
   sections: z.array(sectionMetaSchema).max(50),
   questions: z.array(questionInputSchema).max(200),
+  consent_text: z.string().max(10000).nullable(),
+  target_conditions: targetConditionsSchema.nullable(),
+  min_trust_score: z.number().int().min(0).max(100).nullable(),
+  retention_months: z.number().int().min(1).max(120).nullable(),
+  visibility: z.enum(['public', 'unlisted']),
 }) satisfies z.ZodType<SurveyInput>;
 
 const gridRowAnswerSchema = z.object({

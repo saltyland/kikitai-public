@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/expire-points", "schedule": "0 18 * * *" },
+    { "path": "/api/cron/data-retention", "schedule": "30 18 * * *" }
+  ]
+}

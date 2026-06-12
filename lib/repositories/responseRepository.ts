@@ -1,19 +1,43 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Answer, AnswerInput, ResponseSession } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
-import { isUniqueViolation, throwDbError } from './dbError';
+import { throwDbError, throwRpcError } from './dbError';
+
+/** submit_survey_response RPC の戻り値 */
+export interface SubmitOutcome {
+  /** 送信後のこのアンケートの総回答数 */
+  response_count: number;
+  /** 必要回答数に到達して自動closeされたか */
+  closed: boolean;
+}
 
 /** 回答セッション・個別回答のDBアクセスを抽象化するインターフェース */
 export interface IResponseRepository {
   hasResponded(surveyId: string, userId: string): Promise<boolean>;
   /** 指定ユーザーが回答済みのアンケートidを1クエリでまとめて取得する（一覧表示のN+1対策） */
   findRespondedSurveyIds(userId: string, surveyIds: string[]): Promise<Set<string>>;
-  /** 回答セッションと個別回答をまとめて保存する */
-  saveResponse(
+  /**
+   * 回答保存＋報酬ポイント付与＋作成者への品質比例課金＋信頼スコア更新＋
+   * 上限到達時の自動closeを RPC（submit_survey_response）で1トランザクションとして
+   * 実行する。途中で失敗した場合はすべてロールバックされる（「回答済みなのに0pt」を防ぐ）。
+   */
+  submitWithRewards(
     surveyId: string,
-    userId: string,
-    answers: AnswerInput[]
-  ): Promise<void>;
+    answers: AnswerInput[],
+    earnedPoints: number,
+    trustDelta: number,
+    durationSec: number | null
+  ): Promise<SubmitOutcome>;
+  /**
+   * ゲスト回答（共有リンク経由）の保存。RPC（submit_guest_response）が
+   * 回答保存＋自動closeを1トランザクションで行う。ポイント付与はなし。
+   */
+  submitGuest(
+    shareToken: string,
+    answers: AnswerInput[],
+    guestKey: string,
+    durationSec: number | null
+  ): Promise<SubmitOutcome>;
   /** あるアンケートの全回答（個別回答）を取得する。結果集計用。 */
   findAnswersBySurvey(surveyId: string): Promise<Answer[]>;
   /** あるアンケートの回答セッション一覧を取得する。CSV出力用。 */
@@ -49,36 +73,52 @@ export class ResponseRepository
     return new Set(((data ?? []) as { survey_id: string }[]).map((r) => r.survey_id));
   }
 
-  async saveResponse(
+  async submitWithRewards(
     surveyId: string,
-    userId: string,
+    answers: AnswerInput[],
+    earnedPoints: number,
+    trustDelta: number,
+    durationSec: number | null
+  ): Promise<SubmitOutcome> {
+    const { data, error } = await this.supabase.rpc('submit_survey_response', {
+      p_survey_id: surveyId,
+      p_answers: this.buildAnswerRows(answers),
+      p_earned_points: earnedPoints,
+      p_trust_delta: trustDelta,
+      p_duration_sec: durationSec,
+    });
+    if (error) throwRpcError(error, 'submit_survey_response');
+    return data as SubmitOutcome;
+  }
+
+  async submitGuest(
+    shareToken: string,
+    answers: AnswerInput[],
+    guestKey: string,
+    durationSec: number | null
+  ): Promise<SubmitOutcome> {
+    const { data, error } = await this.supabase.rpc('submit_guest_response', {
+      p_token: shareToken,
+      p_answers: this.buildAnswerRows(answers),
+      p_guest_key: guestKey,
+      p_duration_sec: durationSec,
+    });
+    if (error) throwRpcError(error, 'submit_guest_response');
+    return data as SubmitOutcome;
+  }
+
+  /**
+   * 回答入力を answers テーブルの行形式に展開する。
+   *  - multiple: 選択肢ごとに1行
+   *  - grid: 行×選択列ごとに1行（row_labelに行ラベル、text_answerに列ラベル）
+   */
+  private buildAnswerRows(
     answers: AnswerInput[]
-  ): Promise<void> {
-    // 回答セッションを作成
-    const { data: session, error: sError } = await this.supabase
-      .from('responses')
-      .insert({ survey_id: surveyId, user_id: userId })
-      .select('id')
-      .single();
-    if (sError) {
-      // 事前の hasResponded チェックとすれ違いで二重送信された場合は
-      // unique(survey_id, user_id) 制約に当たるため、分かりやすいメッセージに変換する
-      if (isUniqueViolation(sError)) {
-        throw new Error('すでに回答済みです。ページを再読み込みしてください。');
-      }
-      throwDbError(sError, 'responses.insert');
-    }
-
-    const responseId = (session as { id: string }).id;
-
-    // 個別回答を組み立てる
-    //  - multiple: 選択肢ごとに1行
-    //  - grid: 行×選択列ごとに1行（row_labelに行ラベル、text_answerに列ラベル）
-    const rows: Omit<Answer, 'id'>[] = [];
+  ): Omit<Answer, 'id' | 'response_id'>[] {
+    const rows: Omit<Answer, 'id' | 'response_id'>[] = [];
     for (const a of answers) {
       if (a.text_answer !== undefined && a.text_answer !== null && a.text_answer !== '') {
         rows.push({
-          response_id: responseId,
           question_id: a.question_id,
           option_id: null,
           text_answer: a.text_answer,
@@ -87,7 +127,6 @@ export class ResponseRepository
       }
       for (const optionId of a.option_ids ?? []) {
         rows.push({
-          response_id: responseId,
           question_id: a.question_id,
           option_id: optionId,
           text_answer: null,
@@ -97,7 +136,6 @@ export class ResponseRepository
       for (const g of a.grid_answers ?? []) {
         for (const col of g.columns) {
           rows.push({
-            response_id: responseId,
             question_id: a.question_id,
             option_id: null,
             text_answer: col,
@@ -106,11 +144,7 @@ export class ResponseRepository
         }
       }
     }
-
-    if (rows.length > 0) {
-      const { error: aError } = await this.supabase.from('answers').insert(rows);
-      if (aError) throwDbError(aError, 'answers.insert');
-    }
+    return rows;
   }
 
   async findAnswersBySurvey(surveyId: string): Promise<Answer[]> {

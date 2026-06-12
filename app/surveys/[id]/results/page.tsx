@@ -34,7 +34,7 @@ export default async function ResultsPage({
 
   return (
     <>
-      <Header nickname={profile.nickname} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
         <Link href="/" className="text-sm text-indigo-600 hover:underline">← ホームに戻る</Link>
         <h1 className="mt-2 mb-1 text-xl font-bold text-zinc-800">{survey.title}</h1>
@@ -42,6 +42,12 @@ export default async function ResultsPage({
           <p className="text-sm text-zinc-600">回答数：{responseCount}件</p>
           <div className="flex items-center gap-2">
             <RefreshButton />
+            <Link
+              href={`/surveys/${survey.id}/results/summary`}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+            >
+              倫理審査用サマリー
+            </Link>
             {responseCount > 0 && (
               <a
                 href={`/surveys/${survey.id}/results/export`}
@@ -80,7 +86,6 @@ export default async function ResultsPage({
 
         {statsMode && !isPro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
-            <p className="text-2xl">🔒</p>
             <p className="mt-2 font-bold text-amber-800">統計解析モードはProプラン限定です</p>
             <p className="mt-1 text-sm text-amber-700">
               平均・中央値・標準偏差などの基礎統計量を確認できます。

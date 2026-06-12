@@ -26,7 +26,7 @@ export default async function AnswerSurveyPage({
 
   return (
     <>
-      <Header nickname={profile.nickname} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
         {errorMsg || !survey ? (
           <div role="alert" className="rounded-lg bg-red-50 border border-red-200 p-8 text-center">

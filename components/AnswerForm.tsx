@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { submitResponseAction } from '@/app/actions/response';
+import { submitGuestResponseAction } from '@/app/actions/guest';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import type {
@@ -38,6 +39,7 @@ const SECONDS_PER_TYPE: Record<string, number> = {
   single: 8,
   multiple: 12,
   dropdown: 8,
+  attention: 8,
   scale: 8,
   grid: 20,
   text: 25,
@@ -67,7 +69,14 @@ function answerSummary(q: QuestionWithOptions, s: QState): string {
   return s.optionIds.map((id) => textById.get(id) ?? '').filter(Boolean).join('・');
 }
 
-export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) {
+export default function AnswerForm({
+  survey,
+  guestToken,
+}: {
+  survey: SurveyWithQuestions;
+  /** 共有リンク（ゲスト回答）のトークン。指定時はゲスト用アクションで送信する。 */
+  guestToken?: string;
+}) {
   const [consented, setConsented] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<AnswerState>(() => {
@@ -81,6 +90,10 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   const [restored, setRestored] = useState(false);
   // 追加状態
   const [reviewing, setReviewing] = useState(false); // 送信前の確認・修正画面
+  // 低品質判定で保存前に差し戻された際のフィードバック（見直し or 受け入れ送信を選ぶ）
+  const [rejectedFeedback, setRejectedFeedback] = useState<string | null>(null);
+  // 回答開始時刻（同意した瞬間から計測。所要時間は不正回答検出の参考値として送る）
+  const startedAt = useRef<number | null>(null);
   const [showCheck, setShowCheck] = useState(false); // 「次へ」進行時の✓アニメ
   const [saving, setSaving] = useState(false); // 自動保存インジケーターの点滅
   const [online, setOnline] = useState(true); // オンライン状態
@@ -95,7 +108,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     try {
       const raw = localStorage.getItem(draftKey(survey.id));
       if (raw) {
-        const data = JSON.parse(raw) as { answers?: AnswerState; step?: number; consented?: boolean };
+        const data = JSON.parse(raw) as { answers?: AnswerState; step?: number };
         if (data.answers) {
           setAnswers((prev) => {
             const merged = { ...prev };
@@ -105,7 +118,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
             return merged;
           });
           setStep(data.step ?? 0);
-          setConsented(!!data.consented);
+          // 同意状態はドラフトから復元しない：倫理要件として毎セッション明示同意を取る
           setRestored(true);
         }
       }
@@ -120,14 +133,15 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   useEffect(() => {
     if (!loaded) return;
     try {
-      localStorage.setItem(draftKey(survey.id), JSON.stringify({ answers, step, consented }));
+      // 同意状態は意図的に保存しない（毎セッション明示同意を取るため）
+      localStorage.setItem(draftKey(survey.id), JSON.stringify({ answers, step }));
       setSaving(true);
       const t = setTimeout(() => setSaving(false), 800);
       return () => clearTimeout(t);
     } catch {
       /* 保存失敗は無視 */
     }
-  }, [answers, step, consented, loaded, survey.id]);
+  }, [answers, step, loaded, survey.id]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const clearDraft = () => {
@@ -211,9 +225,33 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     setStep(Math.max(0, safeStep - 1));
   };
 
-  // 最後の設問から確認画面へ
+  /**
+   * 全表示設問の一括バリデーション（B#15）。
+   * 分岐で後から現れた設問やドットナビでジャンプした経路の未充足を、
+   * 確認画面へ進む前・送信前に検出し、最初の未充足設問へ誘導する。
+   * 戻り値：すべて充足なら null、未充足があればその設問の index。
+   */
+  const findFirstInvalid = (): { index: number; message: string } | null => {
+    for (let i = 0; i < visibleQuestions.length; i++) {
+      const q = visibleQuestions[i];
+      try {
+        QuestionTypeRegistry.get(q.type).validateAnswer(buildAnswer(q, answers[q.id]), q);
+      } catch (e) {
+        return { index: i, message: e instanceof Error ? e.message : '入力内容を確認してください' };
+      }
+    }
+    return null;
+  };
+
+  // 最後の設問から確認画面へ（全設問を一括検証してから）
   const goReview = () => {
     if (!validateCurrent()) return;
+    const invalid = findFirstInvalid();
+    if (invalid) {
+      setStep(invalid.index);
+      setError(invalid.message);
+      return;
+    }
     popCheck();
     setReviewing(true);
   };
@@ -249,14 +287,34 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
       .catch(() => {});
   };
 
-  const sendPayload = async (payload: AnswerInput[]): Promise<boolean> => {
+  const sendPayload = async (
+    payload: AnswerInput[],
+    acceptLowQuality = false
+  ): Promise<boolean> => {
     const formData = new FormData();
-    formData.set('surveyId', survey.id);
     formData.set('payload', JSON.stringify(payload));
+    // 回答所要時間（秒）。不正回答検出（極端な短時間）の参考値。
+    if (startedAt.current) {
+      formData.set('durationSec', String(Math.round((Date.now() - startedAt.current) / 1000)));
+    }
+    if (acceptLowQuality) formData.set('acceptLowQuality', '1');
     try {
-      const result = await submitResponseAction({ error: null }, formData);
+      // ゲスト回答（共有リンク）はトークン宛のゲスト用アクションで送信する
+      let result;
+      if (guestToken) {
+        formData.set('shareToken', guestToken);
+        result = await submitGuestResponseAction({ error: null }, formData);
+      } else {
+        formData.set('surveyId', survey.id);
+        result = await submitResponseAction({ error: null }, formData);
+      }
       if (result?.error) {
         setError(result.error);
+        return false;
+      }
+      // 低品質判定の差し戻し：保存されていないので、見直すか受け入れて再送するか選ばせる
+      if (result && 'rejectedFeedback' in result && result.rejectedFeedback) {
+        setRejectedFeedback(result.rejectedFeedback);
         return false;
       }
       // 成功（通常はサーバー側 redirect で遷移）
@@ -279,15 +337,31 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
     }
   };
 
-  const submit = async () => {
+  const submit = async (acceptLowQuality = false) => {
+    // 送信直前にも全設問を一括検証する（確認画面に滞在中の状態変化への備え）
+    const invalid = findFirstInvalid();
+    if (invalid) {
+      setReviewing(false);
+      setStep(invalid.index);
+      setError(invalid.message);
+      return;
+    }
     const payload: AnswerInput[] = visibleQuestions.map((q) => buildAnswer(q, answers[q.id]));
     if (!navigator.onLine) {
       queuePayload(payload);
       return;
     }
     setPending(true);
-    await sendPayload(payload);
+    await sendPayload(payload, acceptLowQuality);
     setPending(false);
+  };
+
+  // 低品質差し戻しから「内容を見直す」：設問の先頭に戻る
+  const reviseAnswers = () => {
+    setRejectedFeedback(null);
+    setReviewing(false);
+    setStep(0);
+    setError(null);
   };
 
   // 保留中の回答を再送する
@@ -351,18 +425,28 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
         <p className="rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
           全{survey.questions.length}問・所要時間 約{estMin}分
         </p>
-        <div className="space-y-2 text-sm text-zinc-600">
-          <p>本アンケートは学術目的で実施されます。</p>
-          <p>・回答は任意であり、いつでも中断できます（入力内容は自動保存されます）。</p>
-          <p>・回答内容はアンケート作成者が研究目的で集計・利用します。</p>
-          <p>・個人を特定する情報は収集しません。</p>
-          <p>上記に同意のうえ、回答を開始してください。</p>
-        </div>
+        {/* 作成者が設定したインフォームドコンセント文（8位）。同意した人だけ設問へ進める */}
+        {survey.consent_text ? (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 whitespace-pre-wrap max-h-72 overflow-y-auto">
+            {survey.consent_text}
+          </div>
+        ) : (
+          <div className="space-y-2 text-sm text-zinc-600">
+            <p>本アンケートは学術目的で実施されます。</p>
+            <p>・回答は任意であり、いつでも中断できます（入力内容は自動保存されます）。</p>
+            <p>・回答内容はアンケート作成者が研究目的で集計・利用します。</p>
+            <p>・個人を特定する情報は収集しません。</p>
+          </div>
+        )}
+        <p className="text-sm text-zinc-600">上記に同意のうえ、回答を開始してください。</p>
         {restored && (
           <p className="text-sm text-amber-700">前回の入力内容が残っています。続きから再開できます。</p>
         )}
         <button
-          onClick={() => setConsented(true)}
+          onClick={() => {
+            startedAt.current = Date.now();
+            setConsented(true);
+          }}
           className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
         >
           同意して回答を始める
@@ -375,6 +459,39 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
   if (reviewing) {
     return (
       <div className="space-y-4">
+        {/* 低品質判定の差し戻し（保存前）：見直すか、0pt＋信頼スコア減点を受け入れて送信するか */}
+        {rejectedFeedback && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl space-y-3">
+              <h2 className="text-base font-bold text-amber-700">回答内容の見直しをおすすめします</h2>
+              <p className="text-sm text-zinc-600">
+                AIによる品質チェックで、回答の充実度に課題がある可能性が示されました。
+                まだ送信されていません。内容を見直すと報酬ポイントを受け取れます。
+              </p>
+              <p className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                {rejectedFeedback}
+              </p>
+              <div className="flex flex-wrap justify-end gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setRejectedFeedback(null);
+                    void submit(true);
+                  }}
+                  disabled={pending}
+                  className="rounded-md border border-zinc-300 px-4 py-2 text-xs text-zinc-500 hover:bg-zinc-50 disabled:opacity-50 cursor-pointer"
+                >
+                  このまま送信する（報酬なし・信頼スコア減点）
+                </button>
+                <button
+                  onClick={reviseAnswers}
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+                >
+                  回答を見直す
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <OfflineBanner online={online} queued={queued} pending={pending} onRetry={retryPending} />
         <div className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
           <h2 className="text-lg font-bold text-zinc-800">回答内容の確認</h2>
@@ -430,7 +547,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
             設問に戻る
           </button>
           <button
-            onClick={submit}
+            onClick={() => submit()}
             disabled={pending}
             className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
           >
@@ -512,7 +629,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
 
       {restored && (
         <div className="flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-          <span>📌 前回の続きから再開しました。</span>
+          <span>前回の続きから再開しました。</span>
           <button onClick={restart} className="font-medium underline hover:text-amber-900 cursor-pointer">
             最初からやり直す
           </button>
@@ -538,7 +655,7 @@ export default function AnswerForm({ survey }: { survey: SurveyWithQuestions }) 
           {/* ✓ マイクロフィードバック */}
           {showCheck && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="kikitai-check-pop text-6xl">✅</span>
+              <span className="kikitai-check-pop text-6xl text-emerald-500">✓</span>
             </div>
           )}
           <p className="font-medium text-zinc-800">
@@ -623,9 +740,9 @@ function OfflineBanner({
     >
       <span>
         {!online
-          ? '📴 オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
+          ? 'オフラインです。入力内容は保存され、オンライン復帰時に自動送信されます。'
           : queued
-          ? '⏳ 未送信の回答があります。オンラインに復帰しました。'
+          ? '未送信の回答があります。オンラインに復帰しました。'
           : ''}
       </span>
       {queued && online && (
@@ -657,7 +774,7 @@ function QuestionInputView({
   setText: (qid: string, text: string) => void;
   setGridCell: (qid: string, row: string, col: string, multiple: boolean) => void;
 }) {
-  if (q.type === 'single' || q.type === 'multiple') {
+  if (q.type === 'single' || q.type === 'multiple' || q.type === 'attention') {
     const multiple = q.type === 'multiple';
     return (
       <div className="space-y-2">
