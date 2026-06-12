@@ -5,8 +5,9 @@ import AnswerForm from '@/components/AnswerForm';
 import Logo from '@/components/Logo';
 
 /**
- * 共有リンクの公開回答ページ（/s/<token>）。
- * リンクを知っていれば未ログインでも「ゲスト」として回答できる（ポイント付与なし）。
+ * 共有リンクの回答ページ（/s/<token>）。
+ * - ログイン済み → 通常のポイント付与あり回答（share_link_no_reward=true なら0pt）
+ * - 未ログイン  → ゲスト回答（ポイント付与なし）＋ログイン/新規登録リンク表示
  */
 export default async function SharedSurveyPage({
   params,
@@ -19,10 +20,15 @@ export default async function SharedSurveyPage({
   const { done, closed } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
-  // 送信完了画面（アンケート取得失敗時も表示できるよう先に処理する）
+  // ログイン状態を確認する
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 送信完了画面
   if (done) {
     return (
-      <GuestShell>
+      <SharedShell token={token} user={user}>
         <div className="card-3d p-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50">
             <svg className="h-9 w-9 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -34,44 +40,69 @@ export default async function SharedSurveyPage({
             ご協力ありがとうございました。
             {closed && '（このアンケートは必要回答数に到達したため締め切られました）'}
           </p>
-
-          {/* ゲスト回答者を会員登録／ログインへ誘導する（#21） */}
-          <div className="mt-6 rounded-xl bg-brand-50/60 p-5 text-left">
-            <p className="text-sm font-bold text-slate-800">キキタイをはじめてみませんか？</p>
-            <p className="mt-1 text-xs text-slate-600">
-              会員登録すると、こんなアンケートを自分でも作って回答を集められます。回答するとポイントも貯まります。
-            </p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Link href="/register" className="btn-3d btn-3d-primary px-6 py-3 text-sm">
-                無料ではじめる
-              </Link>
-              <Link href="/login" className="btn-3d btn-3d-secondary px-6 py-3 text-sm">
-                ログイン
-              </Link>
+          {!user && (
+            /* ゲスト回答者を会員登録／ログインへ誘導する（#21） */
+            <div className="mt-6 rounded-xl bg-brand-50/60 p-5 text-left">
+              <p className="text-sm font-bold text-slate-800">キキタイをはじめてみませんか？</p>
+              <p className="mt-1 text-xs text-slate-600">
+                会員登録すると、こんなアンケートを自分でも作って回答を集められます。回答するとポイントも貯まります。
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Link href="/register" className="btn-3d btn-3d-primary px-6 py-3 text-sm">
+                  無料ではじめる
+                </Link>
+                <Link href="/login" className="btn-3d btn-3d-secondary px-6 py-3 text-sm">
+                  ログイン
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
 
           <Link href="/" className="mt-4 inline-block text-sm text-brand-600 hover:underline">
-            キキタイについて見る
+            {user ? 'ホームへ戻る' : 'キキタイについて見る'}
           </Link>
         </div>
-      </GuestShell>
+      </SharedShell>
     );
   }
 
+  const responseService = new ResponseService(supabase);
   let survey;
   let errorMsg: string | null = null;
-  try {
-    survey = await new ResponseService(supabase).getSurveyForGuest(token);
-  } catch (e) {
-    errorMsg = e instanceof Error ? e.message : 'アンケートを取得できませんでした';
+
+  if (user) {
+    // ログイン済み：通常の回答可能チェック（自作・回答済みなど）
+    try {
+      survey = await responseService.getSurveyForSharedLinkAuth(user.id, token);
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : 'アンケートを取得できませんでした';
+    }
+  } else {
+    // 未ログイン：ゲスト用取得（簡易チェックのみ）
+    try {
+      survey = await responseService.getSurveyForGuest(token);
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : 'アンケートを取得できませんでした';
+    }
   }
 
   return (
-    <GuestShell>
+    <SharedShell token={token} user={user}>
       {errorMsg || !survey ? (
         <div className="card-3d p-8 text-center">
           <p className="text-sm text-slate-600">{errorMsg ?? 'アンケートが見つかりません'}</p>
+          {!user && (
+            <p className="mt-4 text-xs text-slate-500">
+              ログイン済みの場合は{' '}
+              <Link
+                href={`/login?next=/s/${token}`}
+                className="text-brand-600 underline hover:text-brand-700"
+              >
+                ログイン
+              </Link>{' '}
+              してから再アクセスしてください。
+            </p>
+          )}
         </div>
       ) : (
         <>
@@ -79,21 +110,66 @@ export default async function SharedSurveyPage({
           {survey.description && (
             <p className="mb-4 text-sm text-slate-600">{survey.description}</p>
           )}
-          <p className="mb-6 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-500">
-            共有リンクからのゲスト回答です。ログインは不要ですが、ポイントは付与されません。
-            <Link href="/login" className="ml-1 font-medium text-brand-600 hover:underline">
-              ログインして回答する
-            </Link>
-          </p>
-          <AnswerForm survey={survey} guestToken={token} />
+
+          {user ? (
+            /* ログイン済み：ポイント付与の説明 */
+            survey.share_link_no_reward ? (
+              <p className="mb-6 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+                このアンケートは作成者の設定により、共有リンクからの回答はポイント付与なし（0pt）です。
+              </p>
+            ) : (
+              <p className="mb-6 rounded-lg bg-brand-50 border border-brand-200 px-3 py-2 text-xs text-brand-700">
+                ログイン済みで回答中です。回答品質に応じてポイントが付与されます。
+              </p>
+            )
+          ) : (
+            /* 未ログイン：ログイン/新規登録の案内 */
+            <div className="mb-6 rounded-lg bg-slate-50 border border-slate-200 px-3 py-3 text-xs text-slate-600 space-y-2">
+              <p>
+                ゲストとして回答できます（ポイント付与なし）。
+              </p>
+              <p>
+                ポイントを獲得するには{' '}
+                <Link
+                  href={`/login?next=/s/${token}`}
+                  className="font-medium text-brand-600 underline hover:text-brand-700"
+                >
+                  ログイン
+                </Link>
+                {' '}または{' '}
+                <Link
+                  href={`/register?next=/s/${token}`}
+                  className="font-medium text-brand-600 underline hover:text-brand-700"
+                >
+                  新規登録
+                </Link>
+                {' '}してください。
+              </p>
+            </div>
+          )}
+
+          {/* ログイン済みは shareToken、未ログインは guestToken を渡す */}
+          {user ? (
+            <AnswerForm survey={survey} shareToken={token} />
+          ) : (
+            <AnswerForm survey={survey} guestToken={token} />
+          )}
         </>
       )}
-    </GuestShell>
+    </SharedShell>
   );
 }
 
-/** ゲスト用の簡易シェル（ログイン前提のHeaderは使わない） */
-function GuestShell({ children }: { children: React.ReactNode }) {
+/** 共有リンク用シェル（ログイン状態に応じてヘッダー右側を切り替え） */
+function SharedShell({
+  children,
+  token,
+  user,
+}: {
+  children: React.ReactNode;
+  token: string;
+  user: { email?: string } | null;
+}) {
   return (
     <>
       <header className="border-b border-slate-200 bg-white/70 backdrop-blur">
@@ -101,9 +177,29 @@ function GuestShell({ children }: { children: React.ReactNode }) {
           <Link href="/" aria-label="キキタイ">
             <Logo className="h-7" />
           </Link>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            ゲスト回答
-          </span>
+          {user ? (
+            <Link
+              href="/"
+              className="rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-200"
+            >
+              ホームへ
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/login?next=/s/${token}`}
+                className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                ログイン
+              </Link>
+              <Link
+                href={`/register?next=/s/${token}`}
+                className="btn-3d rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white hover:bg-brand-700"
+              >
+                新規登録
+              </Link>
+            </div>
+          )}
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">{children}</main>

@@ -39,8 +39,58 @@ interface EditorQuestion {
 const inputClass =
   'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
 
+/**
+ * 「あり」を選んだときに最初から入っているインフォームドコンセント文の例。
+ * そのまま使うことも、編集して自分の調査に合わせることもできる。
+ */
+const DEFAULT_CONSENT_TEXT =
+  '本調査は学術研究を目的として実施しています。\n' +
+  'ご回答いただいた内容は統計的に処理され、個人が特定される形で公開されることはありません。\n' +
+  '回答は任意であり、いつでも中断することができます（途中までの入力は自動的に保存されます）。\n' +
+  '取得したデータは研究目的にのみ利用し、定められた保持期間の経過後に適切に破棄します。\n' +
+  '以上にご同意いただける場合のみ、回答にお進みください。';
+
 function needsOptions(type: QuestionType) {
   return QuestionTypeRegistry.get(type).requiresOptionInput;
+}
+
+/**
+ * 条件文（表示条件）の「元設問」に使えるタイプか。
+ * 選択肢を持つタイプ（single/multiple/dropdown）に加え、目盛り値を選択肢として持つ
+ * スケールも対象にする。記述・段落・日付（自由入力）／表（グリッド）／確認設問は対象外。
+ */
+function canBeConditionSource(type: QuestionType): boolean {
+  return needsOptions(type) || type === 'scale';
+}
+
+/**
+ * 条件文で「選んだら表示」の対象にできる値の一覧。
+ * 選択式は入力済みの選択肢、スケールは config の min〜max から目盛り値（保存される
+ * 選択肢テキストと同じ String(v)）を生成する。これにより回答時の選択肢一致判定と整合する。
+ */
+function conditionSourceValues(q: EditorQuestion): string[] {
+  if (q.type === 'scale') {
+    const min = q.config.min === 0 ? 0 : 1;
+    const rawMax =
+      typeof q.config.max === 'number' && Number.isFinite(q.config.max)
+        ? Math.round(q.config.max)
+        : 5;
+    const max = Math.min(10, Math.max(min + 1, rawMax));
+    const values: string[] = [];
+    for (let v = min; v <= max; v++) values.push(String(v));
+    return values;
+  }
+  return q.options.map((o) => o.trim()).filter(Boolean);
+}
+
+/** 条件文の値ドロップダウン表示用ラベル（スケールの両端は端ラベルを併記） */
+function conditionSourceValueLabel(q: EditorQuestion, value: string, values: string[]): string {
+  if (q.type === 'scale') {
+    if (value === values[0] && q.config.minLabel?.trim()) return `${value}（${q.config.minLabel.trim()}）`;
+    if (value === values[values.length - 1] && q.config.maxLabel?.trim())
+      return `${value}（${q.config.maxLabel.trim()}）`;
+  }
+  return value;
 }
 
 function uid() {
@@ -86,11 +136,13 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
   deadline: string;
   sections: SectionMeta[];
   questions: EditorQuestion[];
+  consentEnabled: boolean;
   consentText: string;
   targetConditions: TargetConditions;
   minTrustScore: number | null;
   retentionMonths: number | null;
   unlisted: boolean;
+  shareLinkNoReward: boolean;
 } {
   if (!survey) {
     return {
@@ -100,9 +152,12 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
       deadline: '',
       sections: [{ title: '', description: '' }],
       questions: [newQuestion(0)],
-      consentText: '',
+      // 新規作成時は「あり」を既定とし、例文を最初から入れておく
+      consentEnabled: true,
+      consentText: DEFAULT_CONSENT_TEXT,
       targetConditions: {},
       unlisted: false,
+      shareLinkNoReward: false,
       minTrustScore: null,
       retentionMonths: null,
     };
@@ -139,9 +194,13 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     deadline: survey.deadline ?? '',
     sections,
     questions,
-    consentText: survey.consent_text ?? '',
+    // 既存アンケートは consent_text の有無で「あり/なし」を復元。
+    // 「なし」で保存されていた場合も、再び「あり」にしたときに例文が出るようにしておく。
+    consentEnabled: !!survey.consent_text?.trim(),
+    consentText: survey.consent_text?.trim() ? survey.consent_text : DEFAULT_CONSENT_TEXT,
     targetConditions: survey.target_conditions ?? {},
     unlisted: survey.visibility === 'unlisted',
+    shareLinkNoReward: !!survey.share_link_no_reward,
     minTrustScore: survey.min_trust_score,
     // retention_until（日時）から残り月数は復元できないため、編集時は再設定式にする
     retentionMonths: null,
@@ -157,11 +216,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [deadline, setDeadline] = useState(initial.deadline);
   const [sections, setSections] = useState<SectionMeta[]>(initial.sections);
   const [questions, setQuestions] = useState<EditorQuestion[]>(initial.questions);
+  const [consentEnabled, setConsentEnabled] = useState(initial.consentEnabled);
   const [consentText, setConsentText] = useState(initial.consentText);
   const [targetConditions, setTargetConditions] = useState<TargetConditions>(
     initial.targetConditions
   );
   const [unlisted, setUnlisted] = useState(initial.unlisted);
+  const [shareLinkNoReward, setShareLinkNoReward] = useState(initial.shareLinkNoReward);
   const [minTrustScore, setMinTrustScore] = useState<number | null>(initial.minTrustScore);
   const [retentionMonths, setRetentionMonths] = useState<number | null>(initial.retentionMonths);
   const [dragKey, setDragKey] = useState<string | null>(null);
@@ -172,7 +233,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [showRight, setShowRight] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [templateSection, setTemplateSection] = useState(0);
-  const [publishIssues, setPublishIssues] = useState<{ index: number; text: string; warnings: QuestionWarning[] }[] | null>(null);
+  const [publishIssues, setPublishIssues] = useState<{ index: number; key: string; text: string; warnings: QuestionWarning[] }[] | null>(null);
+  // 公開ボタンを押すまでインライン警告バッジを非表示にする
+  const [showValidation, setShowValidation] = useState(false);
 
   // セクション順に並べた表示順（条件の「先行設問」候補算出に使う）
   const orderedQuestions = [...questions].sort((a, b) => a.section_index - b.section_index);
@@ -331,15 +394,17 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       setError('タイトルを入力してください');
       return;
     }
-    if (!consentText.trim()) {
+    // 「あり」を選んだ場合のみ本文が必須。「なし」のときは空でよい。
+    if (consentEnabled && !consentText.trim()) {
       setError('インフォームドコンセント文（研究目的・データの取り扱い・任意性の説明）を入力してください');
       return;
     }
     // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
     if (status === 'open') {
+      setShowValidation(true);
       const ordered0 = [...questions].sort((a, b) => a.section_index - b.section_index);
       const issues = ordered0
-        .map((q, i) => ({ index: i, text: q.text, warnings: warningsByKey.get(q.key) ?? [] }))
+        .map((q, i) => ({ index: i, key: q.key, text: q.text, warnings: warningsByKey.get(q.key) ?? [] }))
         .filter((it) => hasBlockingWarning(it.warnings));
       if (issues.length > 0) {
         setPublishIssues(issues);
@@ -364,7 +429,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       status,
       sections: sectionsPayload,
       visibility: unlisted ? 'unlisted' : 'public',
-      consent_text: consentText.trim() || null,
+      share_link_no_reward: unlisted ? shareLinkNoReward : false,
+      consent_text: consentEnabled ? consentText.trim() || null : null,
       target_conditions: targetConditions,
       min_trust_score: minTrustScore,
       retention_months: retentionMonths,
@@ -399,7 +465,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:gap-6 lg:items-start">
+    <div className={`lg:gap-6 lg:items-start ${showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
       {/* ツールバー */}
       <div className="flex flex-wrap items-center gap-2">
@@ -413,29 +479,22 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
         >
           テンプレートから追加
         </button>
-        <button
-          type="button"
-          onClick={() => setShowRight((v) => !v)}
-          aria-pressed={showRight}
-          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer"
-        >
-          {showRight ? (
-            // 目を閉じる（プレビューを隠す）アイコン
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-              <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-              <line x1="2" x2="22" y1="2" y2="22" />
-            </svg>
-          ) : (
-            // 目を開く（プレビューを表示）アイコン
+        {/* デスクトップのみ：閉じているときに「プレビューを表示」ボタンを出す */}
+        {!showRight && (
+          <button
+            type="button"
+            onClick={() => setShowRight(true)}
+            aria-pressed={showRight}
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+          >
+            {/* 目を開く（プレビューを表示）アイコン */}
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-          )}
-          {showRight ? 'プレビューを隠す' : 'プレビューを表示'}
-        </button>
+            プレビューを表示
+          </button>
+        )}
       </div>
 
       {/* 基本情報 */}
@@ -486,11 +545,27 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           <span>
             限定公開（リンクを知っている人のみ）
             <span className="block text-xs text-zinc-500">
-              回答一覧には表示されません。共有リンクからはログインなしのゲストとして回答できます
-              （ゲスト回答にはポイントが付与されません）。
+              回答一覧には表示されません。共有リンクからはログインして回答できます
+              （ログイン済みなら通常どおりポイントが付与されます）。
             </span>
           </span>
         </label>
+        {unlisted && (
+          <label className="ml-6 flex items-start gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={shareLinkNoReward}
+              onChange={(e) => setShareLinkNoReward(e.target.checked)}
+            />
+            <span>
+              共有リンクからの回答を０ポイントにする
+              <span className="block text-xs text-zinc-500">
+                チェックすると、ログイン済みユーザーが共有リンクから回答しても報酬ポイントは付与されません。
+              </span>
+            </span>
+          </label>
+        )}
       </section>
 
       {/* 研究倫理・配信設定 */}
@@ -498,21 +573,52 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
         <h2 className="text-sm font-bold text-zinc-700">研究倫理・配信設定</h2>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            インフォームドコンセント文 <span className="text-red-500">*</span>
+            インフォームドコンセント文
           </label>
-          <p className="mb-1 text-xs text-zinc-500">
-            研究目的・データの取り扱い（保存期間/公開範囲）・回答の任意性と中断の自由を説明してください。
+          <p className="mb-2 text-xs text-zinc-500">
+            研究目的・データの取り扱い（保存期間/公開範囲）・回答の任意性と中断の自由を説明する文章です。
             回答者には回答開始前に表示され、同意した人だけが回答できます。
           </p>
-          <textarea
-            className={inputClass}
-            rows={5}
-            placeholder={
-              '例：本調査は◯◯の研究を目的としています。回答は統計的に処理され、個人が特定される形で公開されることはありません。回答は任意であり、いつでも中断できます。'
-            }
-            value={consentText}
-            onChange={(e) => setConsentText(e.target.value)}
-          />
+
+          {/* あり / なし の切り替え */}
+          <div className="mb-2 inline-flex overflow-hidden rounded-md border border-zinc-300 text-sm">
+            <button
+              type="button"
+              onClick={() => setConsentEnabled(true)}
+              className={`px-4 py-1.5 ${
+                consentEnabled ? 'bg-emerald-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
+              }`}
+            >
+              あり
+            </button>
+            <button
+              type="button"
+              onClick={() => setConsentEnabled(false)}
+              className={`px-4 py-1.5 ${
+                !consentEnabled ? 'bg-emerald-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
+              }`}
+            >
+              なし
+            </button>
+          </div>
+
+          {consentEnabled ? (
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-500">
+                文例を最初から入れてあります。そのまま使っても、自由に書き換えても構いません。
+              </p>
+              <textarea
+                className={inputClass}
+                rows={6}
+                value={consentText}
+                onChange={(e) => setConsentText(e.target.value)}
+              />
+            </div>
+          ) : (
+            <p className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+              インフォームドコンセント文は表示しません。回答画面では汎用の説明文（学術目的・任意性など）が表示されます。
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -671,12 +777,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
               return (
                 <section
                   key={q.key}
+                  id={`question-${q.key}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => dropOnQuestion(q.key)}
                   onDragEnd={() => setDragKey(null)}
-                  className={`rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3 ${
+                  className={`rounded-xl bg-white border p-5 shadow-sm space-y-3 ${
                     dragKey === q.key ? 'opacity-50' : ''
-                  }`}
+                  } ${showValidation && hasError ? 'border-red-400' : 'border-zinc-200'}`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -691,7 +798,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                       >
                         ⠿ 設問 {globalIndex + 1}
                       </span>
-                      {warns.length > 0 && (
+                      {showValidation && warns.length > 0 && (
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                             hasError ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
@@ -902,7 +1009,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     必須
                   </label>
 
-                  {warns.length > 0 && (
+                  {showValidation && warns.length > 0 && (
                     <ul className="space-y-1 rounded-md bg-amber-50/70 border border-amber-200 p-2 text-xs">
                       {warns.map((w, wi) => (
                         <li key={wi} className={w.level === 'error' ? 'text-red-700' : 'text-amber-700'}>
@@ -998,24 +1105,35 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       </div>
       </div>
 
-      {/* 右ペイン：回答者プレビュー / 分岐フロー */}
-      {showRight && (
-        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-4 lg:self-start">
+      {/* 右ペイン：回答者プレビュー / 分岐フロー
+          モバイルでは常に表示（下部）、デスクトップでは showRight で開閉 */}
+      <aside className={`mt-6 lg:mt-0 lg:sticky lg:top-[72px] lg:self-start ${showRight ? '' : 'lg:hidden'}`}>
           <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
-            <div className="mb-3 inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setRightTab('preview')}
+                  className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                >
+                  プレビュー
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightTab('flow')}
+                  className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                >
+                  分岐フロー
+                </button>
+              </div>
+              {/* デスクトップのみ：パネルを閉じるボタン */}
               <button
                 type="button"
-                onClick={() => setRightTab('preview')}
-                className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                onClick={() => setShowRight(false)}
+                className="hidden lg:block text-xs text-zinc-400 hover:text-zinc-700 rounded px-2 py-1 cursor-pointer"
+                title="プレビューを閉じる"
               >
-                プレビュー
-              </button>
-              <button
-                type="button"
-                onClick={() => setRightTab('flow')}
-                className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
-              >
-                分岐フロー
+                ✕
               </button>
             </div>
             {rightTab === 'preview' ? (
@@ -1025,7 +1143,6 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             )}
           </div>
         </aside>
-      )}
 
       {/* テンプレートライブラリ */}
       {showTemplates && (
@@ -1046,8 +1163,18 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             </p>
             <ul className="max-h-72 space-y-2 overflow-y-auto">
               {publishIssues.map((it) => (
-                <li key={it.index} className="rounded-md border border-red-200 bg-red-50 p-2 text-sm">
-                  <p className="font-medium text-zinc-800">
+                <li
+                  key={it.index}
+                  className="rounded-md border border-red-200 bg-red-50 p-2 text-sm cursor-pointer hover:bg-red-100"
+                  onClick={() => {
+                    setPublishIssues(null);
+                    setTimeout(() => {
+                      document.getElementById(`question-${it.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 50);
+                  }}
+                >
+                  <p className="font-medium text-zinc-800 flex items-center gap-1">
+                    <span className="text-indigo-600 text-xs">↓ジャンプ</span>
                     設問 {it.index + 1}：{it.text.trim() || '（無題）'}
                   </p>
                   <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
@@ -1063,10 +1190,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setPublishIssues(null)}
+                onClick={() => {
+                  const firstKey = publishIssues[0]?.key;
+                  setPublishIssues(null);
+                  setTimeout(() => {
+                    document.getElementById(`question-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 50);
+                }}
                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
               >
-                修正する
+                最初のエラーへ移動
               </button>
             </div>
           </div>
@@ -1094,8 +1227,11 @@ function ConditionEditor({
   candidates: EditorQuestion[];
   onChange: (condition: { sourceKey: string; optionText: string } | null) => void;
 }) {
-  // 条件元になれるのは「選択肢を持つ設問（single/multiple/dropdown）」のみ
-  const sources = candidates.filter((c) => needsOptions(c.type) && c.options.some((o) => o.trim()));
+  // 条件元になれるのは「選択肢を持つ設問」（single/multiple/dropdown）と、目盛り値を
+  // 選択肢として持つスケール。記述・段落・日付・表・確認設問は対象外。
+  const sources = candidates.filter(
+    (c) => canBeConditionSource(c.type) && conditionSourceValues(c).length > 0
+  );
   const cond = question.condition;
   const enabled = !!cond;
 
@@ -1105,7 +1241,7 @@ function ConditionEditor({
   }
 
   const source = cond ? sources.find((s) => s.key === cond.sourceKey) ?? null : null;
-  const sourceOptions = (source?.options ?? []).map((o) => o.trim()).filter(Boolean);
+  const sourceOptions = source ? conditionSourceValues(source) : [];
 
   return (
     <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-3">
@@ -1116,7 +1252,7 @@ function ConditionEditor({
           onChange={(e) => {
             if (e.target.checked) {
               const first = sources[0];
-              onChange({ sourceKey: first.key, optionText: first.options.map((o) => o.trim()).find(Boolean) ?? '' });
+              onChange({ sourceKey: first.key, optionText: conditionSourceValues(first)[0] ?? '' });
             } else {
               onChange(null);
             }
@@ -1132,7 +1268,7 @@ function ConditionEditor({
             value={cond.sourceKey}
             onChange={(e) => {
               const next = sources.find((s) => s.key === e.target.value)!;
-              onChange({ sourceKey: next.key, optionText: next.options.map((o) => o.trim()).find(Boolean) ?? '' });
+              onChange({ sourceKey: next.key, optionText: conditionSourceValues(next)[0] ?? '' });
             }}
           >
             {sources.map((s, i) => (
@@ -1149,7 +1285,7 @@ function ConditionEditor({
           >
             {sourceOptions.map((o, i) => (
               <option key={i} value={o}>
-                {o}
+                {source ? conditionSourceValueLabel(source, o, sourceOptions) : o}
               </option>
             ))}
           </select>

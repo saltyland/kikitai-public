@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AnswerInput, SurveyInput } from '@/lib/types/database';
+import type { AnswerInput } from '@/lib/types/database';
 
 /**
  * サーバーアクションの入力検証スキーマ（zod）。
@@ -21,20 +21,20 @@ const sectionMetaSchema = z.object({
 });
 
 const scaleConfigSchema = z.object({
-  min: z.number().int(),
-  max: z.number().int(),
-  minLabel: z.string().max(100).nullable(),
-  maxLabel: z.string().max(100).nullable(),
+  min: z.number().int().optional(),
+  max: z.number().int().optional(),
+  minLabel: z.string().max(100).nullable().optional(),
+  maxLabel: z.string().max(100).nullable().optional(),
 });
 
 const gridConfigSchema = z.object({
-  rows: z.array(z.string().max(200)).max(50),
-  columns: z.array(z.string().max(200)).max(50),
-  multiple: z.boolean(),
+  rows: z.array(z.string().max(200)).max(50).optional(),
+  columns: z.array(z.string().max(200)).max(50).optional(),
+  multiple: z.boolean().optional(),
 });
 
 const attentionConfigSchema = z.object({
-  correctOptionText: z.string().max(500),
+  correctOptionText: z.string().max(500).optional(),
 });
 
 const questionInputSchema = z.object({
@@ -78,7 +78,8 @@ export const surveyInputSchema = z.object({
   min_trust_score: z.number().int().min(0).max(100).nullable(),
   retention_months: z.number().int().min(1).max(120).nullable(),
   visibility: z.enum(['public', 'unlisted']),
-}) satisfies z.ZodType<SurveyInput>;
+  share_link_no_reward: z.boolean(),
+});
 
 const gridRowAnswerSchema = z.object({
   row: z.string().max(200),

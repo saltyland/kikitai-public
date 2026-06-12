@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { submitResponseAction } from '@/app/actions/response';
+import { submitResponseAction, submitSharedLinkResponseAction } from '@/app/actions/response';
 import { submitGuestResponseAction } from '@/app/actions/guest';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
@@ -72,10 +72,13 @@ function answerSummary(q: QuestionWithOptions, s: QState): string {
 export default function AnswerForm({
   survey,
   guestToken,
+  shareToken,
 }: {
   survey: SurveyWithQuestions;
   /** 共有リンク（ゲスト回答）のトークン。指定時はゲスト用アクションで送信する。 */
   guestToken?: string;
+  /** 共有リンク（ログイン済み回答）のトークン。指定時は共有リンク用アクションで送信する。 */
+  shareToken?: string;
 }) {
   const [consented, setConsented] = useState(false);
   const [step, setStep] = useState(0);
@@ -299,11 +302,16 @@ export default function AnswerForm({
     }
     if (acceptLowQuality) formData.set('acceptLowQuality', '1');
     try {
-      // ゲスト回答（共有リンク）はトークン宛のゲスト用アクションで送信する
+      // 送信先アクションを props に応じて切り替える
       let result;
       if (guestToken) {
+        // 未ログインゲスト回答（ポイント付与なし）
         formData.set('shareToken', guestToken);
         result = await submitGuestResponseAction({ error: null }, formData);
+      } else if (shareToken) {
+        // ログイン済み共有リンク回答（share_link_no_reward に応じてポイント付与）
+        formData.set('shareToken', shareToken);
+        result = await submitSharedLinkResponseAction({ error: null }, formData);
       } else {
         formData.set('surveyId', survey.id);
         result = await submitResponseAction({ error: null }, formData);
@@ -684,36 +692,41 @@ export default function AnswerForm({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="flex items-center gap-3">
-        {safeStep > 0 && (
-          <button
-            onClick={goPrev}
-            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+      {/* ナビゲーションバー：スマホでは画面下部に固定、PCではインライン */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          {safeStep > 0 && (
+            <button
+              onClick={goPrev}
+              className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+            >
+              戻る
+            </button>
+          )}
+          {safeStep < total - 1 ? (
+            <button
+              onClick={goNext}
+              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              次へ
+            </button>
+          ) : (
+            <button
+              onClick={goReview}
+              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              回答内容を確認する
+            </button>
+          )}
+          <span
+            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
           >
-            戻る
-          </button>
-        )}
-        {safeStep < total - 1 ? (
-          <button
-            onClick={goNext}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
-          >
-            次へ
-          </button>
-        ) : (
-          <button
-            onClick={goReview}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
-          >
-            回答内容を確認する
-          </button>
-        )}
-        <span
-          className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
-        >
-          {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
-        </span>
+            {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
+          </span>
+        </div>
       </div>
+      {/* スマホ固定バーの高さ分だけ余白を確保 */}
+      <div className="h-16 sm:hidden" aria-hidden />
       <p className="text-center text-[11px] text-zinc-300 sm:hidden">← スワイプで前後に移動できます →</p>
     </div>
   );

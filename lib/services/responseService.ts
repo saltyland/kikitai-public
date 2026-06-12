@@ -91,6 +91,62 @@ export class ResponseService {
   }
 
   /**
+   * 共有リンクからログイン済みユーザーが回答するためのアンケート取得。
+   * トークンでアンケートを引き、通常の回答可能チェック（自作・回答済みなど）を行う。
+   */
+  async getSurveyForSharedLinkAuth(
+    userId: string,
+    shareToken: string
+  ): Promise<SurveyWithQuestions> {
+    const survey = await this.surveyRepo.findByShareToken(shareToken);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.status !== 'open') throw new Error('このアンケートは現在回答を受け付けていません');
+    if (this.isExpired(survey)) throw new Error('このアンケートは回答期限を過ぎています');
+    if (survey.user_id === userId) throw new Error('自分が作成したアンケートには回答できません');
+    if (await this.responseRepo.hasResponded(survey.id, userId)) {
+      throw new Error('このアンケートにはすでに回答済みです');
+    }
+    return survey;
+  }
+
+  /**
+   * 共有リンクからのログイン済み回答送信。
+   * survey.share_link_no_reward が true の場合は earnedPoints を強制0にする。
+   * それ以外は通常の品質評価＋ポイント付与を行う。
+   */
+  async submitSharedLinkResponse(
+    userId: string,
+    shareToken: string,
+    answers: AnswerInput[],
+    options: SubmitOptions = {}
+  ): Promise<SubmitResult> {
+    const survey = await this.getSurveyForSharedLinkAuth(userId, shareToken);
+
+    if (survey.share_link_no_reward) {
+      // 0ptモード：整合性チェックのみ行い品質評価はスキップ
+      this.assertAnswerIntegrity(survey, answers);
+      const visibleAnswers = this.validateAndFilterVisible(survey, answers);
+      const outcome = await this.responseRepo.submitWithRewards(
+        survey.id,
+        visibleAnswers,
+        0,
+        0,
+        options.durationSec ?? null
+      );
+      return {
+        score: 0,
+        feedback: 'ポイント付与なし（作成者の設定により）',
+        earnedPoints: 0,
+        surveyClosed: outcome.closed,
+        rejected: false,
+      };
+    }
+
+    // 通常モード：品質評価＋ポイント付与（survey.id を直接使う）
+    return this.submitResponse(userId, survey.id, answers, options);
+  }
+
+  /**
    * ゲスト回答の送信（共有リンク経由・未ログイン可）。
    * ログイン回答と同じ整合性検証・必須検証を行うが、AI品質評価・ポイント付与・
    * 信頼スコア更新は行わない。保存と自動closeはRPCが1トランザクションで行う。

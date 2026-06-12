@@ -86,6 +86,21 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
 
   return (
     <div className="flex flex-col">
+      {/* 投稿者（カード枠の外・上） */}
+      <Link
+        href={survey.author_id ? `/users/${survey.author_id}` : '#'}
+        className="mb-3 flex items-center gap-3 px-1 group"
+      >
+        <Avatar name={author} src={survey.author_avatar_url} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-slate-800 group-hover:text-brand-600 transition-colors">{author}</p>
+          <p className="truncate text-xs text-slate-400">
+            残り {remaining}枠
+            {survey.deadline && ` ・期限 ${survey.deadline}`}
+          </p>
+        </div>
+      </Link>
+
       <article className="card-3d card-3d-hover flex flex-1 flex-col overflow-hidden p-0">
         {/* タイトル・説明 */}
         <div className="px-5 pt-5">
@@ -148,17 +163,6 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
         </div>
       </article>
 
-      {/* 投稿者（カード枠の外・下） */}
-      <div className="mt-3 flex items-center gap-3 px-1">
-        <Avatar name={author} src={survey.author_avatar_url} />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-800">{author}</p>
-          <p className="truncate text-xs text-slate-400">
-            残り {remaining}枠
-            {survey.deadline && ` ・期限 ${survey.deadline}`}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

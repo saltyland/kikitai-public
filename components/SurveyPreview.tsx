@@ -151,7 +151,7 @@ function PreviewInput({
 }) {
   const opts = q.options.map((o) => o.trim()).filter(Boolean);
 
-  if (q.type === 'single' || q.type === 'multiple') {
+  if (q.type === 'single' || q.type === 'multiple' || q.type === 'attention') {
     const multiple = q.type === 'multiple';
     return (
       <div className="space-y-1.5">

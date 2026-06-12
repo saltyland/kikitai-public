@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
-import type { PrivateField } from '@/lib/types/database';
+import type { PrivateField, SnsLinks } from '@/lib/types/database';
 
 export interface ProfileActionState {
   error: string | null;
@@ -27,6 +27,17 @@ export async function updateProfileAction(
   const privateFields = formData
     .getAll('private_fields')
     .map((v) => String(v)) as PrivateField[];
+
+  // SNSリンク（空文字は除外）
+  const snsLinks: SnsLinks = {};
+  const twitter = str('sns_twitter');
+  const instagram = str('sns_instagram');
+  const github = str('sns_github');
+  const website = str('sns_website');
+  if (twitter) snsLinks.twitter = twitter;
+  if (instagram) snsLinks.instagram = instagram;
+  if (github) snsLinks.github = github;
+  if (website) snsLinks.website = website;
 
   const supabase = await createSupabaseServerClient();
   const user = await new AuthService(supabase).getCurrentUser();
@@ -52,6 +63,7 @@ export async function updateProfileAction(
       grade: str('grade'),
       major: str('major'),
       private_fields: privateFields,
+      sns_links: snsLinks,
       ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
     });
   } catch (e) {

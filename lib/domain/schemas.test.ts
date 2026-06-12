@@ -27,6 +27,7 @@ const validSurvey: SurveyInput = {
   min_trust_score: null,
   retention_months: null,
   visibility: 'public',
+  share_link_no_reward: false,
 };
 
 describe('surveyInputSchema', () => {

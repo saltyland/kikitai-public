@@ -7,6 +7,7 @@ import type {
   PointsSummary,
   PrivateField,
   Profile,
+  SnsLinks,
 } from '@/lib/types/database';
 import { PRIVATE_FIELDS } from '@/lib/types/database';
 
@@ -89,6 +90,7 @@ export class ProfileService {
       grade: string | null;
       major: string | null;
       private_fields: PrivateField[];
+      sns_links?: SnsLinks;
       /** 渡された場合のみ更新する（未指定なら既存のまま） */
       avatar_url?: string | null;
     }

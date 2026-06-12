@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { RegisterForm } from '@/components/AuthForms';
 import { LogoMark } from '@/components/Logo';
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="card-3d w-full max-w-sm p-8">
@@ -13,7 +18,7 @@ export default function RegisterPage() {
         <p className="mb-6 mt-1 text-center text-sm text-slate-500">
           無料登録して、回答し合う輪に参加しましょう
         </p>
-        <RegisterForm />
+        <RegisterForm next={next} />
       </div>
     </main>
   );

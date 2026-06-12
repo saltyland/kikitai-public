@@ -97,6 +97,14 @@ export const PRIVATE_FIELDS: PrivateField[] = [
   'major',
 ];
 
+/** SNSリンクの構造 */
+export interface SnsLinks {
+  twitter?: string;
+  instagram?: string;
+  github?: string;
+  website?: string;
+}
+
 export interface Profile {
   id: string;
   nickname: string;
@@ -117,6 +125,8 @@ export interface Profile {
   private_fields: PrivateField[];
   /** 料金プラン。pro のみ統計解析モードを利用できる。 */
   plan: Plan;
+  /** SNSリンク（twitter/instagram/github/websiteのURL） */
+  sns_links: SnsLinks;
   created_at: string;
 }
 
@@ -136,6 +146,7 @@ export interface PublicProfile {
   occupation: string | null;
   grade: string | null;
   major: string | null;
+  sns_links: SnsLinks;
   created_at: string;
 }
 
@@ -211,6 +222,11 @@ export interface Survey {
   share_token: string;
   /** 公開範囲。unlisted は一覧非表示（リンクを知っている人のみ）。 */
   visibility: SurveyVisibility;
+  /**
+   * 共有リンク経由の回答をポイント付与なし（0pt）にするか。
+   * unlisted アンケートで有効。true の場合、ログイン済み回答でも0pt。
+   */
+  share_link_no_reward: boolean;
   created_at: string;
 }
 
@@ -276,6 +292,7 @@ export interface PreviewQuestionLite {
 /** 一覧表示用：アンケート＋回答数 */
 export interface SurveyWithStats extends Survey {
   response_count: number;
+  author_id?: string;
   author_nickname?: string;
   /** 投稿者のアバター画像URL（未設定は null → イニシャル表示） */
   author_avatar_url?: string | null;
@@ -322,6 +339,8 @@ export interface SurveyInput {
   retention_months: number | null;
   /** 公開範囲。unlisted は一覧非表示（リンクを知っている人のみ）。 */
   visibility: SurveyVisibility;
+  /** 共有リンク経由の回答を0ptにするか（unlisted のみ有効）。 */
+  share_link_no_reward: boolean;
 }
 
 /** グリッド設問の1行分の回答（行ラベル→選択した列） */
