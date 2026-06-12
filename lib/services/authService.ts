@@ -5,7 +5,7 @@ import type { Profile } from '@/lib/types/database';
 export interface RegisterInput {
   email: string;
   password: string;
-  nickname: string;
+  nickname?: string;
   affiliation?: string;
   field?: string;
 }

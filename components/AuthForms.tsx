@@ -64,18 +64,6 @@ export function RegisterForm({ next }: { next?: string }) {
           8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください。
         </p>
       </div>
-      <div>
-        <FormLabel htmlFor="nickname" required>ニックネーム</FormLabel>
-        <input id="nickname" name="nickname" type="text" required className={inputClass} />
-      </div>
-      <div>
-        <FormLabel htmlFor="affiliation" optional>所属機関</FormLabel>
-        <input id="affiliation" name="affiliation" type="text" className={inputClass} />
-      </div>
-      <div>
-        <FormLabel htmlFor="field" optional>研究分野</FormLabel>
-        <input id="field" name="field" type="text" className={inputClass} />
-      </div>
       {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
@@ -83,7 +71,7 @@ export function RegisterForm({ next }: { next?: string }) {
         className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
       >
         {pending && <Spinner className="h-4 w-4" />}
-        {pending ? '登録中…' : '登録する'}
+        {pending ? '登録中…' : '無料で始める'}
       </button>
       <p className="text-center text-sm text-slate-600">
         すでにアカウントをお持ちの方は{' '}

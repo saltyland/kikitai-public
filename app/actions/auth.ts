@@ -34,22 +34,20 @@ export async function registerAction(
 ): Promise<ActionState> {
   const email = String(formData.get('email') ?? '');
   const password = String(formData.get('password') ?? '');
-  const nickname = String(formData.get('nickname') ?? '');
-  const affiliation = String(formData.get('affiliation') ?? '');
-  const field = String(formData.get('field') ?? '');
   const next = String(formData.get('next') ?? '');
 
-  if (!email || !password || !nickname) {
-    return { error: 'メールアドレス・パスワード・ニックネームは必須です' };
+  if (!email || !password) {
+    return { error: 'メールアドレスとパスワードは必須です' };
   }
-  // NIST SP 800-63B に倣い最低8文字。文字種を狭めると逆に強度が落ちるため、
-  // 「英小文字と数字を最低1つずつ含む」ことだけを要求し、記号・大文字も許可する。
   if (password.length < 8) {
     return { error: 'パスワードは8文字以上で入力してください' };
   }
   if (!/[a-z]/.test(password) || !/[0-9]/.test(password)) {
     return { error: 'パスワードには英小文字と数字をそれぞれ1文字以上含めてください' };
   }
+
+  // ニックネームはメールの@前部分から自動生成（オンボーディングで変更可）
+  const autoNickname = email.split('@')[0] ?? 'ユーザー';
 
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
@@ -58,17 +56,12 @@ export async function registerAction(
     ({ hasSession } = await auth.register({
       email,
       password,
-      nickname,
-      affiliation: affiliation || undefined,
-      field: field || undefined,
+      nickname: autoNickname,
     }));
   } catch (e) {
     return { error: e instanceof Error ? e.message : '登録に失敗しました' };
   }
 
-  // メール確認がONの場合はセッションが張られない（未確認ユーザー）。
-  // その状態でログインすると "Invalid login credentials" になるため、
-  // 無言でリダイレクトせず、確認が必要であることを明示する。
   if (!hasSession) {
     return {
       error:
@@ -76,7 +69,8 @@ export async function registerAction(
     };
   }
 
-  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/');
+  // nextが指定されていればそちらへ、なければオンボーディングへ
+  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/onboarding');
 }
 
 export async function logoutAction(): Promise<void> {
