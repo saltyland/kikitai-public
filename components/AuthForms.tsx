@@ -1,82 +1,69 @@
 'use client';
 
-import { useActionState } from 'react';
 import Link from 'next/link';
-import { loginAction, registerAction, type ActionState } from '@/app/actions/auth';
-import { inputClass } from '@/lib/ui/styles';
-import { FormLabel } from '@/components/ui/FormLabel';
+import { loginWithGoogleAction } from '@/app/actions/auth';
 import { Spinner } from '@/components/ui/Spinner';
+import { useTransition } from 'react';
 
-const initial: ActionState = { error: null };
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.548 0 9s.348 2.825.957 4.039l3.007-2.332z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"
+      />
+    </svg>
+  );
+}
 
 export function LoginForm({ next }: { next?: string }) {
-  const [state, action, pending] = useActionState(loginAction, initial);
+  const [pending, startTransition] = useTransition();
+  const boundAction = loginWithGoogleAction.bind(null, next);
+
   return (
-    <form action={action} className="space-y-4">
-      {next && <input type="hidden" name="next" value={next} />}
-      <div>
-        <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
-        <input id="email" name="email" type="email" required className={inputClass} />
-      </div>
-      <div>
-        <FormLabel htmlFor="password" required>パスワード</FormLabel>
-        <input id="password" name="password" type="password" required className={inputClass} />
-      </div>
-      {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
+    <form
+      action={boundAction}
+      onSubmit={() => startTransition(() => {})}
+      className="space-y-4"
+    >
       <button
         type="submit"
         disabled={pending}
-        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
+        className="btn-3d flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
       >
-        {pending && <Spinner className="h-4 w-4" />}
-        {pending ? 'ログイン中…' : 'ログイン'}
+        {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
+        {pending ? '移動中…' : 'Googleで続ける'}
       </button>
-      <p className="text-center text-sm text-slate-600">
-        アカウントをお持ちでない方は{' '}
-        <Link href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'} className="text-brand-600 hover:underline">新規登録</Link>
-      </p>
     </form>
   );
 }
 
 export function RegisterForm({ next }: { next?: string }) {
-  const [state, action, pending] = useActionState(registerAction, initial);
   return (
-    <form action={action} className="space-y-4">
-      {next && <input type="hidden" name="next" value={next} />}
-      <div>
-        <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
-        <input id="email" name="email" type="email" required className={inputClass} />
-      </div>
-      <div>
-        <FormLabel htmlFor="password" required>パスワード（8文字以上・英小文字と数字を含む）</FormLabel>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          aria-describedby="password-hint"
-          title="8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください"
-          className={inputClass}
-        />
-        <p id="password-hint" className="mt-1 text-xs text-zinc-600">
-          8文字以上で、英小文字（a-z）と数字（0-9）をそれぞれ1文字以上含めてください。
-        </p>
-      </div>
-      {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="btn-3d btn-3d-primary flex w-full items-center justify-center gap-2 py-2 text-sm"
-      >
-        {pending && <Spinner className="h-4 w-4" />}
-        {pending ? '登録中…' : '無料で始める'}
-      </button>
+    <div className="space-y-4">
+      <LoginForm next={next} />
       <p className="text-center text-sm text-slate-600">
-        すでにアカウントをお持ちの方は{' '}
-        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-brand-600 hover:underline">ログイン</Link>
+        すでにアカウントをお持ちの方も{' '}
+        <Link
+          href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+          className="text-brand-600 hover:underline"
+        >
+          こちら
+        </Link>
+        から
       </p>
-    </form>
+    </div>
   );
 }

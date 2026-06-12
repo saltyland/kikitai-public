@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /** 認証不要でアクセスできるパス（/api/cron は CRON_SECRET で独自認可する） */
-const PUBLIC_PATHS = ['/login', '/register', '/api/cron', '/s', '/users'];
+const PUBLIC_PATHS = ['/login', '/register', '/auth', '/api/cron', '/s', '/users'];
 
 /** 完全一致のみ公開（トップはランディングページとして未ログインでも表示） */
 const PUBLIC_EXACT_PATHS = ['/'];

@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 
@@ -77,4 +78,24 @@ export async function logoutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
   await new AuthService(supabase).logout();
   redirect('/login');
+}
+
+export async function loginWithGoogleAction(next?: string): Promise<never> {
+  const supabase = await createSupabaseServerClient();
+  const headersList = await headers();
+  const host = headersList.get('host') ?? 'localhost:3000';
+  const proto = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const origin = `${proto}://${host}`;
+
+  const callbackUrl = `${origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: callbackUrl },
+  });
+
+  if (error || !data.url) {
+    throw new Error('Google ログインに失敗しました');
+  }
+  redirect(data.url);
 }

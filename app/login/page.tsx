@@ -15,7 +15,7 @@ export default async function LoginPage({
           <LogoMark className="mx-auto h-12" />
           <h1 className="mt-2 text-center text-2xl font-extrabold">キキタイ</h1>
         </Link>
-        <p className="mb-6 mt-1 text-center text-sm text-slate-500">おかえりなさい。ログインして続けましょう</p>
+        <p className="mb-6 mt-1 text-center text-sm text-slate-500">Googleアカウントでログイン・新規登録できます</p>
         <LoginForm next={next} />
       </div>
     </main>
