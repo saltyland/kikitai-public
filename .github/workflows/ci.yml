@@ -1,0 +1,38 @@
+name: CI
+
+# PR作成時と main への push 時に、型チェック・lint・テスト・ビルドを自動実行する。
+# これにより、壊れたコードがマージ／デプロイされるのを防ぐ。
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 依存をインストール
+        run: npm ci
+
+      - name: 型チェック
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: テスト
+        run: npm test
+
+      # ビルドには Supabase の公開環境変数が必要（値はダミーでよい：接続せず静的検証のみ）
+      - name: ビルド
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key-for-build
