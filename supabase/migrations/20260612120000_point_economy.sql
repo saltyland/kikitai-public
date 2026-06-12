@@ -238,7 +238,9 @@ drop policy if exists "プロフィールは本人のみ閲覧可" on profiles;
 create policy "プロフィールは本人のみ閲覧可" on profiles
   for select using (auth.uid() = id);
 
-create or replace view public.public_profiles
+drop view if exists public.public_profiles;
+
+create view public.public_profiles
 with (security_barrier = true)
 as
 select
