@@ -1,11 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import * as XLSX from 'xlsx';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
 import type {
   AnswerInput,
   QuestionAggregate,
   SurveyWithQuestions,
+  UserResponse,
 } from '@/lib/types/database';
+import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
@@ -47,10 +50,12 @@ export interface SubmitOptions {
 export class ResponseService {
   private readonly surveyRepo: SurveyRepository;
   private readonly responseRepo: ResponseRepository;
+  private readonly profileRepo: ProfileRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
+    this.profileRepo = new ProfileRepository(supabase);
   }
 
   /** 期限切れ（deadlineが過去）かどうか */
@@ -340,6 +345,46 @@ export class ResponseService {
   }
 
   /**
+   * ユーザー別回答一覧を取得する（作成者のみ・Proプラン用）。
+   * ゲスト回答（user_id null）は「ゲスト」として含める。
+   */
+  async getPerUserResults(
+    userId: string,
+    surveyId: string
+  ): Promise<{ survey: SurveyWithQuestions; userResponses: UserResponse[] }> {
+    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.user_id !== userId) throw new Error('結果を閲覧する権限がありません');
+
+    const sessions = await this.responseRepo.findSessionsBySurvey(surveyId);
+    const answers = await this.responseRepo.findAnswersBySurvey(surveyId);
+
+    const userIds = [...new Set(sessions.map((s) => s.user_id).filter((id): id is string => id !== null))];
+    const profiles = await this.profileRepo.findByIds(userIds);
+
+    const byResponse = new Map<string, typeof answers>();
+    for (const a of answers) {
+      const list = byResponse.get(a.response_id) ?? [];
+      list.push(a);
+      byResponse.set(a.response_id, list);
+    }
+
+    const userResponses: UserResponse[] = sessions.map((s) => {
+      const profile = s.user_id ? profiles.get(s.user_id) : undefined;
+      return {
+        responseId: s.id,
+        userId: s.user_id,
+        nickname: profile?.nickname ?? 'ゲスト',
+        avatarUrl: profile?.avatar_url ?? null,
+        createdAt: s.created_at,
+        answers: byResponse.get(s.id) ?? [],
+      };
+    });
+
+    return { survey, userResponses };
+  }
+
+  /**
    * 結果をCSV文字列で出力する（作成者のみ）。
    * 1行＝1回答セッション。列＝タイムスタンプ＋各設問。
    * 設問ごとの整形は各設問タイプ定義の renderAnswerText に委譲する。
@@ -376,6 +421,47 @@ export class ResponseService {
     const csv = [header, ...rows].map((r) => r.map(escapeCsv).join(',')).join('\r\n');
     // Excelの文字化け対策にBOMを付与する
     return { filename: `${survey.title || 'survey'}_results.csv`, csv: '﻿' + csv };
+  }
+
+  /** 結果をExcel（.xlsx）バイナリで出力する（作成者のみ）。 */
+  async getResultXlsx(
+    userId: string,
+    surveyId: string
+  ): Promise<{ filename: string; buffer: Buffer }> {
+    const survey = await this.surveyRepo.findWithQuestions(surveyId);
+    if (!survey) throw new Error('アンケートが見つかりません');
+    if (survey.user_id !== userId) throw new Error('結果を閲覧する権限がありません');
+
+    const sessions = await this.responseRepo.findSessionsBySurvey(surveyId);
+    const answers = await this.responseRepo.findAnswersBySurvey(surveyId);
+
+    const byResponse = new Map<string, typeof answers>();
+    for (const a of answers) {
+      const list = byResponse.get(a.response_id) ?? [];
+      list.push(a);
+      byResponse.set(a.response_id, list);
+    }
+
+    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const rows = sessions.map((s) => {
+      const mine = byResponse.get(s.id) ?? [];
+      const cells = survey.questions.map((q) => {
+        const forQ = mine.filter((a) => a.question_id === q.id);
+        return QuestionTypeRegistry.get(q.type).renderAnswerText(forQ, q);
+      });
+      return [new Date(s.created_at).toLocaleString('ja-JP'), ...cells];
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    // ヘッダー行を太字にする
+    header.forEach((_, ci) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: ci })];
+      if (cell) cell.s = { font: { bold: true } };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '回答データ');
+    const buffer = Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+    return { filename: `${survey.title || 'survey'}_results.xlsx`, buffer };
   }
 }
 

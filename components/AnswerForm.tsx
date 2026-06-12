@@ -834,26 +834,37 @@ function QuestionInputView({
 
   if (q.type === 'scale') {
     const cfg = (q.config ?? {}) as ScaleConfig;
-    // 両端ラベルは選択肢の行に混ぜず、上下に独立配置する。
-    // 選択肢は折り返し可能な行にまとめ、各段階を44px以上のタップ領域にする（#19）。
+    // 両端ラベルは選択肢の行に混ぜず上に独立配置し、各段階は数字+○のシンプル表示にする。
     return (
-      <div className="space-y-2">
-        {cfg.minLabel && <p className="text-xs text-zinc-600">{cfg.minLabel}</p>}
-        <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+      <div className="flex flex-col gap-1">
+        {(cfg.minLabel || cfg.maxLabel) && (
+          <div className="flex justify-between text-xs text-zinc-500 px-1">
+            <span>{cfg.minLabel ?? ''}</span>
+            <span>{cfg.maxLabel ?? ''}</span>
+          </div>
+        )}
+        <div className="flex items-end justify-around gap-1">
           {q.options.map((o) => {
             const checked = state.optionIds[0] === o.id;
             return (
               <label
                 key={o.id}
-                className={`flex h-11 min-w-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 text-sm transition ${
-                  checked ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-zinc-200 text-zinc-700 hover:bg-indigo-50/40'
-                }`}
+                className="flex flex-col items-center gap-1 cursor-pointer select-none"
               >
-                <span className="text-xs">{o.text}</span>
+                <span className={`text-sm font-medium transition ${checked ? 'text-indigo-600' : 'text-zinc-600'}`}>
+                  {o.text}
+                </span>
+                <span
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
+                    checked ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-400 bg-white hover:border-indigo-400'
+                  }`}
+                >
+                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+                </span>
                 <input
                   type="radio"
                   name={q.id}
-                  className="h-4 w-4"
+                  className="sr-only"
                   checked={checked}
                   onChange={() => setSingle(q.id, o.id)}
                 />
@@ -861,7 +872,6 @@ function QuestionInputView({
             );
           })}
         </div>
-        {cfg.maxLabel && <p className="text-right text-xs text-zinc-600">{cfg.maxLabel}</p>}
       </div>
     );
   }
