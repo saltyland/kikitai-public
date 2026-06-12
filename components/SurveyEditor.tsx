@@ -233,7 +233,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [showRight, setShowRight] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [templateSection, setTemplateSection] = useState(0);
-  const [publishIssues, setPublishIssues] = useState<{ index: number; text: string; warnings: QuestionWarning[] }[] | null>(null);
+  const [publishIssues, setPublishIssues] = useState<{ index: number; key: string; text: string; warnings: QuestionWarning[] }[] | null>(null);
+  // 公開ボタンを押すまでインライン警告バッジを非表示にする
+  const [showValidation, setShowValidation] = useState(false);
 
   // セクション順に並べた表示順（条件の「先行設問」候補算出に使う）
   const orderedQuestions = [...questions].sort((a, b) => a.section_index - b.section_index);
@@ -399,9 +401,10 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
     }
     // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
     if (status === 'open') {
+      setShowValidation(true);
       const ordered0 = [...questions].sort((a, b) => a.section_index - b.section_index);
       const issues = ordered0
-        .map((q, i) => ({ index: i, text: q.text, warnings: warningsByKey.get(q.key) ?? [] }))
+        .map((q, i) => ({ index: i, key: q.key, text: q.text, warnings: warningsByKey.get(q.key) ?? [] }))
         .filter((it) => hasBlockingWarning(it.warnings));
       if (issues.length > 0) {
         setPublishIssues(issues);
@@ -462,7 +465,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:gap-6 lg:items-start">
+    <div className={`lg:gap-6 lg:items-start ${showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
       {/* ツールバー */}
       <div className="flex flex-wrap items-center gap-2">
@@ -476,13 +479,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
         >
           テンプレートから追加
         </button>
-        <button
-          type="button"
-          onClick={() => setShowRight((v) => !v)}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer lg:inline-block"
-        >
-          {showRight ? '▶ プレビューを隠す' : '◀ プレビューを表示'}
-        </button>
+        {/* デスクトップのみ：閉じているときに「プレビューを表示」ボタンを出す */}
+        {!showRight && (
+          <button
+            type="button"
+            onClick={() => setShowRight(true)}
+            className="hidden lg:inline-flex items-center gap-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+          >
+            ◀ プレビューを表示
+          </button>
+        )}
       </div>
 
       {/* 基本情報 */}
@@ -765,12 +771,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
               return (
                 <section
                   key={q.key}
+                  id={`question-${q.key}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => dropOnQuestion(q.key)}
                   onDragEnd={() => setDragKey(null)}
-                  className={`rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3 ${
+                  className={`rounded-xl bg-white border p-5 shadow-sm space-y-3 ${
                     dragKey === q.key ? 'opacity-50' : ''
-                  }`}
+                  } ${showValidation && hasError ? 'border-red-400' : 'border-zinc-200'}`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -785,7 +792,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                       >
                         ⠿ 設問 {globalIndex + 1}
                       </span>
-                      {warns.length > 0 && (
+                      {showValidation && warns.length > 0 && (
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                             hasError ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
@@ -996,7 +1003,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     必須
                   </label>
 
-                  {warns.length > 0 && (
+                  {showValidation && warns.length > 0 && (
                     <ul className="space-y-1 rounded-md bg-amber-50/70 border border-amber-200 p-2 text-xs">
                       {warns.map((w, wi) => (
                         <li key={wi} className={w.level === 'error' ? 'text-red-700' : 'text-amber-700'}>
@@ -1092,24 +1099,35 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       </div>
       </div>
 
-      {/* 右ペイン：回答者プレビュー / 分岐フロー */}
-      {showRight && (
-        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-4 lg:self-start">
+      {/* 右ペイン：回答者プレビュー / 分岐フロー
+          モバイルでは常に表示（下部）、デスクトップでは showRight で開閉 */}
+      <aside className={`mt-6 lg:mt-0 lg:sticky lg:top-[72px] lg:self-start ${showRight ? '' : 'lg:hidden'}`}>
           <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
-            <div className="mb-3 inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setRightTab('preview')}
+                  className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                >
+                  プレビュー
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightTab('flow')}
+                  className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                >
+                  分岐フロー
+                </button>
+              </div>
+              {/* デスクトップのみ：パネルを閉じるボタン */}
               <button
                 type="button"
-                onClick={() => setRightTab('preview')}
-                className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                onClick={() => setShowRight(false)}
+                className="hidden lg:block text-xs text-zinc-400 hover:text-zinc-700 rounded px-2 py-1 cursor-pointer"
+                title="プレビューを閉じる"
               >
-                プレビュー
-              </button>
-              <button
-                type="button"
-                onClick={() => setRightTab('flow')}
-                className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
-              >
-                分岐フロー
+                ✕
               </button>
             </div>
             {rightTab === 'preview' ? (
@@ -1119,7 +1137,6 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             )}
           </div>
         </aside>
-      )}
 
       {/* テンプレートライブラリ */}
       {showTemplates && (
@@ -1140,8 +1157,18 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             </p>
             <ul className="max-h-72 space-y-2 overflow-y-auto">
               {publishIssues.map((it) => (
-                <li key={it.index} className="rounded-md border border-red-200 bg-red-50 p-2 text-sm">
-                  <p className="font-medium text-zinc-800">
+                <li
+                  key={it.index}
+                  className="rounded-md border border-red-200 bg-red-50 p-2 text-sm cursor-pointer hover:bg-red-100"
+                  onClick={() => {
+                    setPublishIssues(null);
+                    setTimeout(() => {
+                      document.getElementById(`question-${it.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 50);
+                  }}
+                >
+                  <p className="font-medium text-zinc-800 flex items-center gap-1">
+                    <span className="text-indigo-600 text-xs">↓ジャンプ</span>
                     設問 {it.index + 1}：{it.text.trim() || '（無題）'}
                   </p>
                   <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
@@ -1157,10 +1184,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setPublishIssues(null)}
+                onClick={() => {
+                  const firstKey = publishIssues[0]?.key;
+                  setPublishIssues(null);
+                  setTimeout(() => {
+                    document.getElementById(`question-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 50);
+                }}
                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
               >
-                修正する
+                最初のエラーへ移動
               </button>
             </div>
           </div>

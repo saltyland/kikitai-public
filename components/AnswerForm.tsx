@@ -692,36 +692,41 @@ export default function AnswerForm({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="flex items-center gap-3">
-        {safeStep > 0 && (
-          <button
-            onClick={goPrev}
-            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+      {/* ナビゲーションバー：スマホでは画面下部に固定、PCではインライン */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          {safeStep > 0 && (
+            <button
+              onClick={goPrev}
+              className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+            >
+              戻る
+            </button>
+          )}
+          {safeStep < total - 1 ? (
+            <button
+              onClick={goNext}
+              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              次へ
+            </button>
+          ) : (
+            <button
+              onClick={goReview}
+              className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              回答内容を確認する
+            </button>
+          )}
+          <span
+            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
           >
-            戻る
-          </button>
-        )}
-        {safeStep < total - 1 ? (
-          <button
-            onClick={goNext}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
-          >
-            次へ
-          </button>
-        ) : (
-          <button
-            onClick={goReview}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
-          >
-            回答内容を確認する
-          </button>
-        )}
-        <span
-          className={`ml-auto text-xs ${saving ? 'kikitai-saving text-indigo-500' : 'text-zinc-400'}`}
-        >
-          {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
-        </span>
+            {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
+          </span>
+        </div>
       </div>
+      {/* スマホ固定バーの高さ分だけ余白を確保 */}
+      <div className="h-16 sm:hidden" aria-hidden />
       <p className="text-center text-[11px] text-zinc-300 sm:hidden">← スワイプで前後に移動できます →</p>
     </div>
   );
