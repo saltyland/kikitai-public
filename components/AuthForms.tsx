@@ -9,10 +9,11 @@ import { Spinner } from '@/components/ui/Spinner';
 
 const initial: ActionState = { error: null };
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(loginAction, initial);
   return (
     <form action={action} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div>
         <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
         <input id="email" name="email" type="email" required className={inputClass} />
@@ -32,16 +33,17 @@ export function LoginForm() {
       </button>
       <p className="text-center text-sm text-slate-600">
         アカウントをお持ちでない方は{' '}
-        <Link href="/register" className="text-brand-600 hover:underline">新規登録</Link>
+        <Link href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'} className="text-brand-600 hover:underline">新規登録</Link>
       </p>
     </form>
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(registerAction, initial);
   return (
     <form action={action} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div>
         <FormLabel htmlFor="email" required>メールアドレス</FormLabel>
         <input id="email" name="email" type="email" required className={inputClass} />
@@ -85,7 +87,7 @@ export function RegisterForm() {
       </button>
       <p className="text-center text-sm text-slate-600">
         すでにアカウントをお持ちの方は{' '}
-        <Link href="/login" className="text-brand-600 hover:underline">ログイン</Link>
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-brand-600 hover:underline">ログイン</Link>
       </p>
     </form>
   );

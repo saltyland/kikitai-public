@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { submitResponseAction } from '@/app/actions/response';
+import { submitResponseAction, submitSharedLinkResponseAction } from '@/app/actions/response';
 import { submitGuestResponseAction } from '@/app/actions/guest';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
@@ -72,10 +72,13 @@ function answerSummary(q: QuestionWithOptions, s: QState): string {
 export default function AnswerForm({
   survey,
   guestToken,
+  shareToken,
 }: {
   survey: SurveyWithQuestions;
   /** 共有リンク（ゲスト回答）のトークン。指定時はゲスト用アクションで送信する。 */
   guestToken?: string;
+  /** 共有リンク（ログイン済み回答）のトークン。指定時は共有リンク用アクションで送信する。 */
+  shareToken?: string;
 }) {
   const [consented, setConsented] = useState(false);
   const [step, setStep] = useState(0);
@@ -299,11 +302,16 @@ export default function AnswerForm({
     }
     if (acceptLowQuality) formData.set('acceptLowQuality', '1');
     try {
-      // ゲスト回答（共有リンク）はトークン宛のゲスト用アクションで送信する
+      // 送信先アクションを props に応じて切り替える
       let result;
       if (guestToken) {
+        // 未ログインゲスト回答（ポイント付与なし）
         formData.set('shareToken', guestToken);
         result = await submitGuestResponseAction({ error: null }, formData);
+      } else if (shareToken) {
+        // ログイン済み共有リンク回答（share_link_no_reward に応じてポイント付与）
+        formData.set('shareToken', shareToken);
+        result = await submitSharedLinkResponseAction({ error: null }, formData);
       } else {
         formData.set('surveyId', survey.id);
         result = await submitResponseAction({ error: null }, formData);

@@ -15,6 +15,8 @@ export async function loginAction(
   const email = String(formData.get('email') ?? '');
   const password = String(formData.get('password') ?? '');
 
+  const next = String(formData.get('next') ?? '');
+
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
   try {
@@ -22,7 +24,8 @@ export async function loginAction(
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'ログインに失敗しました' };
   }
-  redirect('/');
+  // next は自サイトの相対パスのみ許可する（オープンリダイレクト防止）
+  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/');
 }
 
 export async function registerAction(
@@ -34,6 +37,7 @@ export async function registerAction(
   const nickname = String(formData.get('nickname') ?? '');
   const affiliation = String(formData.get('affiliation') ?? '');
   const field = String(formData.get('field') ?? '');
+  const next = String(formData.get('next') ?? '');
 
   if (!email || !password || !nickname) {
     return { error: 'メールアドレス・パスワード・ニックネームは必須です' };
@@ -72,7 +76,7 @@ export async function registerAction(
     };
   }
 
-  redirect('/');
+  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/');
 }
 
 export async function logoutAction(): Promise<void> {

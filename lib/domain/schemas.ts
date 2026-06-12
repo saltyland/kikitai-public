@@ -78,6 +78,7 @@ export const surveyInputSchema = z.object({
   min_trust_score: z.number().int().min(0).max(100).nullable(),
   retention_months: z.number().int().min(1).max(120).nullable(),
   visibility: z.enum(['public', 'unlisted']),
+  share_link_no_reward: z.boolean(),
 }) satisfies z.ZodType<SurveyInput>;
 
 const gridRowAnswerSchema = z.object({

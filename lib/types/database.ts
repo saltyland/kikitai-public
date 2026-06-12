@@ -339,6 +339,8 @@ export interface SurveyInput {
   retention_months: number | null;
   /** 公開範囲。unlisted は一覧非表示（リンクを知っている人のみ）。 */
   visibility: SurveyVisibility;
+  /** 共有リンク経由の回答を0ptにするか（unlisted のみ有効）。 */
+  share_link_no_reward: boolean;
 }
 
 /** グリッド設問の1行分の回答（行ラベル→選択した列） */

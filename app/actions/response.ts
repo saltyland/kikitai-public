@@ -61,3 +61,56 @@ export async function submitResponseAction(
   if (result.surveyClosed) params.set('closed', '1');
   redirect(`/?${params.toString()}`);
 }
+
+/**
+ * 共有リンク（/s/<token>）からのログイン済み回答送信。
+ * share_link_no_reward が true の場合は0ptで保存し、それ以外は品質評価付き通常送信。
+ */
+export async function submitSharedLinkResponseAction(
+  _prev: ResponseActionState,
+  formData: FormData
+): Promise<ResponseActionState> {
+  const shareToken = String(formData.get('shareToken') ?? '');
+  const payloadRaw = String(formData.get('payload') ?? '');
+  const durationRaw = Number(formData.get('durationSec'));
+  const durationSec =
+    Number.isFinite(durationRaw) && durationRaw >= 0 ? Math.round(durationRaw) : undefined;
+  const acceptLowQuality = formData.get('acceptLowQuality') === '1';
+
+  if (!/^[a-f0-9]{16,64}$/.test(shareToken)) {
+    return { error: 'アンケートが見つかりません' };
+  }
+  const answers = parseJsonWith(answerListSchema, payloadRaw);
+  if (!answers) {
+    return { error: '回答データの形式が不正です' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const user = await new AuthService(supabase).getCurrentUser();
+  if (!user) return { error: 'ログインが必要です' };
+
+  let result;
+  try {
+    result = await new ResponseService(supabase).submitSharedLinkResponse(
+      user.id,
+      shareToken,
+      answers,
+      { durationSec, acceptLowQuality }
+    );
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '回答の送信に失敗しました' };
+  }
+
+  if (result.rejected) {
+    return { error: null, rejectedFeedback: result.feedback };
+  }
+
+  revalidatePath('/surveys');
+  const params = new URLSearchParams({
+    answered: '1',
+    score: String(result.score),
+    pts: String(result.earnedPoints),
+  });
+  if (result.surveyClosed) params.set('closed', '1');
+  redirect(`/?${params.toString()}`);
+}
