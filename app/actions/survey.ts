@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import { parseJsonWith, surveyInputSchema } from '@/lib/domain/schemas';
+import type { SurveyInput } from '@/lib/types/database';
 import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
 import { NotificationService } from '@/lib/services/notificationService';
 import { BusinessRuleError } from '@/lib/repositories/dbError';
@@ -26,7 +27,8 @@ export async function saveSurveyAction(
   const payloadRaw = String(formData.get('payload') ?? '');
 
   // 構文チェックだけでなく zod で構造・型も検証する（改ざんされた payload を弾く）
-  const input = parseJsonWith(surveyInputSchema, payloadRaw);
+  // config は部分的に省略可能（サービス層でデフォルト値を補完）なため as でキャストする
+  const input = parseJsonWith(surveyInputSchema, payloadRaw) as SurveyInput | null;
   if (!input) {
     return { error: '入力データの形式が不正です' };
   }
