@@ -835,29 +835,42 @@ function QuestionInputView({
   if (q.type === 'scale') {
     const cfg = (q.config ?? {}) as ScaleConfig;
     return (
-      <div className="flex items-center gap-2 flex-wrap justify-between">
-        {cfg.minLabel && <span className="text-xs text-zinc-600 w-full sm:w-auto">{cfg.minLabel}</span>}
-        {q.options.map((o) => {
-          const checked = state.optionIds[0] === o.id;
-          return (
-            <label
-              key={o.id}
-              className={`flex min-w-[44px] flex-col items-center gap-1 rounded-lg border px-2 py-2 text-sm cursor-pointer transition ${
-                checked ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-zinc-200 text-zinc-700 hover:bg-indigo-50/40'
-              }`}
-            >
-              <span className="text-xs">{o.text}</span>
-              <input
-                type="radio"
-                name={q.id}
-                className="h-4 w-4"
-                checked={checked}
-                onChange={() => setSingle(q.id, o.id)}
-              />
-            </label>
-          );
-        })}
-        {cfg.maxLabel && <span className="text-xs text-zinc-600 w-full text-right sm:w-auto">{cfg.maxLabel}</span>}
+      <div className="flex flex-col gap-1">
+        {(cfg.minLabel || cfg.maxLabel) && (
+          <div className="flex justify-between text-xs text-zinc-500 px-1">
+            <span>{cfg.minLabel ?? ''}</span>
+            <span>{cfg.maxLabel ?? ''}</span>
+          </div>
+        )}
+        <div className="flex items-end justify-around gap-1">
+          {q.options.map((o) => {
+            const checked = state.optionIds[0] === o.id;
+            return (
+              <label
+                key={o.id}
+                className="flex flex-col items-center gap-1 cursor-pointer select-none"
+              >
+                <span className={`text-sm font-medium transition ${checked ? 'text-indigo-600' : 'text-zinc-600'}`}>
+                  {o.text}
+                </span>
+                <span
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
+                    checked ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-400 bg-white hover:border-indigo-400'
+                  }`}
+                >
+                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+                </span>
+                <input
+                  type="radio"
+                  name={q.id}
+                  className="sr-only"
+                  checked={checked}
+                  onChange={() => setSingle(q.id, o.id)}
+                />
+              </label>
+            );
+          })}
+        </div>
       </div>
     );
   }

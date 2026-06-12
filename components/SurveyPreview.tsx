@@ -205,20 +205,39 @@ function PreviewInput({
     const max = q.config.max ?? 5;
     const nums = Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
     return (
-      <div className="flex flex-wrap items-center gap-3">
-        {q.config.minLabel && <span className="text-xs text-zinc-400">{q.config.minLabel}</span>}
-        {nums.map((n) => (
-          <label key={n} className="flex flex-col items-center text-xs text-zinc-700 cursor-pointer">
-            <span className="mb-1">{n}</span>
-            <input
-              type="radio"
-              name={q.key}
-              checked={answer.options[0] === String(n)}
-              onChange={() => patch({ options: [String(n)] })}
-            />
-          </label>
-        ))}
-        {q.config.maxLabel && <span className="text-xs text-zinc-400">{q.config.maxLabel}</span>}
+      <div className="flex flex-col gap-1">
+        {(q.config.minLabel || q.config.maxLabel) && (
+          <div className="flex justify-between text-xs text-zinc-500 px-1">
+            <span>{q.config.minLabel ?? ''}</span>
+            <span>{q.config.maxLabel ?? ''}</span>
+          </div>
+        )}
+        <div className="flex items-end justify-around gap-1">
+          {nums.map((n) => {
+            const checked = answer.options[0] === String(n);
+            return (
+              <label key={n} className="flex flex-col items-center gap-1 cursor-pointer select-none">
+                <span className={`text-sm font-medium transition ${checked ? 'text-indigo-600' : 'text-zinc-600'}`}>
+                  {n}
+                </span>
+                <span
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
+                    checked ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-400 bg-white hover:border-indigo-400'
+                  }`}
+                >
+                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+                </span>
+                <input
+                  type="radio"
+                  name={q.key}
+                  className="sr-only"
+                  checked={checked}
+                  onChange={() => patch({ options: [String(n)] })}
+                />
+              </label>
+            );
+          })}
+        </div>
       </div>
     );
   }
