@@ -44,24 +44,22 @@ export default async function SharedSurveyPage({
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
                 <Link
                   href="/register"
-                  className="btn-3d rounded-full bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700 text-center"
+                  className="btn-3d btn-3d-primary px-5 py-2 text-xs text-center"
                 >
                   無料で始める
                 </Link>
                 <Link
-                  href="/"
-                  className="rounded-full border border-brand-300 px-4 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 text-center"
+                  href="/login"
+                  className="btn-3d btn-3d-secondary px-5 py-2 text-xs text-center"
                 >
-                  キキタイとは？
+                  ログイン
                 </Link>
               </div>
             </div>
           )}
-          {user && (
-            <Link href="/" className="mt-6 inline-block text-sm text-brand-600 hover:underline">
-              ホームへ戻る
-            </Link>
-          )}
+          <Link href="/" className="mt-4 inline-block text-sm text-brand-600 hover:underline">
+            {user ? 'ホームへ戻る' : 'キキタイについて見る'}
+          </Link>
         </div>
       </SharedShell>
     );

@@ -1187,6 +1187,16 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
         </div>
       ))}
 
+      {step === 2 && (
+      <button
+        type="button"
+        onClick={addSection}
+        className="w-full rounded-xl border-2 border-dashed border-brand-300 py-2 text-sm text-brand-600 hover:bg-brand-50 cursor-pointer"
+      >
+        ＋ セクションを追加（ページ分割）
+      </button>
+      )}
+
       {/* ポイントコストの目安（回答ごとの品質比例課金）※ステップ3 */}
       {step === 3 && (
       <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4 text-sm text-slate-700">
