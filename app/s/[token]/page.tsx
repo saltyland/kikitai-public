@@ -35,9 +35,33 @@ export default async function SharedSurveyPage({
             ご協力ありがとうございました。
             {closed && '（このアンケートは必要回答数に到達したため締め切られました）'}
           </p>
-          <Link href="/" className="mt-6 inline-block text-sm text-brand-600 hover:underline">
-            {user ? 'ホームへ戻る' : 'キキタイについて見る'}
-          </Link>
+          {!user && (
+            <div className="mt-8 rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 px-6 py-5 text-left">
+              <p className="text-sm font-bold text-brand-800">📋 あなたもアンケートを作れます！</p>
+              <p className="mt-2 text-xs text-brand-700 leading-relaxed">
+                キキタイなら、アカウント登録するだけで<span className="font-semibold">かんたんに自分のアンケートが作れます</span>。回答を集めて、ポイントをもらってさらに分析も。
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <Link
+                  href="/register"
+                  className="btn-3d rounded-full bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700 text-center"
+                >
+                  無料で始める
+                </Link>
+                <Link
+                  href="/"
+                  className="rounded-full border border-brand-300 px-4 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 text-center"
+                >
+                  キキタイとは？
+                </Link>
+              </div>
+            </div>
+          )}
+          {user && (
+            <Link href="/" className="mt-6 inline-block text-sm text-brand-600 hover:underline">
+              ホームへ戻る
+            </Link>
+          )}
         </div>
       </SharedShell>
     );

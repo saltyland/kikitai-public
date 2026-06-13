@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
 import type {
@@ -408,7 +408,7 @@ export class ResponseService {
       byResponse.set(a.response_id, list);
     }
 
-    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const header = ['タイムスタンプ', ...survey.questions.map((q, i) => `Q${i + 1}: ${q.text}`)];
     const rows = sessions.map((s) => {
       const mine = byResponse.get(s.id) ?? [];
       const cells = survey.questions.map((q) => {
@@ -442,7 +442,7 @@ export class ResponseService {
       byResponse.set(a.response_id, list);
     }
 
-    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const header = ['タイムスタンプ', ...survey.questions.map((q, i) => `Q${i + 1}: ${q.text}`)];
     const rows = sessions.map((s) => {
       const mine = byResponse.get(s.id) ?? [];
       const cells = survey.questions.map((q) => {
@@ -452,15 +452,47 @@ export class ResponseService {
       return [new Date(s.created_at).toLocaleString('ja-JP'), ...cells];
     });
 
-    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    // ヘッダー行を太字にする
-    header.forEach((_, ci) => {
-      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: ci })];
-      if (cell) cell.s = { font: { bold: true } };
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('回答データ');
+
+    // ヘッダー行
+    const headerRow = ws.addRow(header);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+      cell.border = {
+        top: { style: 'medium' }, bottom: { style: 'medium' },
+        left: { style: 'thin' }, right: { style: 'thin' },
+      };
+      cell.alignment = { vertical: 'middle', wrapText: true };
     });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '回答データ');
-    const buffer = Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+
+    // データ行（1行おきに薄い背景色）
+    rows.forEach((row, ri) => {
+      const dataRow = ws.addRow(row);
+      const fill: ExcelJS.Fill = ri % 2 === 0
+        ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+        : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } };
+      dataRow.eachCell({ includeEmpty: true }, (cell) => {
+        cell.fill = fill;
+        cell.border = {
+          top: { style: 'hair' }, bottom: { style: 'hair' },
+          left: { style: 'thin' }, right: { style: 'thin' },
+        };
+        cell.alignment = { vertical: 'middle' };
+      });
+    });
+
+    // 列幅をコンテンツに合わせて調整（最大60文字）
+    ws.columns.forEach((col, ci) => {
+      const maxLen = [header[ci], ...rows.map((r) => r[ci] ?? '')].reduce(
+        (max, v) => Math.max(max, String(v ?? '').length),
+        10
+      );
+      col.width = Math.min(maxLen + 2, 60);
+    });
+
+    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
     return { filename: `${survey.title || 'survey'}_results.xlsx`, buffer };
   }
 }

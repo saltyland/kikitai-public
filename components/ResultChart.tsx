@@ -4,7 +4,7 @@
  */
 
 const PALETTE = [
-  '#6366f1', // indigo-500
+  '#26a69a', // brand-500
   '#22c55e', // green-500
   '#f59e0b', // amber-500
   '#ec4899', // pink-500
@@ -80,8 +80,8 @@ export default function ResultChart({
               return (
                 <li key={i} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PALETTE[i % PALETTE.length] }} />
-                  <span className="text-zinc-600">{it.label}</span>
-                  <span className="text-zinc-600">{pct}%</span>
+                  <span className="text-slate-600">{it.label}</span>
+                  <span className="text-slate-600">{pct}%</span>
                 </li>
               );
             })}
@@ -96,13 +96,13 @@ export default function ResultChart({
           const w = Math.round((it.count / max) * 100);
           return (
             <div key={i}>
-              <div className="mb-1 flex justify-between text-xs text-zinc-500">
+              <div className="mb-1 flex justify-between text-xs text-slate-500">
                 <span>{it.label}</span>
                 <span>
                   {it.count}件（{pct}%）
                 </span>
               </div>
-              <div className="h-4 w-full overflow-hidden rounded bg-zinc-100">
+              <div className="h-4 w-full overflow-hidden rounded bg-slate-100">
                 <div
                   className="h-full rounded"
                   style={{ width: `${w}%`, background: PALETTE[i % PALETTE.length] }}

@@ -27,10 +27,10 @@
 
 @theme inline {
   /* セマンティックカラーの下地（今後ハードコードのindigo/red等を段階的に置き換える土台）。
-     primary=indigo-600 / danger=red-600 / success=green-600 / accent(Pro)=amber-500。
+     primary=brand-500 / danger=red-600 / success=green-600 / accent(Pro)=amber-500。
      ※ フォント/背景は上の @theme（brand/rounded）を正とし、geist 系の上書きは行わない。 */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
+  --color-primary: #26a69a;
+  --color-primary-hover: #19857d;
   --color-danger: #dc2626;
   --color-success: #16a34a;
   --color-accent: #f59e0b;
@@ -176,6 +176,51 @@ body {
 }
 .kikitai-spin {
   animation: kikitai-spin 0.7s linear infinite;
+}
+
+/* ── 倫理審査サマリー印刷用（A4 1枚に収める） ── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  body {
+    background: white !important;
+    font-size: 9pt;
+  }
+
+  /* サマリーページ本体 */
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  h1 { font-size: 12pt !important; margin-bottom: 4pt !important; padding-bottom: 2pt !important; }
+  h2 { font-size: 9.5pt !important; margin-bottom: 2pt !important; }
+
+  section {
+    margin-top: 6pt !important;
+  }
+
+  /* Row の縦余白を詰める */
+  .py-1\.5 { padding-top: 2pt !important; padding-bottom: 2pt !important; }
+  .py-1    { padding-top: 1pt !important; padding-bottom: 1pt !important; }
+
+  /* インフォームドコンセントのテキストボックス */
+  .whitespace-pre-wrap {
+    font-size: 8pt !important;
+  }
+
+  p.text-sm, .text-sm { font-size: 8pt !important; }
+  p.text-xs, .text-xs { font-size: 7.5pt !important; }
+
+  /* セクションを途中で改ページしない */
+  section { break-inside: avoid; }
+
+  /* フッター */
+  .mt-8 { margin-top: 4pt !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

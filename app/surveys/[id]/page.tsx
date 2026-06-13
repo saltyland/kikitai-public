@@ -33,18 +33,18 @@ export default async function AnswerSurveyPage({
             <p className="text-sm font-medium text-red-700">
               {errorMsg ?? 'アンケートが見つかりません'}
             </p>
-            <p className="mt-1 text-xs text-zinc-600">
+            <p className="mt-1 text-xs text-slate-600">
               アンケートが削除・終了されたか、すでに回答済みの可能性があります。
             </p>
-            <Link href="/surveys" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:underline">
+            <Link href="/surveys" className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline">
               回答できるアンケート一覧に戻る →
             </Link>
           </div>
         ) : (
           <>
-            <h1 className="mb-2 text-xl font-bold text-zinc-800">{survey.title}</h1>
+            <h1 className="mb-2 text-xl font-bold text-slate-800">{survey.title}</h1>
             {survey.description && (
-              <p className="mb-6 text-sm text-zinc-600">{survey.description}</p>
+              <p className="mb-6 text-sm text-slate-600">{survey.description}</p>
             )}
             <AnswerForm survey={survey} />
           </>

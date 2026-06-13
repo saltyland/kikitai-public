@@ -66,17 +66,17 @@ export default function ConfirmDialog({
       >
         <h2
           id="confirm-dialog-title"
-          className={`text-lg font-bold ${danger ? 'text-red-700' : 'text-zinc-800'}`}
+          className={`text-lg font-bold ${danger ? 'text-red-700' : 'text-slate-800'}`}
         >
           {title}
         </h2>
-        <div className="mt-2 text-sm text-zinc-600">{message}</div>
+        <div className="mt-2 text-sm text-slate-600">{message}</div>
         <div className="mt-6 flex gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="flex-1 rounded-md bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+            className="flex-1 rounded-md bg-slate-200 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-300 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
           >
             {cancelLabel}
           </button>
@@ -88,7 +88,7 @@ export default function ConfirmDialog({
             className={`flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               danger
                 ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-500'
-                : 'bg-indigo-600 hover:bg-indigo-700 focus-visible:ring-indigo-500'
+                : 'bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-500'
             }`}
           >
             {pending ? '処理中…' : confirmLabel}

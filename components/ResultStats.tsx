@@ -24,8 +24,8 @@ export default function ResultStats({ aggregates }: { aggregates: QuestionAggreg
           Object.values(agg.optionCounts).reduce((a, b) => a + b, 0) || agg.textAnswers.length;
 
         return (
-          <section key={agg.question.id} className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm">
-            <p className="mb-3 font-medium text-zinc-800">
+          <section key={agg.question.id} className="rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+            <p className="mb-3 font-medium text-slate-800">
               <span className="text-amber-600 mr-1">Q{i + 1}.</span>
               {agg.question.text}
             </p>
@@ -48,7 +48,7 @@ export default function ResultStats({ aggregates }: { aggregates: QuestionAggreg
                 {top && <Stat label="最多回答" value={`${top.text}（${top.count}）`} />}
               </dl>
             ) : (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-slate-400">
                 自由記述・日付・グリッドは統計対象外です（回答数：{responded}件）。
               </p>
             )}
@@ -61,9 +61,9 @@ export default function ResultStats({ aggregates }: { aggregates: QuestionAggreg
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-zinc-50 px-3 py-2">
-      <dt className="text-xs text-zinc-500">{label}</dt>
-      <dd className="font-bold text-zinc-800">{value}</dd>
+    <div className="rounded-md bg-slate-50 px-3 py-2">
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className="font-bold text-slate-800">{value}</dd>
     </div>
   );
 }

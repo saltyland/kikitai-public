@@ -38,7 +38,7 @@ export default async function Header({
 
   return (
     <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
-      <div className="mx-auto max-w-4xl px-4 h-14 flex items-center justify-between">
+      <div className="mx-auto max-w-4xl px-4 h-16 flex items-center justify-between">
         <Link href="/" aria-label="キキタイ ホーム">
           <Logo />
         </Link>

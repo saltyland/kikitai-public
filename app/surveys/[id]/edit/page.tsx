@@ -26,7 +26,7 @@ export default async function EditSurveyPage({
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-zinc-800">アンケートを編集</h1>
+        <h1 className="mb-6 text-xl font-bold text-slate-800">アンケートを編集</h1>
         <SurveyEditor survey={survey} />
       </main>
     </>

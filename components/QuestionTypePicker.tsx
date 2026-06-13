@@ -27,8 +27,8 @@ const FRIENDLY: Record<QuestionType, { name: string; hint: string }> = {
 
 /** 各タイプの完成イメージ図（SVGミニプレビュー）。文字なしで形だけ見せる。 */
 function TypePreview({ type }: { type: QuestionType }) {
-  const line = '#a1a1aa'; // zinc-400
-  const fill = '#6366f1'; // indigo-500
+  const line = '#a1a1aa'; // slate-400
+  const fill = '#6366f1'; // brand-500
   switch (type) {
     case 'single':
       return (
@@ -162,24 +162,24 @@ export default function QuestionTypePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-left hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="flex w-full items-center gap-3 rounded-md border border-slate-300 bg-white px-3 py-2 text-left hover:border-brand-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
       >
-        <span className="h-7 w-11 shrink-0 rounded bg-zinc-50 ring-1 ring-zinc-200">
+        <span className="h-7 w-11 shrink-0 rounded bg-slate-50 ring-1 ring-slate-200">
           <TypePreview type={value} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-zinc-800">{current.name}</span>
-          <span className="block truncate text-[11px] text-zinc-400">{current.hint}</span>
+          <span className="block truncate text-sm font-medium text-slate-800">{current.name}</span>
+          <span className="block truncate text-[11px] text-slate-400">{current.hint}</span>
         </span>
-        <svg viewBox="0 0 20 20" className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`}>
+        <svg viewBox="0 0 20 20" className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}>
           <path d="M6 8l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
       {/* 開いた時：イメージ図ボタンの一覧 */}
       {open && (
-        <div className="absolute left-0 z-20 mt-2 w-[min(34rem,90vw)] rounded-xl border border-zinc-200 bg-white p-3 shadow-xl">
-          <p className="mb-2 px-1 text-xs font-bold text-zinc-500">回答のしかたを選ぶ</p>
+        <div className="absolute left-0 z-20 mt-2 w-[min(34rem,90vw)] rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+          <p className="mb-2 px-1 text-xs font-bold text-slate-500">回答のしかたを選ぶ</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {types.map((t) => {
               const f = FRIENDLY[t];
@@ -194,15 +194,15 @@ export default function QuestionTypePicker({
                   }}
                   className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2 text-center transition ${
                     active
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-zinc-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40'
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50/40'
                   }`}
                 >
-                  <span className="h-12 w-full rounded bg-zinc-50 ring-1 ring-zinc-100">
+                  <span className="h-12 w-full rounded bg-slate-50 ring-1 ring-slate-100">
                     <TypePreview type={t} />
                   </span>
-                  <span className="text-xs font-medium text-zinc-800">{f.name}</span>
-                  <span className="text-[10px] leading-tight text-zinc-400">{f.hint}</span>
+                  <span className="text-xs font-medium text-slate-800">{f.name}</span>
+                  <span className="text-[10px] leading-tight text-slate-400">{f.hint}</span>
                 </button>
               );
             })}

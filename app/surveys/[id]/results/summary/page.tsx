@@ -43,15 +43,15 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
     : '制限なし（全回答者に配信）';
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-8 bg-white text-zinc-800 print:px-0 print:py-0">
+    <main className="mx-auto w-full max-w-3xl px-6 py-8 bg-white text-slate-800 print:px-0 print:py-0">
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <Link href={`/surveys/${survey.id}/results`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/surveys/${survey.id}/results`} className="text-sm text-brand-600 hover:underline">
           ← 結果に戻る
         </Link>
         <PrintButton />
       </div>
 
-      <h1 className="text-xl font-bold border-b-2 border-zinc-800 pb-2">
+      <h1 className="text-xl font-bold border-b-2 border-slate-800 pb-2">
         調査実施サマリー（倫理審査・記録用）
       </h1>
 
@@ -67,10 +67,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
       </Section>
 
       <Section title="2. インフォームドコンセント">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap rounded border border-zinc-300 p-3">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap rounded border border-slate-300 p-3">
           {survey.consent_text ?? '（未設定）'}
         </p>
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-xs text-slate-500">
           ※ 上記の説明文は回答画面の冒頭に表示され、明示的に同意した回答者のみが設問に進めます。
           同意状態は保存されず、セッションごとに再同意を求めます。
         </p>
@@ -103,7 +103,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
       <Section title="4. 設問構成">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-zinc-400 text-left text-xs text-zinc-500">
+            <tr className="border-b border-slate-400 text-left text-xs text-slate-500">
               <th className="py-1 pr-2 w-8">#</th>
               <th className="py-1 pr-2">設問</th>
               <th className="py-1 pr-2 w-36">形式</th>
@@ -112,10 +112,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
           </thead>
           <tbody>
             {survey.questions.map((q, i) => (
-              <tr key={q.id} className="border-b border-zinc-200 align-top">
-                <td className="py-1.5 pr-2 text-zinc-500">{i + 1}</td>
+              <tr key={q.id} className="border-b border-slate-200 align-top">
+                <td className="py-1.5 pr-2 text-slate-500">{i + 1}</td>
                 <td className="py-1.5 pr-2">{q.text}</td>
-                <td className="py-1.5 pr-2 text-zinc-500">
+                <td className="py-1.5 pr-2 text-slate-500">
                   {QuestionTypeRegistry.get(q.type).label}
                 </td>
                 <td className="py-1.5">{q.required ? '必須' : '任意'}</td>
@@ -125,7 +125,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
         </table>
       </Section>
 
-      <p className="mt-8 text-xs text-zinc-400">
+      <p className="mt-8 text-xs text-slate-400">
         本書は学術アンケートプラットフォーム「キキタイ」により {new Date().toLocaleDateString('ja-JP')} に自動生成されました。
       </p>
     </main>
@@ -135,7 +135,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6 break-inside-avoid">
-      <h2 className="mb-2 text-base font-bold border-l-4 border-zinc-700 pl-2">{title}</h2>
+      <h2 className="mb-2 text-base font-bold border-l-4 border-slate-700 pl-2">{title}</h2>
       {children}
     </section>
   );
@@ -143,8 +143,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex border-b border-zinc-200 py-1.5 text-sm">
-      <span className="w-56 shrink-0 text-zinc-500">{label}</span>
+    <div className="flex border-b border-slate-200 py-1.5 text-sm">
+      <span className="w-56 shrink-0 text-slate-500">{label}</span>
       <span className="whitespace-pre-wrap">{value}</span>
     </div>
   );

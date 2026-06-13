@@ -25,9 +25,9 @@ export function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
 /** ページ遷移時などに中央へ表示するフルスクリーンのローディング表示 */
 export function LoadingScreen({ label = '読み込み中…' }: { label?: string }) {
   return (
-    <div role="status" className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-indigo-600">
+    <div role="status" className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-brand-600">
       <Spinner className="h-8 w-8" />
-      <p className="text-sm text-zinc-600">{label}</p>
+      <p className="text-sm text-slate-600">{label}</p>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { M_PLUS_Rounded_1c } from "next/font/google";
 import "./globals.css";
+import SiteFooter from "@/components/SiteFooter";
 
 // 日本語の丸ゴシック体。親しみやすさと信頼感を両立（DESIGN_SPEC 準拠）。
 const rounded = M_PLUS_Rounded_1c({
@@ -10,9 +11,33 @@ const rounded = M_PLUS_Rounded_1c({
   display: "swap",
 });
 
+const SITE_NAME = "キキタイ";
+const SITE_DESC =
+  "学生・研究者が互いにアンケートに回答し合い、ポイントで自分の調査に回答者を集められるアンケート交換サービス。";
+
 export const metadata: Metadata = {
-  title: "キキタイ｜学術アンケート交換プラットフォーム",
-  description: "学生・研究者が互いにアンケートに回答し合うP2P型アンケート交換サービス",
+  metadataBase: new URL("https://kikitai.vercel.app"),
+  title: {
+    default: "キキタイ｜みんなで回答し合うアンケート交換サービス",
+    template: "%s｜キキタイ",
+  },
+  description: SITE_DESC,
+  applicationName: SITE_NAME,
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: "キキタイ｜みんなで回答し合うアンケート交換サービス",
+    description: SITE_DESC,
+    locale: "ja_JP",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "キキタイ｜みんなで回答し合うアンケート交換サービス",
+    description: SITE_DESC,
+  },
 };
 
 export default function RootLayout({
@@ -30,6 +55,7 @@ export default function RootLayout({
           <div className="absolute bottom-[-10rem] left-1/3 h-96 w-96 rounded-full bg-brand-200/30 blur-3xl" />
         </div>
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

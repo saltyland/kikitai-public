@@ -21,8 +21,8 @@ export default function ResultPerUser({
 }) {
   if (userResponses.length === 0) {
     return (
-      <div className="rounded-lg bg-white border border-zinc-200 px-4 py-10 text-center">
-        <p className="text-sm font-medium text-zinc-800">まだ回答がありません</p>
+      <div className="rounded-lg bg-white border border-slate-200 px-4 py-10 text-center">
+        <p className="text-sm font-medium text-slate-800">まだ回答がありません</p>
       </div>
     );
   }
@@ -36,33 +36,33 @@ export default function ResultPerUser({
       {userResponses.map((ur, idx) => (
         <section
           key={ur.responseId}
-          className="rounded-xl bg-white border border-zinc-200 shadow-sm overflow-hidden"
+          className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden"
         >
           {/* ヘッダー：匿名番号・回答日時 */}
-          <div className="flex items-center gap-3 bg-zinc-50 border-b border-zinc-200 px-5 py-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-500">
+          <div className="flex items-center gap-3 bg-slate-50 border-b border-slate-200 px-5 py-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-500">
               {idx + 1}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-700">回答者 #{idx + 1}</p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-sm font-medium text-slate-700">回答者 #{idx + 1}</p>
+              <p className="text-xs text-slate-400">
                 {new Date(ur.createdAt).toLocaleString('ja-JP')}
               </p>
             </div>
-            <span className="text-xs text-zinc-400">{ur.userId ? 'ログイン済み' : 'ゲスト'}</span>
+            <span className="text-xs text-slate-400">{ur.userId ? 'ログイン済み' : 'ゲスト'}</span>
           </div>
 
           {/* 回答一覧 */}
-          <dl className="divide-y divide-zinc-100">
+          <dl className="divide-y divide-slate-100">
             {survey.questions.map((q, qi) => {
               const text = renderAnswer(ur.answers, survey, q.id);
               return (
                 <div key={q.id} className="px-5 py-3 flex gap-3 text-sm">
-                  <dt className="w-5 shrink-0 text-indigo-500 font-medium">Q{qi + 1}</dt>
+                  <dt className="w-5 shrink-0 text-brand-500 font-medium">Q{qi + 1}</dt>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-zinc-500 mb-0.5 truncate">{q.text}</p>
-                    <dd className="text-zinc-800 whitespace-pre-wrap break-words">
-                      {text || <span className="text-zinc-400">（未回答）</span>}
+                    <p className="text-xs text-slate-500 mb-0.5 truncate">{q.text}</p>
+                    <dd className="text-slate-800 whitespace-pre-wrap break-words">
+                      {text || <span className="text-slate-400">（未回答）</span>}
                     </dd>
                   </div>
                 </div>

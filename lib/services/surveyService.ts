@@ -107,7 +107,7 @@ export class SurveyService {
       min_trust_score: input.min_trust_score,
       retention_until: this.computeRetentionUntil(input.retention_months),
       visibility: input.visibility,
-      share_link_no_reward: input.visibility === 'unlisted' ? !!input.share_link_no_reward : false,
+      share_link_no_reward: input.visibility === 'unlisted',
     };
   }
 

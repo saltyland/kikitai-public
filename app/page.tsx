@@ -9,6 +9,8 @@ import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 import ShareLinkButton from '@/components/ShareLinkButton';
 import LandingPage from '@/components/LandingPage';
 import RefreshButton from '@/components/ui/RefreshButton';
+import PublishSurveyButton from '@/components/PublishSurveyButton';
+import EmptyState from '@/components/EmptyState';
 
 export default async function HomePage({
   searchParams,
@@ -38,17 +40,17 @@ export default async function HomePage({
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         {answered && (
           <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-            回答を送信しました。ご協力ありがとうございました。
+            回答を送信しました。ありがとう！
             {earnedPts !== null && qScore !== null && (
               <span className="mt-1 block text-green-800">
                 {earnedPts > 0
-                  ? `品質スコア ${qScore} 点 → ${earnedPts}pt を獲得しました。`
-                  : `品質スコア ${qScore} 点でした。今回はポイント付与の基準に届きませんでした。`}
+                  ? `ていねいな回答ありがとう！ ${earnedPts}pt 獲得しました。`
+                  : `今回はポイントがもらえませんでした。次はもう少しくわしく答えてみよう。`}
               </span>
             )}
             {closed && (
               <span className="mt-1 block text-green-800">
-                このアンケートは必要回答数に到達したため締め切られました。
+                このアンケートは必要な回答数が集まったので、自動的に締め切られました。
               </span>
             )}
           </div>
@@ -67,24 +69,24 @@ export default async function HomePage({
           </h1>
           <p className="mt-2 text-sm text-slate-600 sm:text-base">
             アンケートに答えてポイントを貯め、自分の研究に回答者を集めよう。<br className="hidden sm:inline" />
-            学生・研究者のための、P2P型アンケート交換プラットフォーム。
+            みんなで回答し合う、アンケート交換サービス。
           </p>
         </section>
 
         <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Link
-            href="/surveys/new"
-            className="card-3d card-3d-hover block p-6"
-          >
-            <p className="text-lg font-extrabold text-brand-600">＋ アンケートを作成する</p>
-            <p className="mt-1 text-sm text-slate-500">設問を作って回答を集めましょう</p>
-          </Link>
-          <Link
             href="/surveys"
             className="card-3d card-3d-hover block p-6"
           >
-            <p className="text-lg font-extrabold text-slate-800">アンケートに回答する</p>
-            <p className="mt-1 text-sm text-slate-500">公開中のアンケートに回答します</p>
+            <p className="text-lg font-extrabold text-brand-600">アンケートに答えてポイントをためる</p>
+            <p className="mt-1 text-sm text-slate-500">答えるとポイントがたまります。まずはここから。</p>
+          </Link>
+          <Link
+            href="/surveys/new"
+            className="card-3d card-3d-hover block p-6"
+          >
+            <p className="text-lg font-extrabold text-slate-800">＋ アンケートを作る</p>
+            <p className="mt-1 text-sm text-slate-500">ためたポイントで回答者を集めましょう</p>
           </Link>
         </div>
 
@@ -93,17 +95,17 @@ export default async function HomePage({
           <RefreshButton />
         </div>
         {surveys.length === 0 ? (
-          <div className="card-3d px-4 py-10 text-center">
-            <p className="text-4xl" aria-hidden="true">📝</p>
-            <p className="mt-2 text-sm font-medium text-slate-800">まだアンケートがありません</p>
-            <p className="mt-1 text-sm text-slate-500">最初のアンケートを作成して回答を集めましょう。</p>
-            <Link
-              href="/surveys/new"
-              className="mt-4 inline-block rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              ＋ アンケートを作成する
+          <EmptyState
+            title="まだ作ったアンケートはありません"
+            description="まずは他の人のアンケートに答えてポイントをため、そのポイントで自分のアンケートに回答者を集めましょう。"
+          >
+            <Link href="/surveys" className="btn-3d btn-3d-primary px-5 py-2.5 text-sm">
+              アンケートに答えてポイントをためる
             </Link>
-          </div>
+            <Link href="/surveys/new" className="btn-3d btn-3d-secondary px-5 py-2.5 text-sm">
+              ＋ アンケートを作る
+            </Link>
+          </EmptyState>
         ) : (
           <ul className="space-y-3">
             {surveys.map((s) => (
@@ -144,15 +146,7 @@ export default async function HomePage({
                       編集
                     </Link>
                   )}
-                  {s.status === 'draft' && (
-                    <form action={changeStatusAction}>
-                      <input type="hidden" name="surveyId" value={s.id} />
-                      <input type="hidden" name="status" value="open" />
-                      <button className="btn-3d btn-3d-primary px-3 py-1">
-                        公開する
-                      </button>
-                    </form>
-                  )}
+                  {s.status === 'draft' && <PublishSurveyButton surveyId={s.id} />}
                   {s.status === 'open' && (
                     <form action={changeStatusAction}>
                       <input type="hidden" name="surveyId" value={s.id} />
