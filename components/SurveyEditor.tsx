@@ -37,7 +37,7 @@ interface EditorQuestion {
 }
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
+  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /**
  * 「あり」を選んだときに最初から入っているインフォームドコンセント文の例。
@@ -475,7 +475,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             setTemplateSection(0);
             setShowTemplates(true);
           }}
-          className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+          className="rounded-md border border-brand-300 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-100 cursor-pointer"
         >
           テンプレートから追加
         </button>
@@ -498,7 +498,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       </div>
 
       {/* 基本情報 */}
-      <section className="rounded-xl bg-white border-t-8 border-t-indigo-500 border border-zinc-200 p-5 shadow-sm space-y-4">
+      <section className="rounded-xl bg-white border-t-8 border-t-brand-500 border border-zinc-200 p-5 shadow-sm space-y-4">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
             タイトル <span className="text-red-500">*</span>
@@ -737,9 +737,9 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
         <div key={si} className="space-y-4">
           {/* セクション見出し（単一・無題のセクションは表示しない） */}
           {(sections.length > 1 || section.title || section.description) && (
-            <section className="rounded-xl bg-indigo-50 border border-indigo-200 p-4 space-y-2">
+            <section className="rounded-xl bg-brand-50 border border-brand-200 p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-700">
+                <span className="text-xs font-bold text-brand-700">
                   セクション {si + 1} / {sections.length}
                 </span>
                 {sections.length > 1 && (
@@ -883,7 +883,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                           )}
                         </div>
                       ))}
-                      <button type="button" onClick={() => addOption(q.key)} className="text-sm text-indigo-600 hover:underline cursor-pointer">
+                      <button type="button" onClick={() => addOption(q.key)} className="text-sm text-brand-600 hover:underline cursor-pointer">
                         ＋ 選択肢を追加
                       </button>
                     </div>
@@ -1032,7 +1032,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
               <button
                 type="button"
                 onClick={() => addQuestion(si)}
-                className="flex-1 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-600 hover:border-indigo-400 hover:text-indigo-600 cursor-pointer"
+                className="flex-1 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-600 hover:border-brand-400 hover:text-brand-600 cursor-pointer"
               >
                 ＋ 設問を追加
               </button>
@@ -1042,7 +1042,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                   setTemplateSection(si);
                   setShowTemplates(true);
                 }}
-                className="rounded-xl border-2 border-dashed border-indigo-300 px-4 py-3 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
+                className="rounded-xl border-2 border-dashed border-brand-300 px-4 py-3 text-sm text-brand-600 hover:bg-brand-50 cursor-pointer"
               >
                 テンプレート
               </button>
@@ -1054,7 +1054,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       <button
         type="button"
         onClick={addSection}
-        className="w-full rounded-xl border-2 border-dashed border-indigo-300 py-2 text-sm text-indigo-600 hover:bg-indigo-50 cursor-pointer"
+        className="w-full rounded-xl border-2 border-dashed border-brand-300 py-2 text-sm text-brand-600 hover:bg-brand-50 cursor-pointer"
       >
         ＋ セクションを追加（ページ分割）
       </button>
@@ -1091,7 +1091,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
           type="button"
           disabled={pending}
           onClick={() => submit('open')}
-          className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+          className="rounded-md bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 cursor-pointer"
         >
           {survey ? '保存して公開' : '公開する'}
         </button>
@@ -1114,14 +1114,14 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                 <button
                   type="button"
                   onClick={() => setRightTab('preview')}
-                  className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                  className={`px-3 py-1 ${rightTab === 'preview' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
                 >
                   プレビュー
                 </button>
                 <button
                   type="button"
                   onClick={() => setRightTab('flow')}
-                  className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600'}`}
+                  className={`px-3 py-1 ${rightTab === 'flow' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
                 >
                   分岐フロー
                 </button>
@@ -1174,7 +1174,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                   }}
                 >
                   <p className="font-medium text-zinc-800 flex items-center gap-1">
-                    <span className="text-indigo-600 text-xs">↓ジャンプ</span>
+                    <span className="text-brand-600 text-xs">↓ジャンプ</span>
                     設問 {it.index + 1}：{it.text.trim() || '（無題）'}
                   </p>
                   <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
@@ -1197,7 +1197,7 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
                     document.getElementById(`question-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 50);
                 }}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 cursor-pointer"
+                className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
               >
                 最初のエラーへ移動
               </button>
@@ -1326,7 +1326,7 @@ function GridListEditor({
           )}
         </div>
       ))}
-      <button type="button" onClick={onAdd} className="text-sm text-indigo-600 hover:underline cursor-pointer">
+      <button type="button" onClick={onAdd} className="text-sm text-brand-600 hover:underline cursor-pointer">
         ＋ {label}を追加
       </button>
     </div>

@@ -45,7 +45,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ id: st
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-8 bg-white text-zinc-800 print:px-0 print:py-0">
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <Link href={`/surveys/${survey.id}/results`} className="text-sm text-indigo-600 hover:underline">
+        <Link href={`/surveys/${survey.id}/results`} className="text-sm text-brand-600 hover:underline">
           ← 結果に戻る
         </Link>
         <PrintButton />

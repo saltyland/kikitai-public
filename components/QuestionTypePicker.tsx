@@ -28,7 +28,7 @@ const FRIENDLY: Record<QuestionType, { name: string; hint: string }> = {
 /** 各タイプの完成イメージ図（SVGミニプレビュー）。文字なしで形だけ見せる。 */
 function TypePreview({ type }: { type: QuestionType }) {
   const line = '#a1a1aa'; // zinc-400
-  const fill = '#6366f1'; // indigo-500
+  const fill = '#6366f1'; // brand-500
   switch (type) {
     case 'single':
       return (
@@ -162,7 +162,7 @@ export default function QuestionTypePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-left hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="flex w-full items-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-left hover:border-brand-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
       >
         <span className="h-7 w-11 shrink-0 rounded bg-zinc-50 ring-1 ring-zinc-200">
           <TypePreview type={value} />
@@ -194,8 +194,8 @@ export default function QuestionTypePicker({
                   }}
                   className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2 text-center transition ${
                     active
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-zinc-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40'
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-zinc-200 bg-white hover:border-brand-300 hover:bg-brand-50/40'
                   }`}
                 >
                   <span className="h-12 w-full rounded bg-zinc-50 ring-1 ring-zinc-100">

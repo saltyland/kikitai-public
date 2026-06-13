@@ -58,7 +58,7 @@ export default function ResultPerUser({
               const text = renderAnswer(ur.answers, survey, q.id);
               return (
                 <div key={q.id} className="px-5 py-3 flex gap-3 text-sm">
-                  <dt className="w-5 shrink-0 text-indigo-500 font-medium">Q{qi + 1}</dt>
+                  <dt className="w-5 shrink-0 text-brand-500 font-medium">Q{qi + 1}</dt>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-zinc-500 mb-0.5 truncate">{q.text}</p>
                     <dd className="text-zinc-800 whitespace-pre-wrap break-words">

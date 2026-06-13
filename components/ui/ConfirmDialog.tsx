@@ -88,7 +88,7 @@ export default function ConfirmDialog({
             className={`flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               danger
                 ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-500'
-                : 'bg-indigo-600 hover:bg-indigo-700 focus-visible:ring-indigo-500'
+                : 'bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-500'
             }`}
           >
             {pending ? '処理中…' : confirmLabel}

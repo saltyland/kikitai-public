@@ -7,7 +7,7 @@ const AVATAR_COLORS = [
   'bg-teal-500',
   'bg-sky-500',
   'bg-brand-600',
-  'bg-indigo-500',
+  'bg-brand-500',
   'bg-violet-500',
   'bg-fuchsia-500',
 ];
