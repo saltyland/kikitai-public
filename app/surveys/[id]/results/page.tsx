@@ -7,7 +7,14 @@ import Header from '@/components/Header';
 import ResultChart from '@/components/ResultChart';
 import ResultStats from '@/components/ResultStats';
 import ResultPerUser from '@/components/ResultPerUser';
+import ProCharts from '@/components/pro/ProCharts';
+import CrossTabExplorer, {
+  type CrossQuestion,
+  type RespondentSelections,
+} from '@/components/pro/CrossTabExplorer';
 import RefreshButton from '@/components/ui/RefreshButton';
+import { toChartData } from '@/lib/domain/resultCharts';
+import { crossTabbableQuestions, selectedOptionIds } from '@/lib/domain/crosstab';
 
 export default async function ResultsPage({
   params,
@@ -36,10 +43,11 @@ export default async function ResultsPage({
   const isPro = profile.plan === 'pro';
   const statsMode = mode === 'stats';
   const usersMode = mode === 'users';
+  const crossMode = mode === 'cross';
 
-  // ユーザー別モードのみ追加データを取得
+  // ユーザー別・クロス集計モードは回答者ごとの生データが必要
   let userResponses = null;
-  if (usersMode) {
+  if (usersMode || (crossMode && isPro)) {
     try {
       const perUser = await new ResponseService(supabase).getPerUserResults(profile.id, id);
       userResponses = perUser.userResponses;
@@ -47,6 +55,27 @@ export default async function ResultsPage({
       // フォールバック：集計グラフに戻す
     }
   }
+
+  // Proの拡張グラフ用シリアライズデータ
+  const chartData = toChartData(aggregates, responseCount);
+
+  // クロス集計用：選択式設問のメタと、回答者ごとの選択
+  const crossQuestions: CrossQuestion[] = crossTabbableQuestions(survey).map(({ q, index }) => ({
+    id: q.id,
+    index,
+    text: q.text,
+    options: q.options.map((o) => ({ id: o.id, text: o.text })),
+  }));
+  const respondentSelections: RespondentSelections[] =
+    crossMode && userResponses
+      ? userResponses.map((ur) => {
+          const sel: RespondentSelections = {};
+          for (const { q } of crossTabbableQuestions(survey)) {
+            sel[q.id] = selectedOptionIds(ur, q.id);
+          }
+          return sel;
+        })
+      : [];
 
   return (
     <>
@@ -64,6 +93,15 @@ export default async function ResultsPage({
             >
               倫理審査用サマリー
             </Link>
+            {responseCount > 0 && (
+              <Link
+                href={`/surveys/${survey.id}/results/report`}
+                className="flex items-center gap-1 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
+              >
+                学術レポート(PDF)
+                <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
+              </Link>
+            )}
             {responseCount > 0 && (
               <>
                 <a
@@ -107,6 +145,17 @@ export default async function ResultsPage({
             <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
           </Link>
           <Link
+            href={`/surveys/${survey.id}/results?mode=cross`}
+            className={`-mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-sm font-medium ${
+              crossMode
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            クロス集計
+            <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
+          </Link>
+          <Link
             href={`/surveys/${survey.id}/results?mode=users`}
             className={`-mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-sm font-medium ${
               usersMode
@@ -118,13 +167,15 @@ export default async function ResultsPage({
           </Link>
         </div>
 
-        {statsMode && !isPro ? (
+        {(statsMode || crossMode) && !isPro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
             <p className="mt-2 font-bold text-amber-800">
-              統計解析モードはProプラン限定です
+              {crossMode ? 'クロス集計モードはProプラン限定です' : '統計解析モードはProプラン限定です'}
             </p>
             <p className="mt-1 text-sm text-amber-700">
-              平均・中央値・標準偏差などの基礎統計量を確認できます。
+              {crossMode
+                ? '2つの設問の回答の関係を、ヒートマップや構成比グラフで分析できます。'
+                : '平均・中央値・標準偏差などの基礎統計量を確認できます。'}
             </p>
             <Link
               href="/profile"
@@ -133,18 +184,20 @@ export default async function ResultsPage({
               Proプランに加入する
             </Link>
           </div>
+        ) : crossMode ? (
+          responseCount === 0 ? (
+            <EmptyResults />
+          ) : (
+            <CrossTabExplorer questions={crossQuestions} respondents={respondentSelections} />
+          )
         ) : usersMode && userResponses !== null ? (
           <ResultPerUser survey={survey} userResponses={userResponses} />
         ) : responseCount === 0 ? (
-          <div className="rounded-lg bg-white border border-slate-200 px-4 py-10 text-center">
-            <p className="text-4xl" aria-hidden="true">📊</p>
-            <p className="mt-2 text-sm font-medium text-slate-800">まだ回答がありません</p>
-            <p className="mt-1 text-sm text-slate-600">
-              回答が集まると、ここに集計グラフが表示されます。
-            </p>
-          </div>
+          <EmptyResults />
         ) : statsMode ? (
           <ResultStats aggregates={aggregates} />
+        ) : isPro ? (
+          <ProCharts charts={chartData} />
         ) : (
           <div className="space-y-5">
             {aggregates.map((agg, i) => {
@@ -230,5 +283,18 @@ export default async function ResultsPage({
         )}
       </main>
     </>
+  );
+}
+
+/** 回答がまだ無い場合の共通プレースホルダ */
+function EmptyResults() {
+  return (
+    <div className="rounded-lg bg-white border border-slate-200 px-4 py-10 text-center">
+      <p className="text-4xl" aria-hidden="true">📊</p>
+      <p className="mt-2 text-sm font-medium text-slate-800">まだ回答がありません</p>
+      <p className="mt-1 text-sm text-slate-600">
+        回答が集まると、ここに集計グラフが表示されます。
+      </p>
+    </div>
   );
 }
