@@ -39,7 +39,7 @@ export default async function ResultsPage({
 
   // ユーザー別モードのみ追加データを取得
   let userResponses = null;
-  if (usersMode && isPro) {
+  if (usersMode) {
     try {
       const perUser = await new ResponseService(supabase).getPerUserResults(profile.id, id);
       userResponses = perUser.userResponses;
@@ -115,19 +115,16 @@ export default async function ResultsPage({
             }`}
           >
             ユーザー別
-            <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-white">PRO</span>
           </Link>
         </div>
 
-        {(statsMode || usersMode) && !isPro ? (
+        {statsMode && !isPro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center">
             <p className="mt-2 font-bold text-amber-800">
-              {statsMode ? '統計解析モード' : 'ユーザー別回答モード'}はProプラン限定です
+              統計解析モードはProプラン限定です
             </p>
             <p className="mt-1 text-sm text-amber-700">
-              {statsMode
-                ? '平均・中央値・標準偏差などの基礎統計量を確認できます。'
-                : '回答者ごとの個別回答内容を確認できます。'}
+              平均・中央値・標準偏差などの基礎統計量を確認できます。
             </p>
             <Link
               href="/profile"
