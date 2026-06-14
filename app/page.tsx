@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
+import { TopicService } from '@/lib/services/topicService';
 import Header from '@/components/Header';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
 import { changeStatusAction } from '@/app/actions/survey';
@@ -9,6 +10,7 @@ import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 import ShareLinkButton from '@/components/ShareLinkButton';
 import LandingPage from '@/components/LandingPage';
 import RefreshButton from '@/components/ui/RefreshButton';
+import TopicsSelectedBanner from '@/components/TopicsSelectedBanner';
 
 export default async function HomePage({
   searchParams,
@@ -31,11 +33,16 @@ export default async function HomePage({
   if (!profile) return <LandingPage />;
 
   const surveys = await new SurveyService(supabase).listMySurveys(profile.id);
+  const topicsForBanner = profile.topics_selected_at
+    ? []
+    : await new TopicService(supabase).listAll();
 
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+        {!profile.topics_selected_at && <TopicsSelectedBanner topics={topicsForBanner} />}
+
         {answered && (
           <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             回答を送信しました。ご協力ありがとうございました。
