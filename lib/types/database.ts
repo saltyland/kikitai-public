@@ -306,6 +306,8 @@ export interface QuestionWithOptions extends Question {
 /** アンケート＋設問をまとめた集約型 */
 export interface SurveyWithQuestions extends Survey {
   questions: QuestionWithOptions[];
+  /** 紐づくトピックID（1〜3件） */
+  topic_ids: string[];
 }
 
 /** 一覧カードのプレビュー用：設問の最小情報（テキスト・種別・選択肢） */
@@ -367,6 +369,10 @@ export interface SurveyInput {
   visibility: SurveyVisibility;
   /** 共有リンク経由の回答を0ptにするか（unlisted のみ有効）。 */
   share_link_no_reward: boolean;
+  /** 紐づけるトピックID（1〜3件必須） */
+  topic_ids: string[];
+  /** 既存トピックに当てはまらない場合の新トピック提案（自由記述・任意） */
+  topic_suggestion: string | null;
 }
 
 /** グリッド設問の1行分の回答（行ラベル→選択した列） */

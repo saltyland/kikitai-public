@@ -1,14 +1,8 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
-import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
-import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
-import { changeStatusAction } from '@/app/actions/survey';
-import DeleteSurveyButton from '@/components/DeleteSurveyButton';
-import ShareLinkButton from '@/components/ShareLinkButton';
 import LandingPage from '@/components/LandingPage';
-import RefreshButton from '@/components/ui/RefreshButton';
 
 export default async function HomePage({
   searchParams,
@@ -29,8 +23,6 @@ export default async function HomePage({
   const profile = await auth.getCurrentProfile();
   // 未ログインはサービス紹介のランディングページを表示
   if (!profile) return <LandingPage />;
-
-  const surveys = await new SurveyService(supabase).listMySurveys(profile.id);
 
   return (
     <>
@@ -88,87 +80,10 @@ export default async function HomePage({
           </Link>
         </div>
 
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-slate-800">作成したアンケート</h2>
-          <RefreshButton />
-        </div>
-        {surveys.length === 0 ? (
-          <div className="card-3d px-4 py-10 text-center">
-            <p className="text-4xl" aria-hidden="true">📝</p>
-            <p className="mt-2 text-sm font-medium text-slate-800">まだアンケートがありません</p>
-            <p className="mt-1 text-sm text-slate-500">最初のアンケートを作成して回答を集めましょう。</p>
-            <Link
-              href="/surveys/new"
-              className="mt-4 inline-block rounded-xl bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              ＋ アンケートを作成する
-            </Link>
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {surveys.map((s) => (
-              <li
-                key={s.id}
-                className="card-3d p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
-                      <SurveyStatusBadge status={s.status} />
-                      {s.visibility === 'unlisted' && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                          限定公開
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      回答数 {s.response_count} / {s.required_count}
-                      {s.deadline && ` ・期限 ${s.deadline}`}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  <Link
-                    href={`/surveys/${s.id}/results`}
-                    className="btn-3d btn-3d-secondary px-3 py-1"
-                  >
-                    結果を見る
-                  </Link>
-                  {s.status === 'draft' && (
-                    <Link
-                      href={`/surveys/${s.id}/edit`}
-                      className="btn-3d btn-3d-secondary px-3 py-1"
-                    >
-                      編集
-                    </Link>
-                  )}
-                  {s.status === 'draft' && (
-                    <form action={changeStatusAction}>
-                      <input type="hidden" name="surveyId" value={s.id} />
-                      <input type="hidden" name="status" value="open" />
-                      <button className="btn-3d btn-3d-primary px-3 py-1">
-                        公開する
-                      </button>
-                    </form>
-                  )}
-                  {s.status === 'open' && (
-                    <form action={changeStatusAction}>
-                      <input type="hidden" name="surveyId" value={s.id} />
-                      <input type="hidden" name="status" value="closed" />
-                      <button className="btn-3d btn-3d-danger px-3 py-1">
-                        終了する
-                      </button>
-                    </form>
-                  )}
-                  {s.status === 'open' && <ShareLinkButton token={s.share_token} />}
-                  <DeleteSurveyButton surveyId={s.id} title={s.title} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <Link href="/manage" className="card-3d card-3d-hover block p-6">
+          <p className="text-lg font-extrabold text-slate-800">作成したアンケートを管理する</p>
+          <p className="mt-1 text-sm text-slate-500">下書き・公開中・終了済みのアンケートを確認・編集します</p>
+        </Link>
       </main>
     </>
   );

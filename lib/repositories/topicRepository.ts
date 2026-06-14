@@ -16,6 +16,8 @@ export interface ITopicRepository {
    * 自分自身は結果に含めない。
    */
   findRelated(topicId: string, limit?: number): Promise<Topic[]>;
+  /** 新トピック提案を保存する（自由記述） */
+  createSuggestion(surveyId: string, userId: string, text: string): Promise<void>;
 }
 
 export class TopicRepository extends BaseRepository<Topic> implements ITopicRepository {
@@ -63,5 +65,12 @@ export class TopicRepository extends BaseRepository<Topic> implements ITopicRepo
       .limit(limit);
     if (error) throwDbError(error, 'topics');
     return (data ?? []) as Topic[];
+  }
+
+  async createSuggestion(surveyId: string, userId: string, text: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('topic_suggestions')
+      .insert({ survey_id: surveyId, user_id: userId, text });
+    if (error) throwDbError(error, 'topic_suggestions');
   }
 }

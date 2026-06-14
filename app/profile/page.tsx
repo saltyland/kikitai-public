@@ -4,7 +4,6 @@ import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
 import Header from '@/components/Header';
 import ProfileForm from '@/components/ProfileForm';
-import PointsSummaryCard from '@/components/PointsSummaryCard';
 import TrustBadge from '@/components/TrustBadge';
 
 export default async function ProfilePage() {
@@ -13,10 +12,7 @@ export default async function ProfilePage() {
   if (!profile) redirect('/login');
 
   const service = new ProfileService(supabase);
-  const [points, lots] = await Promise.all([
-    service.getPointsSummary(profile.id),
-    service.getPointLots(profile.id),
-  ]);
+  const points = await service.getPointsSummary(profile.id);
 
   return (
     <>
@@ -25,8 +21,6 @@ export default async function ProfilePage() {
         <h1 className="mb-6 text-xl font-bold text-slate-800">プロフィール</h1>
 
         <div className="mb-6 space-y-4">
-          <PointsSummaryCard summary={points} lots={lots} />
-
           <section className="card-3d rounded-2xl bg-white p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-500">信頼スコア</h2>
