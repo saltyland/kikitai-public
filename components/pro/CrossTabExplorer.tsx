@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { cramersV, type CrossTab } from '@/lib/domain/crosstab';
+import { cramersV, crossTabFromSelections, type CrossTab } from '@/lib/domain/crosstab';
 import { color } from '@/components/charts/primitives';
 
 /** クロス集計に使える設問のメタ（シリアライズ可能） */
@@ -234,39 +234,15 @@ function QuestionSelect({
   );
 }
 
-/** クライアント側でクロス集計表を組み立てる（crosstab.ts と同じ計数ルール） */
+/** クライアント側でクロス集計表を組み立てる（集計ロジック本体は crosstab.ts と共有） */
 function computeCrossTab(
   rowQ: CrossQuestion,
   colQ: CrossQuestion,
   respondents: RespondentSelections[]
 ): CrossTab {
-  const rowLabels = rowQ.options.map((o) => o.text);
-  const colLabels = colQ.options.map((o) => o.text);
-  const rowIndex = new Map(rowQ.options.map((o, i) => [o.id, i]));
-  const colIndex = new Map(colQ.options.map((o, i) => [o.id, i]));
-  const matrix = rowLabels.map(() => colLabels.map(() => 0));
-  let excludedCount = 0;
-
-  for (const r of respondents) {
-    const rows = r[rowQ.id] ?? [];
-    const cols = r[colQ.id] ?? [];
-    if (rows.length === 0 || cols.length === 0) {
-      excludedCount += 1;
-      continue;
-    }
-    for (const rid of rows) {
-      const ri = rowIndex.get(rid);
-      if (ri === undefined) continue;
-      for (const cid of cols) {
-        const ci = colIndex.get(cid);
-        if (ci === undefined) continue;
-        matrix[ri][ci] += 1;
-      }
-    }
-  }
-
-  const rowTotals = matrix.map((r) => r.reduce((a, b) => a + b, 0));
-  const colTotals = colLabels.map((_, ci) => matrix.reduce((a, r) => a + r[ci], 0));
-  const grandTotal = rowTotals.reduce((a, b) => a + b, 0);
-  return { rowLabels, colLabels, matrix, rowTotals, colTotals, grandTotal, excludedCount };
+  const selections = respondents.map((r) => ({
+    row: r[rowQ.id] ?? [],
+    col: r[colQ.id] ?? [],
+  }));
+  return crossTabFromSelections(rowQ.options, colQ.options, selections);
 }

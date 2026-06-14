@@ -45,36 +45,43 @@ export interface CrossTab {
   excludedCount: number;
 }
 
+/** クロス集計表の行・列に使う選択肢（id/textのみ。サーバー/クライアント両方で使えるよう最小限） */
+export interface CrossTabOption {
+  id: string;
+  text: string;
+}
+
+/** 1回答者の行設問・列設問それぞれの選択option_id */
+export interface CrossTabSelection {
+  row: string[];
+  col: string[];
+}
+
 /**
- * 行設問×列設問のクロス集計表を作る。
+ * 行・列の選択肢と回答者ごとの選択から同時度数表を作る純粋関数。
+ * `buildCrossTab`（サーバー側・SurveyWithQuestions入力）と
+ * `CrossTabExplorer`（クライアント側・シリアライズ済みデータ入力）の
+ * 両方からこの関数を呼び、集計ロジックを1箇所にまとめる。
  *
  * - 単一選択系は1回答者につき1セルに加算。
  * - 複数選択は選んだ組み合わせ全てのセルに加算するため、合計は回答者数を上回りうる
  *   （grandTotal は「行・列とも回答した回答者の延べセル寄与数」）。
  * - 行・列いずれかが未回答の回答者は excludedCount に数え、表には含めない。
  */
-export function buildCrossTab(
-  survey: SurveyWithQuestions,
-  userResponses: UserResponse[],
-  rowQuestionId: string,
-  colQuestionId: string
-): CrossTab | null {
-  const rowQ = survey.questions.find((q) => q.id === rowQuestionId);
-  const colQ = survey.questions.find((q) => q.id === colQuestionId);
-  if (!rowQ || !colQ) return null;
-  if (!isCrossTabbable(rowQ.type) || !isCrossTabbable(colQ.type)) return null;
-
-  const rowLabels = rowQ.options.map((o) => o.text);
-  const colLabels = colQ.options.map((o) => o.text);
-  const rowIndex = new Map(rowQ.options.map((o, i) => [o.id, i]));
-  const colIndex = new Map(colQ.options.map((o, i) => [o.id, i]));
+export function crossTabFromSelections(
+  rowOptions: CrossTabOption[],
+  colOptions: CrossTabOption[],
+  selections: CrossTabSelection[]
+): CrossTab {
+  const rowLabels = rowOptions.map((o) => o.text);
+  const colLabels = colOptions.map((o) => o.text);
+  const rowIndex = new Map(rowOptions.map((o, i) => [o.id, i]));
+  const colIndex = new Map(colOptions.map((o, i) => [o.id, i]));
 
   const matrix = rowLabels.map(() => colLabels.map(() => 0));
   let excludedCount = 0;
 
-  for (const ur of userResponses) {
-    const rows = selectedOptionIds(ur, rowQuestionId);
-    const cols = selectedOptionIds(ur, colQuestionId);
+  for (const { row: rows, col: cols } of selections) {
     if (rows.length === 0 || cols.length === 0) {
       excludedCount += 1;
       continue;
@@ -95,6 +102,29 @@ export function buildCrossTab(
   const grandTotal = rowTotals.reduce((a, b) => a + b, 0);
 
   return { rowLabels, colLabels, matrix, rowTotals, colTotals, grandTotal, excludedCount };
+}
+
+/**
+ * 行設問×列設問のクロス集計表を作る（サーバー側・SurveyWithQuestions入力）。
+ * 集計ロジック本体は `crossTabFromSelections` に委譲する。
+ */
+export function buildCrossTab(
+  survey: SurveyWithQuestions,
+  userResponses: UserResponse[],
+  rowQuestionId: string,
+  colQuestionId: string
+): CrossTab | null {
+  const rowQ = survey.questions.find((q) => q.id === rowQuestionId);
+  const colQ = survey.questions.find((q) => q.id === colQuestionId);
+  if (!rowQ || !colQ) return null;
+  if (!isCrossTabbable(rowQ.type) || !isCrossTabbable(colQ.type)) return null;
+
+  const selections = userResponses.map((ur) => ({
+    row: selectedOptionIds(ur, rowQuestionId),
+    col: selectedOptionIds(ur, colQuestionId),
+  }));
+
+  return crossTabFromSelections(rowQ.options, colQ.options, selections);
 }
 
 /**
