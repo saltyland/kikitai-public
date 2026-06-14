@@ -127,6 +127,12 @@ export interface Profile {
   plan: Plan;
   /** SNSリンク（twitter/instagram/github/websiteのURL） */
   sns_links: SnsLinks;
+  /** トピック選択（オンボーディング or 再訪促進バナー）を完了した日時 */
+  topics_selected_at: string | null;
+  /** トピックダイジェスト通知を最後に送信した日時 */
+  last_topic_digest_at: string | null;
+  /** 通知種別ごとのON/OFF設定。キー未設定時はON扱い（isNotificationEnabled参照） */
+  notification_settings: NotificationSettings;
   created_at: string;
 }
 
@@ -154,7 +160,16 @@ export interface PublicProfile {
 export type NotificationType =
   | 'survey_goal_reached' // 自分のアンケートが目標回答数に到達
   | 'points_low' // 残高不足で公開に失敗
-  | 'points_expiring'; // ポイント失効14日前
+  | 'points_expiring' // ポイント失効14日前
+  | 'followed_user_survey_published' // フォロー中のユーザーがアンケートを公開
+  | 'followed_topic_digest'; // フォロー中トピックの新着ダイジェスト
+
+/**
+ * 通知種別ごとのON/OFF設定。
+ * キーが存在しない場合は「ON（通知する）」がデフォルト挙動。
+ * isNotificationEnabled() を介して判定すること。
+ */
+export type NotificationSettings = Partial<Record<NotificationType, boolean>>;
 
 /** アプリ内通知（notifications テーブルの行） */
 export interface AppNotification {
@@ -230,6 +245,17 @@ export interface Survey {
   created_at: string;
 }
 
+/** トピックマスタ（topics テーブルの行） */
+export interface Topic {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  /** AI類似度レコメンド用の埋め込みベクトル。未計算は null。 */
+  embedding: unknown | null;
+  created_at: string;
+}
+
 export interface Question {
   id: string;
   survey_id: string;
@@ -280,6 +306,8 @@ export interface QuestionWithOptions extends Question {
 /** アンケート＋設問をまとめた集約型 */
 export interface SurveyWithQuestions extends Survey {
   questions: QuestionWithOptions[];
+  /** 紐づくトピックID（1〜3件） */
+  topic_ids: string[];
 }
 
 /** 一覧カードのプレビュー用：設問の最小情報（テキスト・種別・選択肢） */
@@ -341,6 +369,10 @@ export interface SurveyInput {
   visibility: SurveyVisibility;
   /** 共有リンク経由の回答を0ptにするか（unlisted のみ有効）。 */
   share_link_no_reward: boolean;
+  /** 紐づけるトピックID（1〜3件必須） */
+  topic_ids: string[];
+  /** 既存トピックに当てはまらない場合の新トピック提案（自由記述・任意） */
+  topic_suggestion: string | null;
 }
 
 /** グリッド設問の1行分の回答（行ラベル→選択した列） */

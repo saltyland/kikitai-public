@@ -8,6 +8,7 @@ import QuestionTypePicker from '@/components/QuestionTypePicker';
 import SurveyPreview from '@/components/SurveyPreview';
 import BranchFlow from '@/components/BranchFlow';
 import QuestionTemplates from '@/components/QuestionTemplates';
+import TopicPicker from '@/components/TopicPicker';
 import { validateEditorQuestion, hasBlockingWarning, type QuestionWarning } from '@/lib/domain/validation';
 import type { QuestionSeed } from '@/lib/domain/questionTemplates';
 import type {
@@ -20,6 +21,7 @@ import type {
   ScaleConfig,
   AttentionConfig,
   TargetConditions,
+  Topic,
 } from '@/lib/types/database';
 
 /** 編集中の設問。config はタイプ別の緩い形で保持し、保存時にサービス層が正規化する。 */
@@ -143,6 +145,8 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
   retentionMonths: number | null;
   unlisted: boolean;
   shareLinkNoReward: boolean;
+  topicIds: string[];
+  topicSuggestion: string;
 } {
   if (!survey) {
     return {
@@ -160,6 +164,8 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
       shareLinkNoReward: false,
       minTrustScore: null,
       retentionMonths: null,
+      topicIds: [],
+      topicSuggestion: '',
     };
   }
   const sections = survey.sections.length ? survey.sections : [{ title: '', description: '' }];
@@ -204,10 +210,18 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     minTrustScore: survey.min_trust_score,
     // retention_until（日時）から残り月数は復元できないため、編集時は再設定式にする
     retentionMonths: null,
+    topicIds: survey.topic_ids,
+    topicSuggestion: '',
   };
 }
 
-export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions | null }) {
+export default function SurveyEditor({
+  survey,
+  topics,
+}: {
+  survey: SurveyWithQuestions | null;
+  topics: Topic[];
+}) {
   const router = useRouter();
   const initial = fromSurvey(survey);
   const [title, setTitle] = useState(initial.title);
@@ -225,6 +239,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
   const [shareLinkNoReward, setShareLinkNoReward] = useState(initial.shareLinkNoReward);
   const [minTrustScore, setMinTrustScore] = useState<number | null>(initial.minTrustScore);
   const [retentionMonths, setRetentionMonths] = useState<number | null>(initial.retentionMonths);
+  const [topicIds, setTopicIds] = useState<string[]>(initial.topicIds);
+  const [topicSuggestion, setTopicSuggestion] = useState(initial.topicSuggestion);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -399,6 +415,10 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       setError('インフォームドコンセント文（研究目的・データの取り扱い・任意性の説明）を入力してください');
       return;
     }
+    if (topicIds.length < 1) {
+      setError('トピックを1〜3個選択してください');
+      return;
+    }
     // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
     if (status === 'open') {
       setShowValidation(true);
@@ -434,6 +454,8 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
       target_conditions: targetConditions,
       min_trust_score: minTrustScore,
       retention_months: retentionMonths,
+      topic_ids: topicIds,
+      topic_suggestion: topicSuggestion.trim() || null,
       questions: ordered.map((q, qi) => {
         // 条件元が自分より前にある場合のみ有効
         const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
@@ -514,6 +536,13 @@ export default function SurveyEditor({ survey }: { survey: SurveyWithQuestions |
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
+        <TopicPicker
+          topics={topics}
+          selectedIds={topicIds}
+          onChange={setTopicIds}
+          suggestion={topicSuggestion}
+          onSuggestionChange={setTopicSuggestion}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">必要回答数</label>
