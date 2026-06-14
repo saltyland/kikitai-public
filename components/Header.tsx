@@ -7,6 +7,7 @@ import HeaderMobileMenu from '@/components/HeaderMobileMenu';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { NotificationService } from '@/lib/services/notificationService';
+import { NAV_ITEMS } from '@/lib/ui/navItems';
 import type { AppNotification } from '@/lib/types/database';
 
 /**
@@ -43,25 +44,25 @@ export default async function Header({
           <Logo />
         </Link>
 
-        {/* sm以上：横並びナビ */}
+        {/* sm以上：横並びナビ（5項目） */}
         <nav className="hidden sm:flex items-center gap-4 text-sm">
-          <Link href="/" className="text-slate-600 hover:text-brand-600">
-            ホーム
-          </Link>
-          <Link href="/surveys/new" className="text-slate-600 hover:text-brand-600">
-            作成する
-          </Link>
-          <Link href="/surveys" className="text-slate-600 hover:text-brand-600">
-            回答する
-          </Link>
+          {NAV_ITEMS.map((item) =>
+            item.href === '/profile' ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2 font-medium text-slate-600 hover:text-brand-600"
+              >
+                <Avatar name={nickname} src={avatarUrl} className="h-7 w-7 text-xs" />
+                <span className="max-w-[8rem] truncate">{item.label}</span>
+              </Link>
+            ) : (
+              <Link key={item.href} href={item.href} className="text-slate-600 hover:text-brand-600">
+                {item.label}
+              </Link>
+            )
+          )}
           <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 font-medium text-slate-600 hover:text-brand-600"
-          >
-            <Avatar name={nickname} src={avatarUrl} className="h-7 w-7 text-xs" />
-            <span className="max-w-[12rem] truncate">{nickname}</span>
-          </Link>
           <form action={logoutAction}>
             <button
               type="submit"

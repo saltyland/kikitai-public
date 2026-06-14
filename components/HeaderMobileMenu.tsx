@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { logoutAction } from '@/app/actions/auth';
+import { NAV_ITEMS } from '@/lib/ui/navItems';
 
 /**
  * sm未満で使うハンバーガーメニュー。
@@ -33,18 +34,16 @@ export default function HeaderMobileMenu({ nickname }: { nickname: string }) {
       {open && (
         <nav className="sm:hidden absolute inset-x-0 top-14 z-40 border-b border-brand-100/70 bg-white shadow-sm">
           <div className="mx-auto max-w-4xl px-4 py-2 flex flex-col text-sm">
-            <Link href="/" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              ホーム
-            </Link>
-            <Link href="/surveys/new" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              作成する
-            </Link>
-            <Link href="/surveys" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              回答する
-            </Link>
-            <Link href="/profile" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              {nickname}（プロフィール）
-            </Link>
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50"
+              >
+                {item.href === '/profile' ? `${item.label}（${nickname}）` : item.label}
+              </Link>
+            ))}
             <form action={logoutAction}>
               <button type="submit" className="w-full rounded-md px-2 py-2 text-left text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer">
                 ログアウト
