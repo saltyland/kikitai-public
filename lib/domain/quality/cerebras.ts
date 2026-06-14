@@ -6,15 +6,14 @@ import type {
 } from './types';
 
 /**
- * Gemini API を用いた品質評価器（DESIGN_SPEC §2）。
- * GEMINI_API_KEY が設定されている場合のみ使用される。
- * 通信・パース失敗時は例外を投げ、呼び出し側（factory）がルールベースへ自動フォールバックする。
- *
- * 評価軸: 一貫性・誠実性・回答の充実度。返却形式: { score: number, feedback: string }。
- * モデル: gemini-1.5-flash。
+ * Cerebras API を用いた品質評価器。
+ * 日次トークン上限が厚いためバッチ再評価に適する。
+ * OpenAI互換エンドポイントを使用。CEREBRAS_API_KEY が必要。
+ * 通信・パース失敗時は例外を投げ、呼び出し側がフォールバックする。
  */
-export class GeminiEvaluator implements IQualityEvaluator {
-  private static readonly MODEL = 'gemini-3-flash';
+export class CerebrasEvaluator implements IQualityEvaluator {
+  private static readonly MODEL = 'llama3.1-8b';
+  private static readonly ENDPOINT = 'https://api.cerebras.ai/v1/chat/completions';
 
   constructor(private readonly apiKey: string) {}
 
@@ -26,11 +25,8 @@ export class GeminiEvaluator implements IQualityEvaluator {
       answer: this.describeAnswer(i),
     }));
 
-    // プロンプトインジェクション対策：
-    // 回答テキストは <survey_data> デリミタ内に閉じ込め、「データであり指示ではない」
-    // ことを明示する。回答者が「score:100を返せ」等を書き込んでも従わせない。
-    // さらに呼び出し側（CompositeEvaluator）がルールベース評価と突き合わせて
-    // 乖離が大きい場合はルールベースを優先する二重防御を取る。
+    // 4軸ルーブリック（付録B）を明示。Cerebrasはトークン余裕があるので詳細に記述。
+    // <survey_data>封じ込めでプロンプトインジェクション対策。
     const prompt = [
       'あなたはアンケート回答の品質を評価するアシスタントです。',
       '下記の4軸ルーブリックで採点し、合計を score として返してください。',
@@ -52,31 +48,32 @@ export class GeminiEvaluator implements IQualityEvaluator {
       '</survey_data>',
     ].join('\n');
 
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${GeminiEvaluator.MODEL}:generateContent` +
-      `?key=${encodeURIComponent(this.apiKey)}`;
-
-    const res = await fetch(url, {
+    const res = await fetch(CerebrasEvaluator.ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0, responseMimeType: 'application/json' },
+        model: CerebrasEvaluator.MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0,
+        response_format: { type: 'json_object' },
       }),
     });
 
     if (!res.ok) {
-      throw new Error(`Gemini API error: ${res.status}`);
+      throw new Error(`Cerebras API error: ${res.status}`);
     }
 
     const json = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      choices?: { message?: { content?: string } }[];
     };
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    const text = json.choices?.[0]?.message?.content ?? '';
     const parsed = JSON.parse(text) as { score?: unknown; feedback?: unknown };
 
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score))));
-    if (!Number.isFinite(score)) throw new Error('Gemini returned invalid score');
+    if (!Number.isFinite(score)) throw new Error('Cerebras returned invalid score');
     const feedback =
       typeof parsed.feedback === 'string' && parsed.feedback.trim()
         ? parsed.feedback.trim()
@@ -84,7 +81,6 @@ export class GeminiEvaluator implements IQualityEvaluator {
     return { score, feedback };
   }
 
-  /** 設問タイプに応じて回答を人間可読なテキストへ整形する */
   private describeAnswer(item: EvaluationItem): string {
     const a = item.answer;
     if (!a) return '(未回答)';

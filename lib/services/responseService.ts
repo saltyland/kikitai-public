@@ -13,8 +13,14 @@ import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
   createQualityEvaluator,
-  scoreToMultiplier,
+  grade,
+  sanitizeItems,
+  shouldCallLLM,
+  RuleBasedEvaluator,
   type EvaluationItem,
+  type MechSignals,
+  type QualityHints,
+  type QualityResult,
 } from '@/lib/domain/quality';
 import { AttentionCheckQuestion } from '@/lib/domain/questions/AttentionQuestion';
 
@@ -44,6 +50,12 @@ export interface SubmitOptions {
    * 差し戻し後の再送信でユーザーが明示した場合のみ true。
    */
   acceptLowQuality?: boolean;
+  /**
+   * クライアント由来の不正シグナルのヒント（paste/aiStyle/inputDynamics）。
+   * ルーティング（LLMを呼ぶか）の判断材料に使う。
+   * TODO(S2/S3): フォーム側でこれらのヒントを計測して供給する。
+   */
+  qualityHints?: QualityHints;
 }
 
 /** アンケート回答・結果集計のビジネスロジック */
@@ -276,12 +288,34 @@ export class ResponseService {
           : undefined,
       answer: answers.find((a) => a.question_id === q.id),
     }));
-    const result = await createQualityEvaluator().evaluate(items, {
-      durationSec: options.durationSec,
-    });
-    const multiplier = scoreToMultiplier(result.score);
+    const ctx = { durationSec: options.durationSec };
 
-    // 低品質（倍率0）の場合は即ペナルティを与えず、保存前に差し戻して
+    // 送信前サニタイズ（設計書 §2）：LLM へ渡す前に必ず通す（S3実装をバレル経由で import）。
+    const sanitized = sanitizeItems(items);
+
+    // 機械シグナル（設計書 §2/§3）：ルールベース評価（床）＋クライアントヒント。
+    // LLM を呼ぶ前に得られる安価な信号で、ルーティングと grade の双方が参照する。
+    const ruleResult = await new RuleBasedEvaluator().evaluate(sanitized, ctx);
+    const mech: MechSignals = {
+      rulePass: ruleResult.score >= 100,
+      ruleScore: ruleResult.score,
+      hints: options.qualityHints,
+      durationSec: options.durationSec,
+    };
+
+    // ルーティング（設計書 §3）：LLM を呼ぶか機械評価のみで確定するか分岐する。
+    // TODO(S2): RoutingUser に信頼スコア等を供給して連動させる。
+    const routing = shouldCallLLM(sanitized, mech, {});
+    const quality: QualityResult = routing.callLLM
+      ? await createQualityEvaluator().evaluate(sanitized, ctx)
+      : ruleResult;
+
+    // 最終グレーディング（設計書 §1/§7）：ティアと付与率を決定（S5実装をバレル経由で import）。
+    const gradeResult = grade(quality, mech);
+    const result = { score: gradeResult.score, feedback: gradeResult.feedback };
+    const multiplier = gradeResult.payoutRate;
+
+    // 低品質（付与率0）の場合は即ペナルティを与えず、保存前に差し戻して
     // 再回答を促す（B#11 の一方的ペナルティの救済）。
     // ユーザーが acceptLowQuality を明示した再送信のみ、そのまま保存する。
     if (multiplier === 0 && !options.acceptLowQuality) {
@@ -299,8 +333,10 @@ export class ResponseService {
       1,
       visibleQuestions.reduce((sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost, 0)
     );
+    // 付与率（payoutRate）を下流の報酬付与RPCへ反映する。RPCの契約は earnedPoints
+    // （= 基本コスト × payoutRate）のままなので、ここで換算して渡す。
     const earnedPoints = Math.round(baseCost * multiplier);
-    const trustDelta = result.score === 0 ? -5 : 0;
+    const trustDelta = gradeResult.tier === 'T0' ? -5 : 0;
 
     // 回答保存＋回答者への報酬付与＋作成者からの品質比例課金＋信頼スコア更新＋
     // 上限到達時の自動closeを1トランザクション（RPC）で実行する。
