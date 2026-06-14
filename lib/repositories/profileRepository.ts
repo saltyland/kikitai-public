@@ -34,6 +34,8 @@ export interface IProfileRepository {
   findByIds(ids: string[]): Promise<Map<string, PublicProfile>>;
   update(id: string, data: ProfileEditable): Promise<Profile>;
   updatePlan(id: string, plan: Plan): Promise<Profile>;
+  /** トピック選択（オンボーディング or 既存ユーザー向けバナー）完了を記録する */
+  markTopicsSelected(id: string): Promise<void>;
   delete(id: string): Promise<void>;
 }
 
@@ -84,6 +86,14 @@ export class ProfileRepository extends BaseRepository<Profile> implements IProfi
       .single();
     if (error) throwDbError(error, 'profiles');
     return updated as Profile;
+  }
+
+  async markTopicsSelected(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from(this.table)
+      .update({ topics_selected_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) throwDbError(error, 'profiles');
   }
 
   async delete(id: string): Promise<void> {

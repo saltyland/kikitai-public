@@ -1,16 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { TopicRepository } from '@/lib/repositories/topicRepository';
 import { FollowRepository } from '@/lib/repositories/followRepository';
+import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import type { Topic } from '@/lib/types/database';
 
 /** トピック一覧・フォロー状況・レコメンドのビジネスロジック */
 export class TopicService {
   private readonly topicRepo: TopicRepository;
   private readonly followRepo: FollowRepository;
+  private readonly profileRepo: ProfileRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.topicRepo = new TopicRepository(supabase);
     this.followRepo = new FollowRepository(supabase);
+    this.profileRepo = new ProfileRepository(supabase);
   }
 
   /** 全トピックをカテゴリ・名前順で取得する */
@@ -52,5 +55,17 @@ export class TopicService {
   /** トピックのフォローを解除する */
   async unfollowTopic(userId: string, topicId: string): Promise<void> {
     await this.followRepo.unfollowTopic(userId, topicId);
+  }
+
+  /**
+   * オンボーディング／既存ユーザー向け再訪促進バナーでのトピック選択を完了する。
+   * 選択されたトピックを一括フォローし、topics_selected_at を記録する
+   * （スキップ時は topicIds が空配列のまま呼び出され、記録のみ行う）。
+   */
+  async completeTopicSelection(userId: string, topicIds: string[]): Promise<void> {
+    if (topicIds.length > 0) {
+      await this.followRepo.followTopics(userId, topicIds);
+    }
+    await this.profileRepo.markTopicsSelected(userId);
   }
 }
