@@ -28,8 +28,17 @@ export async function completeOnboardingAction(
   const nickname = String(formData.get('nickname') ?? '').trim();
   if (!nickname) return { error: 'ニックネームは必須です' };
 
-  const ageRaw = str('age');
-  const age = ageRaw !== null && /^\d{1,3}$/.test(ageRaw) ? Number(ageRaw) : null;
+  const birthday = str('birthday');
+  const age = (() => {
+    if (!birthday) return null;
+    const birth = new Date(birthday);
+    if (isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let a = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+    return a >= 0 && a <= 120 ? a : null;
+  })();
 
   const privateFields = formData
     .getAll('private_fields')
@@ -43,6 +52,7 @@ export async function completeOnboardingAction(
       affiliation: str('affiliation'),
       field: str('field'),
       age,
+      birthday,
       gender: str('gender'),
       occupation: str('occupation'),
       grade: str('grade'),

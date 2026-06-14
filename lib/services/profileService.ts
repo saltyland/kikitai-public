@@ -85,6 +85,7 @@ export class ProfileService {
       affiliation: string | null;
       field: string | null;
       age: number | null;
+      birthday?: string | null;
       gender: string | null;
       occupation: string | null;
       grade: string | null;

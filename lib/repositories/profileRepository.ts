@@ -11,6 +11,7 @@ export type ProfileEditable = Partial<
     | 'affiliation'
     | 'field'
     | 'age'
+    | 'birthday'
     | 'gender'
     | 'occupation'
     | 'grade'

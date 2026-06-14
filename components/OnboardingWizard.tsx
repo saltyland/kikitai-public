@@ -26,7 +26,7 @@ export default function OnboardingWizard({ nickname }: Props) {
   // step4のフォーム値
   const [form, setForm] = useState({
     nickname: nickname,
-    age: '',
+    birthday: '',
     gender: '',
     occupation: '',
     grade: '',
@@ -206,22 +206,21 @@ export default function OnboardingWizard({ nickname }: Props) {
                 />
               </QuestionBlock>
 
-              {/* Q2 年齢 */}
+              {/* Q2 生年月日 */}
               <QuestionBlock
                 number={2}
-                label="年齢"
+                label="生年月日"
                 fieldKey="age"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
               >
                 <input
-                  type="number"
-                  value={form.age}
-                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                  type="date"
+                  value={form.birthday}
+                  onChange={(e) => setForm({ ...form, birthday: e.target.value })}
                   className={inputClass}
-                  placeholder="例：22"
-                  min={10}
-                  max={120}
+                  max={new Date().toISOString().slice(0, 10)}
+                  min="1900-01-01"
                 />
               </QuestionBlock>
 
