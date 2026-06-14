@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
+import { TopicRepository } from '@/lib/repositories/topicRepository';
 import type {
   Survey,
   SurveyInput,
@@ -19,11 +20,13 @@ export class SurveyService {
   private readonly surveyRepo: SurveyRepository;
   private readonly profileRepo: ProfileRepository;
   private readonly responseRepo: ResponseRepository;
+  private readonly topicRepo: TopicRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.profileRepo = new ProfileRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
+    this.topicRepo = new TopicRepository(supabase);
   }
 
   /** 入力バリデーション。設問タイプ固有の検証はレジストリ経由で各タイプ定義に委譲する。 */
@@ -31,6 +34,9 @@ export class SurveyService {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
     if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
+    if (input.topic_ids.length < 1 || input.topic_ids.length > 3) {
+      throw new Error('トピックは1〜3個選択してください');
+    }
     // インフォームドコンセント文は「あり/なし」を作成者が選べる（任意）。
     // 「なし」の場合は consent_text が null となり、回答画面では汎用の説明文を表示する。
     input.questions.forEach((q: QuestionInput, i: number) => {
@@ -119,6 +125,12 @@ export class SurveyService {
     return d.toISOString();
   }
 
+  /** 新規トピック提案があれば保存する（自由記述・任意） */
+  private async saveTopicSuggestion(surveyId: string, userId: string, input: SurveyInput) {
+    const text = input.topic_suggestion?.trim();
+    if (text) await this.topicRepo.createSuggestion(surveyId, userId, text);
+  }
+
   /** 新規作成 */
   async createSurvey(userId: string, input: SurveyInput): Promise<Survey> {
     this.validate(input);
@@ -127,6 +139,8 @@ export class SurveyService {
       ...this.toSurveyColumns(input),
     });
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
+    await this.surveyRepo.replaceSurveyTopics(survey.id, input.topic_ids);
+    await this.saveTopicSuggestion(survey.id, userId, input);
     return survey;
   }
 
@@ -143,6 +157,8 @@ export class SurveyService {
 
     const survey = await this.surveyRepo.updateSurvey(surveyId, this.toSurveyColumns(input));
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
+    await this.surveyRepo.replaceSurveyTopics(surveyId, input.topic_ids);
+    await this.saveTopicSuggestion(surveyId, userId, input);
     return survey;
   }
 
@@ -183,6 +199,16 @@ export class SurveyService {
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('削除権限がありません');
     await this.surveyRepo.delete(surveyId);
+  }
+
+  /** トピック詳細ページ：そのトピックが付与された公開中アンケート（回答数つき）。 */
+  async listSurveysByTopic(topicId: string): Promise<SurveyWithStats[]> {
+    const surveys = await this.surveyRepo.findByTopicId(topicId);
+    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
+    return surveys.map((s) => ({
+      ...s,
+      response_count: counts.get(s.id) ?? 0,
+    }));
   }
 
   /** 他人のプロフィールページ：公開中アンケートのみ（回答数つき）。 */
