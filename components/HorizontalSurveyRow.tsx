@@ -1,21 +1,25 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useState, useCallback, useEffect, type ReactNode } from 'react';
 import SurveyCard from '@/components/SurveyCard';
 import ScrollArrowButton from '@/components/ScrollArrowButton';
 import type { SurveyWithStats } from '@/lib/types/database';
 
-/** /surveys のタイムラインで使う横スクロール行（PCは矢印ナビ、モバイルはネイティブスクロール+snap） */
+/** /surveys のタイムラインやホームのダイジェストで使う横スクロール行（PCは矢印ナビ、モバイルはネイティブスクロール+snap） */
 export default function HorizontalSurveyRow({
   title,
   description,
   surveys,
   emptyMessage,
+  viewMoreHref,
 }: {
   title: string;
   description?: ReactNode;
   surveys: SurveyWithStats[];
   emptyMessage?: string;
+  /** 指定時、見出し横に「もっと見る」リンクを表示する（ホームのダイジェスト行から/surveysへの誘導用） */
+  viewMoreHref?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -43,7 +47,14 @@ export default function HorizontalSurveyRow({
     if (!emptyMessage) return null;
     return (
       <section className="mb-10">
-        <h2 className="mb-1 text-lg font-bold text-slate-800">{title}</h2>
+        <div className="mb-1 flex items-baseline justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+          {viewMoreHref && (
+            <Link href={viewMoreHref} className="text-sm font-medium text-brand-600 hover:underline">
+              もっと見る
+            </Link>
+          )}
+        </div>
         {description && <p className="mb-3 text-sm text-slate-400">{description}</p>}
         <div className="card-3d px-4 py-8 text-center text-sm text-slate-500">{emptyMessage}</div>
       </section>
@@ -52,7 +63,14 @@ export default function HorizontalSurveyRow({
 
   return (
     <section className="mb-10">
-      <h2 className="mb-1 text-lg font-bold text-slate-800">{title}</h2>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+        {viewMoreHref && (
+          <Link href={viewMoreHref} className="text-sm font-medium text-brand-600 hover:underline">
+            もっと見る
+          </Link>
+        )}
+      </div>
       {description && <p className="mb-3 text-sm text-slate-400">{description}</p>}
       <div className="group relative">
         <ScrollArrowButton direction="left" disabled={!canScrollLeft} onClick={() => scrollByAmount('left')} />
