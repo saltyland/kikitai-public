@@ -10,6 +10,8 @@ export interface INotificationRepository {
   countUnread(userId: string): Promise<number>;
   /** すべて既読にする */
   markAllRead(userId: string): Promise<void>;
+  /** 指定の通知を既読にする */
+  markAsRead(userId: string, id: string): Promise<void>;
   /**
    * 自分宛の通知を作成する（RLS：user_id = auth.uid() のみ許可）。
    * 他人宛の通知はDB関数 notify_user（SECURITY DEFINER）経由でのみ発行される。
@@ -51,6 +53,15 @@ export class NotificationRepository implements INotificationRepository {
       .eq('user_id', userId)
       .eq('read', false);
     if (error) throwDbError(error, 'notifications.markAllRead');
+  }
+
+  async markAsRead(userId: string, id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) throwDbError(error, 'notifications.markAsRead');
   }
 
   async createForSelf(
