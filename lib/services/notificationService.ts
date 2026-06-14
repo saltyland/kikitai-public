@@ -32,6 +32,16 @@ export class NotificationService {
     await this.repo.markAllRead(userId);
   }
 
+  /** /notifications ページ用：自分宛の通知を新しい順にすべて取得する */
+  async listAll(userId: string, limit = 50): Promise<AppNotification[]> {
+    return this.repo.listByUser(userId, limit);
+  }
+
+  /** 通知を1件既読にする */
+  async markAsRead(userId: string, notificationId: string): Promise<void> {
+    await this.repo.markAsRead(userId, notificationId);
+  }
+
   /** 残高不足でアンケートを公開できなかったことを本人へ通知する */
   async notifyPointsLow(userId: string, requiredPoints?: string): Promise<void> {
     try {
