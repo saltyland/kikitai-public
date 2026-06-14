@@ -4,9 +4,11 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { SurveyService } from '@/lib/services/surveyService';
+import { FollowService } from '@/lib/services/followService';
 import Header from '@/components/Header';
 import Avatar from '@/components/Avatar';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
+import FollowButton from '@/components/FollowButton';
 
 /** SNSリンクのアイコン＋ラベル */
 function SnsLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
@@ -40,6 +42,12 @@ export default async function UserProfilePage({
 
   const surveys = await new SurveyService(supabase).listSurveysByUser(id);
 
+  const isOwnProfile = currentProfile?.id === id;
+  const isFollowing =
+    currentProfile && !isOwnProfile
+      ? await new FollowService(supabase).isFollowingUser(currentProfile.id, id)
+      : false;
+
   const sns = publicProfile.sns_links ?? {};
 
   return (
@@ -53,12 +61,15 @@ export default async function UserProfilePage({
         <section className="card-3d p-6 mb-8">
           <div className="flex items-center gap-4">
             <Avatar name={publicProfile.nickname} src={publicProfile.avatar_url} className="h-16 w-16 text-2xl" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="text-xl font-extrabold text-slate-800 truncate">{publicProfile.nickname}</h1>
               <p className="text-xs text-slate-400 mt-0.5">
                 {new Date(publicProfile.created_at).toLocaleDateString('ja-JP')} 登録
               </p>
             </div>
+            {currentProfile && !isOwnProfile && (
+              <FollowButton followeeId={id} initialFollowing={isFollowing} />
+            )}
           </div>
 
           {/* 属性情報 */}
