@@ -13,6 +13,7 @@ export async function followTopicAction(topicId: string): Promise<void> {
 
   await new TopicService(supabase).followTopic(user.id, topicId);
   revalidatePath(`/topics/${topicId}`);
+  revalidatePath('/profile');
 }
 
 /** 指定トピックのフォローを解除する */
@@ -23,4 +24,5 @@ export async function unfollowTopicAction(topicId: string): Promise<void> {
 
   await new TopicService(supabase).unfollowTopic(user.id, topicId);
   revalidatePath(`/topics/${topicId}`);
+  revalidatePath('/profile');
 }

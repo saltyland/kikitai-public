@@ -1,12 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { FollowRepository } from '@/lib/repositories/followRepository';
+import { ProfileRepository } from '@/lib/repositories/profileRepository';
+import type { PublicProfile } from '@/lib/types/database';
 
 /** ユーザー間フォロー・トピックフォローのビジネスロジック */
 export class FollowService {
   private readonly repo: FollowRepository;
+  private readonly profileRepo: ProfileRepository;
 
   constructor(supabase: SupabaseClient) {
     this.repo = new FollowRepository(supabase);
+    this.profileRepo = new ProfileRepository(supabase);
   }
 
   /** 自分が指定ユーザーをフォロー中か */
@@ -22,5 +26,12 @@ export class FollowService {
   /** ユーザーのフォローを解除する */
   async unfollowUser(followerId: string, followeeId: string): Promise<void> {
     await this.repo.unfollowUser(followerId, followeeId);
+  }
+
+  /** フォロー中ユーザーの公開プロフィール一覧を取得する */
+  async getFollowedUserProfiles(userId: string): Promise<PublicProfile[]> {
+    const ids = await this.repo.listFollowedUserIds(userId);
+    const profiles = await this.profileRepo.findByIds(ids);
+    return ids.map((id) => profiles.get(id)).filter((p): p is PublicProfile => p !== undefined);
   }
 }

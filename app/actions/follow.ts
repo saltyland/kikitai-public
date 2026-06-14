@@ -13,6 +13,7 @@ export async function followUserAction(followeeId: string): Promise<void> {
 
   await new FollowService(supabase).followUser(user.id, followeeId);
   revalidatePath(`/users/${followeeId}`);
+  revalidatePath('/profile');
 }
 
 /** 指定ユーザーのフォローを解除する */
@@ -23,4 +24,5 @@ export async function unfollowUserAction(followeeId: string): Promise<void> {
 
   await new FollowService(supabase).unfollowUser(user.id, followeeId);
   revalidatePath(`/users/${followeeId}`);
+  revalidatePath('/profile');
 }

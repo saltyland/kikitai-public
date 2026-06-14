@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
-import type { PrivateField, SnsLinks } from '@/lib/types/database';
+import type { NotificationType, PrivateField, SnsLinks } from '@/lib/types/database';
 
 export interface ProfileActionState {
   error: string | null;
@@ -108,4 +108,17 @@ export async function deleteAccountAction(): Promise<ProfileActionState> {
     return { error: e instanceof Error ? e.message : '退会処理に失敗しました' };
   }
   redirect('/login');
+}
+
+/** 通知種別ごとのON/OFF設定を1件更新する（マイページの通知設定タブから） */
+export async function updateNotificationSettingAction(
+  type: NotificationType,
+  enabled: boolean
+): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const user = await new AuthService(supabase).getCurrentUser();
+  if (!user) return;
+
+  await new ProfileService(supabase).updateNotificationSettings(user.id, { [type]: enabled });
+  revalidatePath('/profile');
 }
