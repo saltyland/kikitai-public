@@ -14,7 +14,7 @@ import type {
  * モデル: gemini-1.5-flash。
  */
 export class GeminiEvaluator implements IQualityEvaluator {
-  private static readonly MODEL = 'gemini-3-flash';
+  private static readonly MODEL = 'gemini-2.5-flash';
 
   constructor(private readonly apiKey: string) {}
 
