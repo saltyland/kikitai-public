@@ -44,27 +44,29 @@ export default function ProfileNavMenu({
       </button>
 
       {open && (
-        <div
-          role="menu"
-          className="absolute right-0 mt-2 w-44 rounded-xl border border-brand-100 bg-white py-1 shadow-lg z-50"
-        >
-          <Link
-            href="/profile"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-sm text-slate-700 hover:bg-brand-50"
+        <div className="absolute right-0 top-full w-44 pt-2">
+          <div
+            role="menu"
+            className="rounded-xl border border-brand-100 bg-white py-1 shadow-lg z-50"
           >
-            マイページ
-          </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
+            <Link
+              href="/profile"
               role="menuitem"
-              className="block w-full cursor-pointer px-4 py-2 text-left text-sm text-slate-500 hover:bg-red-50 hover:text-red-600"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm text-slate-700 hover:bg-brand-50"
             >
-              ログアウト
-            </button>
-          </form>
+              マイページ
+            </Link>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                role="menuitem"
+                className="block w-full cursor-pointer px-4 py-2 text-left text-sm text-slate-500 hover:bg-red-50 hover:text-red-600"
+              >
+                ログアウト
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
