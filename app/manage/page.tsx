@@ -12,12 +12,20 @@ import ShareLinkButton from '@/components/ShareLinkButton';
 import RefreshButton from '@/components/ui/RefreshButton';
 import type { SurveyStatus } from '@/lib/types/database';
 
-const TABS: { key: 'all' | SurveyStatus; label: string }[] = [
+const TABS: { key: SurveyStatus; label: string }[] = [
   { key: 'draft', label: '下書き' },
   { key: 'open', label: '公開中' },
   { key: 'closed', label: '終了済み' },
-  { key: 'all', label: 'すべて' },
 ];
+
+const DEFAULT_TAB: SurveyStatus = 'open';
+
+/** タブが空のときに表示する案内文 */
+const EMPTY_MESSAGES: Record<SurveyStatus, string> = {
+  draft: '下書きのアンケートはありません',
+  open: '公開中のアンケートはありません',
+  closed: '終了したアンケートはありません',
+};
 
 export default async function ManagePage({
   searchParams,
@@ -25,33 +33,40 @@ export default async function ManagePage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { tab } = await searchParams;
-  const activeTab = TABS.some((t) => t.key === tab) ? (tab as 'all' | SurveyStatus) : 'all';
+  const activeTab = TABS.some((t) => t.key === tab) ? (tab as SurveyStatus) : DEFAULT_TAB;
 
   const supabase = await createSupabaseServerClient();
   const profile = await new AuthService(supabase).getCurrentProfile();
   if (!profile) redirect('/login');
 
   const allSurveys = await new SurveyService(supabase).listMySurveys(profile.id);
-  const surveys =
-    activeTab === 'all' ? allSurveys : allSurveys.filter((s) => s.status === activeTab);
+  const surveys = allSurveys.filter((s) => s.status === activeTab);
 
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h1 className="text-lg font-bold text-slate-800">アンケート管理</h1>
-          <RefreshButton />
+          <h1 className="text-lg font-bold text-slate-800">作成・管理</h1>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/surveys/new"
+              className="btn-3d btn-3d-primary px-3 py-1.5 text-sm"
+            >
+              ＋ アンケートを作成する
+            </Link>
+            <RefreshButton />
+          </div>
         </div>
 
-        <ManageDashboard surveys={allSurveys} activeTab={activeTab === 'all' ? undefined : activeTab} />
+        <ManageDashboard surveys={allSurveys} activeTab={activeTab} />
 
         {/* タブ */}
         <div className="mb-4 flex gap-2 border-b border-zinc-200">
           {TABS.map((t) => (
             <Link
               key={t.key}
-              href={t.key === 'all' ? '/manage' : `/manage?tab=${t.key}`}
+              href={`/manage?tab=${t.key}`}
               className={
                 activeTab === t.key
                   ? 'border-b-2 border-brand-500 px-3 py-2 text-sm font-bold text-brand-600'
@@ -65,10 +80,8 @@ export default async function ManagePage({
 
         {surveys.length === 0 ? (
           <div className="card-3d px-4 py-10 text-center">
-            <p className="mt-2 text-sm font-medium text-slate-800">
-              {activeTab === 'all' ? 'まだアンケートがありません' : '該当するアンケートはありません'}
-            </p>
-            {activeTab === 'all' && (
+            <p className="mt-2 text-sm font-medium text-slate-800">{EMPTY_MESSAGES[activeTab]}</p>
+            {activeTab === 'open' && (
               <>
                 <p className="mt-1 text-sm text-slate-500">最初のアンケートを作成して回答を集めましょう。</p>
                 <Link
