@@ -10,6 +10,7 @@ import { changeStatusAction } from '@/app/actions/survey';
 import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 import ShareLinkButton from '@/components/ShareLinkButton';
 import RefreshButton from '@/components/ui/RefreshButton';
+import { summarizeMySurveys } from '@/lib/ui/surveyStats';
 import type { SurveyStatus } from '@/lib/types/database';
 
 const TABS: { key: SurveyStatus; label: string }[] = [
@@ -41,6 +42,7 @@ export default async function ManagePage({
 
   const allSurveys = await new SurveyService(supabase).listMySurveys(profile.id);
   const surveys = allSurveys.filter((s) => s.status === activeTab);
+  const { statusCounts } = summarizeMySurveys(allSurveys);
 
   return (
     <>
@@ -59,7 +61,7 @@ export default async function ManagePage({
           </div>
         </div>
 
-        <ManageDashboard surveys={allSurveys} activeTab={activeTab} />
+        <ManageDashboard surveys={allSurveys} />
 
         {/* タブ */}
         <div className="mb-4 flex gap-2 border-b border-zinc-200">
@@ -73,7 +75,7 @@ export default async function ManagePage({
                   : 'px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700'
               }
             >
-              {t.label}
+              {t.label} {statusCounts[t.key]}件
             </Link>
           ))}
         </div>
