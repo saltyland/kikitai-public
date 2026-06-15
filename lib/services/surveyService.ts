@@ -16,6 +16,11 @@ import type {
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
 import { isUnrestricted, matches } from '@/lib/domain/matching';
+import { getLocalEncoder } from '@/lib/domain/quality/embedding/factory';
+import {
+  buildReferenceVectors,
+  type ReferenceSource,
+} from '@/lib/domain/quality/referenceVector';
 
 /** アンケート作成・編集・一覧・状態管理のビジネスロジック */
 export class SurveyService {
@@ -117,7 +122,7 @@ export class SurveyService {
       min_trust_score: input.min_trust_score,
       retention_until: this.computeRetentionUntil(input.retention_months),
       visibility: input.visibility,
-      share_link_no_reward: input.visibility === 'unlisted' ? !!input.share_link_no_reward : false,
+      share_link_no_reward: input.visibility === 'unlisted',
     };
   }
 
@@ -135,6 +140,42 @@ export class SurveyService {
     if (text) await this.topicRepo.createSuggestion(surveyId, userId, text);
   }
 
+  /**
+   * 参照ベクトル群を生成して survey に保存する（設計書 §13.2 作成フェーズ）。
+   *
+   * - すべて同一のローカルエンコーダで埋め込む（補正2）。外部LLM埋め込みとは混ぜない。
+   * - 最小実装は「設問文（＋説明文をキー概念）」からの生成。作成者が任意入力する
+   *   理想回答例文（idealAnswers）を渡せば領域化（補正3）が効く。
+   * - **ベストエフォート**：埋め込み生成に失敗してもアンケート作成/公開自体は止めない。
+   */
+  private async saveReferenceVectors(surveyId: string, sources: ReferenceSource[]): Promise<void> {
+    if (sources.length === 0) return;
+    try {
+      const encoder = await getLocalEncoder();
+      const refs = await buildReferenceVectors(encoder, sources);
+      // reference_vectors は Survey 型（S1管理の types.ts）に未定義のため型を緩める。
+      // DBには本マイグレーションで追加した jsonb 列として書き込まれる。
+      await this.surveyRepo.updateSurvey(
+        surveyId,
+        { reference_vectors: refs } as unknown as Partial<Omit<Survey, 'id' | 'user_id' | 'created_at'>>
+      );
+    } catch (e) {
+      // 参照ベクトルは品質評価の「関連性軸」補助であり、無くても回答受付・評価は成立する。
+      console.error('[surveyService] 参照ベクトル生成に失敗（処理は継続）:', e);
+    }
+  }
+
+  /** 設問入力から参照生成の入力（設問文＋説明文をキー概念）を組み立てる。 */
+  private toReferenceSources(questions: QuestionInput[]): ReferenceSource[] {
+    return questions
+      .map((q, qi) => ({
+        questionOrder: qi,
+        questionText: q.text.trim(),
+        keyConcepts: q.description?.trim() ? [q.description.trim()] : undefined,
+      }))
+      .filter((s) => s.questionText.length > 0);
+  }
+
   /** 新規作成 */
   async createSurvey(userId: string, input: SurveyInput): Promise<Survey> {
     this.validate(input);
@@ -145,6 +186,7 @@ export class SurveyService {
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
     await this.surveyRepo.replaceSurveyTopics(survey.id, input.topic_ids);
     await this.saveTopicSuggestion(survey.id, userId, input);
+    await this.saveReferenceVectors(survey.id, this.toReferenceSources(input.questions));
     return survey;
   }
 
@@ -163,6 +205,7 @@ export class SurveyService {
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
     await this.surveyRepo.replaceSurveyTopics(surveyId, input.topic_ids);
     await this.saveTopicSuggestion(surveyId, userId, input);
+    await this.saveReferenceVectors(surveyId, this.toReferenceSources(input.questions));
     return survey;
   }
 
@@ -193,6 +236,18 @@ export class SurveyService {
     // （INSUFFICIENT_POINTS）で公開を拒否する。
     if (existing.status === 'draft' && status === 'open') {
       await this.surveyRepo.publish(surveyId);
+      // 公開時にも参照ベクトルを生成しておく（作成時に未生成・失敗していた場合の保険）。
+      const withQuestions = await this.surveyRepo.findWithQuestions(surveyId);
+      if (withQuestions) {
+        await this.saveReferenceVectors(
+          surveyId,
+          withQuestions.questions.map((q) => ({
+            questionOrder: q.order_index,
+            questionText: q.text.trim(),
+            keyConcepts: q.description?.trim() ? [q.description.trim()] : undefined,
+          }))
+        );
+      }
       return;
     }
     await this.surveyRepo.updateStatus(surveyId, status);

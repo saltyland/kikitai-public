@@ -26,7 +26,7 @@ export interface PreviewData {
 type LocalAnswer = { options: string[]; text: string; grid: Record<string, string[]> };
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
+  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /**
  * 回答者ビューのリアルタイムプレビュー。
@@ -68,25 +68,25 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
 
   const frame =
     device === 'mobile'
-      ? 'mx-auto w-[390px] max-w-full rounded-[2rem] border-8 border-zinc-800 bg-white shadow-xl'
-      : 'w-full rounded-xl border border-zinc-200 bg-white shadow-sm';
+      ? 'mx-auto w-[390px] max-w-full rounded-[2rem] border-8 border-slate-800 bg-white shadow-xl'
+      : 'w-full rounded-xl border border-slate-200 bg-white shadow-sm';
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-zinc-500">回答者プレビュー</span>
-        <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 text-xs">
+        <span className="text-xs font-bold text-slate-500">回答者プレビュー</span>
+        <div className="inline-flex overflow-hidden rounded-md border border-slate-300 text-xs">
           <button
             type="button"
             onClick={() => setDevice('pc')}
-            className={`px-3 py-1 ${device === 'pc' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
+            className={`px-3 py-1 ${device === 'pc' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600'}`}
           >
             PC
           </button>
           <button
             type="button"
             onClick={() => setDevice('mobile')}
-            className={`px-3 py-1 ${device === 'mobile' ? 'bg-brand-600 text-white' : 'bg-white text-zinc-600'}`}
+            className={`px-3 py-1 ${device === 'mobile' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600'}`}
           >
             スマホ
           </button>
@@ -96,12 +96,12 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
       <div className={frame}>
         <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-800">{data.title || '（無題のアンケート）'}</h2>
-            {data.description && <p className="mt-1 text-sm text-zinc-600 whitespace-pre-wrap">{data.description}</p>}
+            <h2 className="text-lg font-bold text-slate-800">{data.title || '（無題のアンケート）'}</h2>
+            {data.description && <p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{data.description}</p>}
           </div>
 
           {visible.length === 0 && (
-            <p className="rounded-md bg-zinc-50 p-4 text-center text-xs text-zinc-400">
+            <p className="rounded-md bg-slate-50 p-4 text-center text-xs text-slate-400">
               表示できる設問がありません。
             </p>
           )}
@@ -120,14 +120,14 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
                     )}
                   </div>
                 )}
-                <div className="rounded-lg border border-zinc-200 p-4 space-y-2">
-                  <p className="text-sm font-medium text-zinc-800">
+                <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+                  <p className="text-sm font-medium text-slate-800">
                     <span className="text-brand-600 mr-1">Q{i + 1}.</span>
                     {q.text || '（設問文未入力）'}
                     {q.required && <span className="text-red-500 ml-1">*</span>}
                   </p>
                   {q.description && (
-                    <p className="text-xs text-zinc-500 whitespace-pre-wrap">{q.description}</p>
+                    <p className="text-xs text-slate-500 whitespace-pre-wrap">{q.description}</p>
                   )}
                   <PreviewInput q={q} answer={get(q.key)} patch={(p) => patch(q.key, p)} />
                 </div>
@@ -160,7 +160,7 @@ function PreviewInput({
           return (
             <label
               key={o}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
             >
               <input
                 type={multiple ? 'checkbox' : 'radio'}
@@ -180,7 +180,7 @@ function PreviewInput({
             </label>
           );
         })}
-        {opts.length === 0 && <p className="text-xs text-zinc-400">選択肢が未入力です</p>}
+        {opts.length === 0 && <p className="text-xs text-slate-400">選択肢が未入力です</p>}
       </div>
     );
   }
@@ -207,7 +207,7 @@ function PreviewInput({
     return (
       <div className="flex flex-col gap-1">
         {(q.config.minLabel || q.config.maxLabel) && (
-          <div className="flex justify-between text-xs text-zinc-500 px-1">
+          <div className="flex justify-between text-xs text-slate-500 px-1">
             <span>{q.config.minLabel ?? ''}</span>
             <span>{q.config.maxLabel ?? ''}</span>
           </div>
@@ -217,12 +217,12 @@ function PreviewInput({
             const checked = answer.options[0] === String(n);
             return (
               <label key={n} className="flex flex-col items-center gap-1 cursor-pointer select-none">
-                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-zinc-600'}`}>
+                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-slate-600'}`}>
                   {n}
                 </span>
                 <span
                   className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
-                    checked ? 'border-brand-500 bg-brand-500' : 'border-zinc-400 bg-white hover:border-brand-400'
+                    checked ? 'border-brand-500 bg-brand-500' : 'border-slate-400 bg-white hover:border-brand-400'
                   }`}
                 >
                   {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
@@ -263,14 +263,14 @@ function PreviewInput({
             <tr>
               <th className="p-1" />
               {cols.map((c) => (
-                <th key={c} className="p-1 text-center font-medium text-zinc-600">{c}</th>
+                <th key={c} className="p-1 text-center font-medium text-slate-600">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r} className="border-t border-zinc-100">
-                <td className="p-1 text-zinc-700">{r}</td>
+              <tr key={r} className="border-t border-slate-100">
+                <td className="p-1 text-slate-700">{r}</td>
                 {cols.map((c) => {
                   const cur = answer.grid[r] ?? [];
                   const checked = cur.includes(c);
@@ -297,7 +297,7 @@ function PreviewInput({
           </tbody>
         </table>
         {(rows.length === 0 || cols.length === 0) && (
-          <p className="text-xs text-zinc-400">行・列が未入力です</p>
+          <p className="text-xs text-slate-400">行・列が未入力です</p>
         )}
       </div>
     );

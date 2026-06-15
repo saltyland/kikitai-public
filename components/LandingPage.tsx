@@ -178,7 +178,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-              {['登録無料', 'クレジットカード不要', '今すぐ作成OK'].map((t) => (
+              {['登録は無料', 'スマホで1問ずつサクサク回答', 'AIが回答の質をチェック'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <IconCheckCircle className="h-4 w-4 text-brand-500" />
                   {t}
@@ -192,12 +192,12 @@ export default function LandingPage() {
         {/* 使い方：3ステップ */}
         <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            しくみはシンプル、3ステップ
+            はじめての人が、回答を集めるまで
           </h2>
           <p className="mt-3 text-center text-slate-600">
             回答し合う経済圏だから、回答者が「いない」を「集まる」に変えられます。
           </p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          <div className="mx-auto mt-10 max-w-2xl space-y-6">
             {[
               {
                 step: '1',
@@ -214,13 +214,18 @@ export default function LandingPage() {
                 title: 'AIが質を守る',
                 body: '提出された回答はAIが自動で品質評価。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータの質を担保します。',
               },
-            ].map(({ step, title, body }) => (
-              <div key={step} className="card-3d card-3d-hover p-6">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white">
-                  {step}
-                </span>
-                <h3 className="mt-4 text-lg font-extrabold text-slate-900">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+            ].map(({ step, title, body }, i, arr) => (
+              <div key={step} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white">
+                    {step}
+                  </span>
+                  {i < arr.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-brand-200" aria-hidden />}
+                </div>
+                <div className="card-3d card-3d-hover flex-1 p-5">
+                  <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{body}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -286,7 +291,7 @@ export default function LandingPage() {
               あなたの研究にも、回答を。
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-slate-600">
-              登録は1分で完了。今日からアンケートを作って、回答し合う輪に参加しましょう。
+              登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
             </p>
             <div className="mt-7 flex justify-center">
               <Link href="/register" className="btn-3d btn-3d-primary px-8 py-3 text-base">
@@ -297,15 +302,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-brand-100/70 bg-white/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <Logo className="text-brand-600" />
-          <p className="text-xs text-slate-400">
-            キキタイ — 学生・研究者のためのアンケート交換プラットフォーム
-          </p>
-        </div>
-      </footer>
     </>
   );
 }

@@ -18,7 +18,7 @@ type QState = { optionIds: string[]; text: string; grid: Record<string, string[]
 type AnswerState = Record<string, QState>;
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
+  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /** 1設問分の状態を AnswerInput に変換する */
 function buildAnswer(q: QuestionWithOptions, s: QState): AnswerInput {
@@ -428,25 +428,25 @@ export default function AnswerForm({
       Math.round(survey.questions.reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0) / 60)
     );
     return (
-      <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-zinc-800">回答にあたってのご説明</h2>
+      <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-slate-800">回答する前に確認しよう</h2>
         <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">
           全{survey.questions.length}問・所要時間 約{estMin}分
         </p>
         {/* 作成者が設定したインフォームドコンセント文（8位）。同意した人だけ設問へ進める */}
         {survey.consent_text ? (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 whitespace-pre-wrap max-h-72 overflow-y-auto">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 whitespace-pre-wrap max-h-72 overflow-y-auto">
             {survey.consent_text}
           </div>
         ) : (
-          <div className="space-y-2 text-sm text-zinc-600">
+          <div className="space-y-2 text-sm text-slate-600">
             <p>本アンケートは学術目的で実施されます。</p>
             <p>・回答は任意であり、いつでも中断できます（入力内容は自動保存されます）。</p>
             <p>・回答内容はアンケート作成者が研究目的で集計・利用します。</p>
             <p>・個人を特定する情報は収集しません。</p>
           </div>
         )}
-        <p className="text-sm text-zinc-600">上記に同意のうえ、回答を開始してください。</p>
+        <p className="text-sm text-slate-600">上記に同意のうえ、回答を開始してください。</p>
         {restored && (
           <p className="text-sm text-amber-700">前回の入力内容が残っています。続きから再開できます。</p>
         )}
@@ -455,7 +455,7 @@ export default function AnswerForm({
             startedAt.current = Date.now();
             setConsented(true);
           }}
-          className="rounded-md bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
+          className="btn-3d btn-3d-primary px-5 py-2 text-sm cursor-pointer"
         >
           同意して回答を始める
         </button>
@@ -471,10 +471,10 @@ export default function AnswerForm({
         {rejectedFeedback && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl space-y-3">
-              <h2 className="text-base font-bold text-amber-700">回答内容の見直しをおすすめします</h2>
-              <p className="text-sm text-zinc-600">
-                AIによる品質チェックで、回答の充実度に課題がある可能性が示されました。
-                まだ送信されていません。内容を見直すと報酬ポイントを受け取れます。
+              <h2 className="text-base font-bold text-amber-700">もう少し答えを充実させるとポイントがもらえます</h2>
+              <p className="text-sm text-slate-600">
+                AIが回答をチェックしたところ、このままだとポイントがもらえないかもしれません。
+                見直してみよう！（見直さずに送信もできます）
               </p>
               <p className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
                 {rejectedFeedback}
@@ -486,27 +486,27 @@ export default function AnswerForm({
                     void submit(true);
                   }}
                   disabled={pending}
-                  className="rounded-md border border-zinc-300 px-4 py-2 text-xs text-zinc-500 hover:bg-zinc-50 disabled:opacity-50 cursor-pointer"
+                  className="rounded-md border border-slate-300 px-4 py-2 text-xs text-slate-500 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
                 >
-                  このまま送信する（報酬なし・信頼スコア減点）
+                  このまま送信する（ポイント0）
                 </button>
                 <button
                   onClick={reviseAnswers}
-                  className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
+                  className="btn-3d btn-3d-primary px-4 py-2 text-sm cursor-pointer"
                 >
-                  回答を見直す
+                  見直してポイントをもらう
                 </button>
               </div>
             </div>
           </div>
         )}
         <OfflineBanner online={online} queued={queued} pending={pending} onRetry={retryPending} />
-        <div className="rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3">
-          <h2 className="text-lg font-bold text-zinc-800">回答内容の確認</h2>
-          <p className="text-sm text-zinc-500">
-            送信前に内容をご確認ください。修正したい設問は「修正」を押すと戻れます。
+        <div className="rounded-xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
+          <h2 className="text-lg font-bold text-slate-800">回答内容の確認</h2>
+          <p className="text-sm text-slate-500">
+            送信前にチェックしよう！直したい質問は「修正」を押すと戻れます。
           </p>
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-slate-100">
             {visibleQuestions.map((q, i) => {
               const summary = answerSummary(q, answers[q.id]);
               const empty = !summary;
@@ -516,7 +516,7 @@ export default function AnswerForm({
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-zinc-800">
+                    <p className="text-sm font-medium text-slate-800">
                       {q.text}
                       {q.required && (
                         <>
@@ -525,13 +525,13 @@ export default function AnswerForm({
                         </>
                       )}
                     </p>
-                    <p className={`mt-0.5 text-sm ${empty ? 'text-zinc-400 italic' : 'text-zinc-600'} whitespace-pre-wrap break-words`}>
+                    <p className={`mt-0.5 text-sm ${empty ? 'text-slate-400 italic' : 'text-slate-600'} whitespace-pre-wrap break-words`}>
                       {empty ? '（未回答）' : summary}
                     </p>
                   </div>
                   <button
                     onClick={() => editQuestion(i)}
-                    className="shrink-0 rounded-md border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+                    className="shrink-0 rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer"
                   >
                     修正
                   </button>
@@ -550,14 +550,14 @@ export default function AnswerForm({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setReviewing(false)}
-            className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+            className="btn-3d btn-3d-secondary px-5 py-2 text-sm cursor-pointer"
           >
             設問に戻る
           </button>
           <button
             onClick={() => submit()}
             disabled={pending}
-            className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 cursor-pointer"
+            className="btn-3d btn-3d-primary px-6 py-2 text-sm disabled:opacity-50 cursor-pointer"
           >
             {pending ? '送信中…' : queued ? '再送信する' : '回答を送信する'}
           </button>
@@ -597,7 +597,7 @@ export default function AnswerForm({
 
       {/* 進捗インジケーター */}
       <div>
-        <div className="mb-1 flex justify-between text-xs text-zinc-600">
+        <div className="mb-1 flex justify-between text-xs text-slate-600">
           <span>問 {safeStep + 1} / {total}</span>
           <span>残り約{remainingMin}分</span>
         </div>
@@ -607,7 +607,7 @@ export default function AnswerForm({
           aria-valuemax={total}
           aria-valuenow={safeStep + 1}
           aria-valuetext={`全${total}問中${safeStep + 1}問目`}
-          className="h-2 w-full rounded-full bg-zinc-100 overflow-hidden"
+          className="h-2 w-full rounded-full bg-slate-100 overflow-hidden"
         >
           <div
             className="h-full rounded-full bg-brand-500 transition-all"
@@ -621,15 +621,22 @@ export default function AnswerForm({
                 key={q.id}
                 type="button"
                 aria-label={`設問${i + 1}へ`}
+                aria-disabled={i > safeStep}
                 onClick={() => i <= safeStep && setStep(i)}
-                className={`h-2 w-2 rounded-full transition ${
-                  i < safeStep
-                    ? 'bg-brand-500 cursor-pointer'
-                    : i === safeStep
-                    ? 'bg-brand-600 ring-2 ring-brand-200'
-                    : 'bg-zinc-200 cursor-default'
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition ${
+                  i <= safeStep ? 'cursor-pointer' : 'cursor-default'
                 }`}
-              />
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full transition ${
+                    i < safeStep
+                      ? 'bg-brand-500'
+                      : i === safeStep
+                      ? 'bg-brand-600 ring-2 ring-brand-200'
+                      : 'bg-slate-200'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -658,7 +665,7 @@ export default function AnswerForm({
           key={current.id}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="kikitai-slide-in relative rounded-xl bg-white border border-zinc-200 p-5 shadow-sm space-y-3"
+          className="kikitai-slide-in relative rounded-xl bg-white border border-slate-200 p-5 shadow-sm space-y-3"
         >
           {/* ✓ マイクロフィードバック */}
           {showCheck && (
@@ -666,7 +673,7 @@ export default function AnswerForm({
               <span className="kikitai-check-pop text-6xl text-emerald-500">✓</span>
             </div>
           )}
-          <p className="font-medium text-zinc-800">
+          <p className="font-medium text-slate-800">
             <span className="text-brand-600 mr-1">Q{safeStep + 1}.</span>
             {current.text}
             {current.required && (
@@ -677,7 +684,7 @@ export default function AnswerForm({
             )}
           </p>
           {current.description && (
-            <p className="text-xs text-zinc-500 whitespace-pre-wrap">{current.description}</p>
+            <p className="text-xs text-slate-500 whitespace-pre-wrap">{current.description}</p>
           )}
           <QuestionInputView
             q={current}
@@ -693,12 +700,12 @@ export default function AnswerForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* ナビゲーションバー：スマホでは画面下部に固定、PCではインライン */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:relative sm:pb-0 sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           {safeStep > 0 && (
             <button
               onClick={goPrev}
-              className="rounded-md bg-zinc-200 px-5 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 cursor-pointer"
+              className="btn-3d btn-3d-secondary px-5 py-2 text-sm cursor-pointer"
             >
               戻る
             </button>
@@ -706,28 +713,28 @@ export default function AnswerForm({
           {safeStep < total - 1 ? (
             <button
               onClick={goNext}
-              className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
+              className="btn-3d btn-3d-primary px-6 py-2 text-sm cursor-pointer"
             >
               次へ
             </button>
           ) : (
             <button
               onClick={goReview}
-              className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 cursor-pointer"
+              className="btn-3d btn-3d-primary px-6 py-2 text-sm cursor-pointer"
             >
               回答内容を確認する
             </button>
           )}
           <span
-            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-brand-500' : 'text-zinc-400'}`}
+            className={`ml-auto text-xs ${saving ? 'kikitai-saving text-brand-500' : 'text-slate-500'}`}
           >
             {saving ? '✓ 保存しました' : '✓ 入力は自動保存されます'}
           </span>
         </div>
       </div>
       {/* スマホ固定バーの高さ分だけ余白を確保 */}
-      <div className="h-16 sm:hidden" aria-hidden />
-      <p className="text-center text-[11px] text-zinc-300 sm:hidden">← スワイプで前後に移動できます →</p>
+      <div className="h-20 sm:hidden" aria-hidden />
+      <p className="text-center text-xs text-slate-500 sm:hidden">← スワイプで前後に移動できます →</p>
     </div>
   );
 }
@@ -748,7 +755,7 @@ function OfflineBanner({
   return (
     <div
       className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
-        online ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-zinc-300 bg-zinc-100 text-zinc-700'
+        online ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-300 bg-slate-100 text-slate-700'
       }`}
     >
       <span>
@@ -799,7 +806,7 @@ function QuestionInputView({
               className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm cursor-pointer transition ${
                 checked
                   ? 'border-brand-500 bg-brand-50 text-brand-900'
-                  : 'border-zinc-200 bg-white text-zinc-700 hover:border-brand-300 hover:bg-brand-50/40'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50/40'
               }`}
             >
               <input
@@ -834,11 +841,10 @@ function QuestionInputView({
 
   if (q.type === 'scale') {
     const cfg = (q.config ?? {}) as ScaleConfig;
-    // 両端ラベルは選択肢の行に混ぜず上に独立配置し、各段階は数字+○のシンプル表示にする。
     return (
       <div className="flex flex-col gap-1">
         {(cfg.minLabel || cfg.maxLabel) && (
-          <div className="flex justify-between text-xs text-zinc-500 px-1">
+          <div className="flex justify-between text-xs text-slate-500 px-1">
             <span>{cfg.minLabel ?? ''}</span>
             <span>{cfg.maxLabel ?? ''}</span>
           </div>
@@ -851,15 +857,15 @@ function QuestionInputView({
                 key={o.id}
                 className="flex flex-col items-center gap-1 cursor-pointer select-none"
               >
-                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-zinc-600'}`}>
+                <span className={`text-sm font-medium transition ${checked ? 'text-brand-600' : 'text-slate-600'}`}>
                   {o.text}
                 </span>
                 <span
-                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition ${
-                    checked ? 'border-brand-500 bg-brand-500' : 'border-zinc-400 bg-white hover:border-brand-400'
+                  className={`h-10 w-10 rounded-full border-2 flex items-center justify-center transition ${
+                    checked ? 'border-brand-500 bg-brand-500' : 'border-slate-400 bg-white hover:border-brand-400'
                   }`}
                 >
-                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+                  {checked && <span className="h-3.5 w-3.5 rounded-full bg-white" />}
                 </span>
                 <input
                   type="radio"
@@ -897,14 +903,14 @@ function QuestionInputView({
             <tr>
               <th className="p-2"></th>
               {cfg.columns.map((c) => (
-                <th key={c} className="p-2 text-center text-xs font-medium text-zinc-600">{c}</th>
+                <th key={c} className="p-2 text-center text-xs font-medium text-slate-600">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {cfg.rows.map((r) => (
-              <tr key={r} className="border-t border-zinc-100">
-                <td className="p-2 text-zinc-700">{r}</td>
+              <tr key={r} className="border-t border-slate-100">
+                <td className="p-2 text-slate-700">{r}</td>
                 {cfg.columns.map((c) => (
                   <td key={c} className="p-2 text-center">
                     <input

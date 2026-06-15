@@ -70,12 +70,12 @@ export default function QuestionTemplates({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
       <div className="my-8 w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-zinc-800">設問テンプレートライブラリ</h2>
-          <button type="button" onClick={onClose} className="rounded px-2 py-1 text-zinc-400 hover:bg-zinc-100 cursor-pointer">
+          <h2 className="text-base font-bold text-slate-800">設問テンプレートライブラリ</h2>
+          <button type="button" onClick={onClose} className="rounded px-2 py-1 text-slate-400 hover:bg-slate-100 cursor-pointer">
             ✕
           </button>
         </div>
-        <p className="mb-4 text-xs text-zinc-500">
+        <p className="mb-4 text-xs text-slate-500">
           テンプレートを選ぶと、現在開いているセクションの末尾に設問が追加されます。
         </p>
 
@@ -84,18 +84,18 @@ export default function QuestionTemplates({
           <section>
             <h3 className="mb-2 text-sm font-bold text-brand-700">マイテンプレート</h3>
             {loaded && myTemplates.length === 0 && (
-              <p className="text-xs text-zinc-400">まだありません。下のフォームから現在の設問群を保存できます。</p>
+              <p className="text-xs text-slate-400">まだありません。下のフォームから現在の設問群を保存できます。</p>
             )}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {myTemplates.map((t) => (
-                <div key={t.id} className="flex items-center justify-between rounded-lg border border-zinc-200 p-2">
+                <div key={t.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-2">
                   <button
                     type="button"
                     onClick={() => insert(t)}
                     className="min-w-0 flex-1 text-left cursor-pointer"
                   >
-                    <span className="block truncate text-sm font-medium text-zinc-800">{t.name}</span>
-                    <span className="block truncate text-[11px] text-zinc-400">{t.hint}</span>
+                    <span className="block truncate text-sm font-medium text-slate-800">{t.name}</span>
+                    <span className="block truncate text-[11px] text-slate-400">{t.hint}</span>
                   </button>
                   <button
                     type="button"
@@ -112,7 +112,7 @@ export default function QuestionTemplates({
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
                 placeholder="現在の設問群をマイテンプレートとして保存（名前）"
-                className="flex-1 rounded-md border border-zinc-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none"
+                className="flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none"
               />
               <button
                 type="button"
@@ -128,20 +128,20 @@ export default function QuestionTemplates({
           {/* 組み込みテンプレート */}
           {TEMPLATE_GROUPS.map((group) => (
             <section key={group.id}>
-              <h3 className="mb-2 text-sm font-bold text-zinc-700">{group.label}</h3>
+              <h3 className="mb-2 text-sm font-bold text-slate-700">{group.label}</h3>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {group.templates.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => insert(t)}
-                    className="rounded-lg border border-zinc-200 p-2.5 text-left hover:border-brand-400 hover:bg-brand-50/40 cursor-pointer"
+                    className="rounded-lg border border-slate-200 p-2.5 text-left hover:border-brand-400 hover:bg-brand-50/40 cursor-pointer"
                   >
                     <span className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-zinc-800">{t.name}</span>
+                      <span className="text-sm font-medium text-slate-800">{t.name}</span>
                       <span className="text-[10px] text-brand-500">＋挿入</span>
                     </span>
-                    <span className="mt-0.5 block text-[11px] text-zinc-400">{t.hint}</span>
+                    <span className="mt-0.5 block text-[11px] text-slate-400">{t.hint}</span>
                   </button>
                 ))}
               </div>

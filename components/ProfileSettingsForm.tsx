@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import Toast from '@/components/ui/Toast';
 import {
   updateProfileAction,
   changePlanAction,
@@ -113,6 +114,11 @@ export default function ProfileSettingsForm({
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, initial);
   const isPrivate = (f: PrivateField) => profile.private_fields.includes(f);
+  const [toastNonce, setToastNonce] = useState(0);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (state.success) setToastNonce((n) => n + 1);
+  }, [state]);
 
   return (
     <div className="space-y-8">
@@ -140,7 +146,7 @@ export default function ProfileSettingsForm({
         <SnsLinksSection sns={profile.sns_links ?? {}} />
 
         {state.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-        {state.success && <p role="status" className="text-sm text-green-600">保存しました。</p>}
+        <Toast nonce={toastNonce} message="保存しました" />
         <button
           type="submit"
           disabled={pending}

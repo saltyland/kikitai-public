@@ -16,8 +16,8 @@ const initial: OnboardingActionState = { error: null };
 const STEPS = 6;
 
 const GENDERS = ['男性', '女性', 'ノンバイナリー', '回答しない'];
-const OCCUPATIONS = ['学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
-const GRADES = ['1年', '2年', '3年', '4年', 'M1', 'M2', 'D1', 'D2', 'D3以上'];
+const OCCUPATIONS = ['中学生', '高校生', '学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
+const GRADES = ['中1', '中2', '中3', '高1', '高2', '高3', '大学1年', '大学2年', '大学3年', '大学4年', 'M1', 'M2', 'D1', 'D2', 'D3以上'];
 
 interface Props {
   nickname: string;
@@ -32,7 +32,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
   // step4のフォーム値
   const [form, setForm] = useState({
     nickname: nickname,
-    age: '',
+    birthday: '',
     gender: '',
     occupation: '',
     grade: '',
@@ -235,22 +235,21 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
                 />
               </QuestionBlock>
 
-              {/* Q2 年齢 */}
+              {/* Q2 生年月日 */}
               <QuestionBlock
                 number={2}
-                label="年齢"
+                label="生年月日"
                 fieldKey="age"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
               >
                 <input
-                  type="number"
-                  value={form.age}
-                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                  type="date"
+                  value={form.birthday}
+                  onChange={(e) => setForm({ ...form, birthday: e.target.value })}
                   className={inputClass}
-                  placeholder="例：22"
-                  min={10}
-                  max={120}
+                  max={new Date().toISOString().slice(0, 10)}
+                  min="1900-01-01"
                 />
               </QuestionBlock>
 

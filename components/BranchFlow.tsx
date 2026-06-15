@@ -61,23 +61,23 @@ export default function BranchFlow({
     .filter((e): e is { fromIndex: number; toIndex: number; label: string } => e !== null);
 
   if (ordered.length === 0) {
-    return <p className="p-6 text-center text-sm text-zinc-400">設問がありません。</p>;
+    return <p className="p-6 text-center text-sm text-slate-400">設問がありません。</p>;
   }
 
   const hasConditions = conditionEdges.length > 0;
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-4 text-xs text-zinc-500">
+      <div className="flex items-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-0.5 w-5 bg-zinc-300" /> 出題順
+          <span className="inline-block h-0.5 w-5 bg-slate-300" /> 出題順
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-0.5 w-5 bg-amber-500" /> 条件付き表示
         </span>
-        {!hasConditions && <span className="text-zinc-400">（条件付き表示はまだ設定されていません）</span>}
+        {!hasConditions && <span className="text-slate-400">（条件付き表示はまだ設定されていません）</span>}
       </div>
-      <div className="overflow-auto rounded-lg border border-zinc-200 bg-zinc-50/60 p-2">
+      <div className="overflow-auto rounded-lg border border-slate-200 bg-slate-50/60 p-2">
         <svg width={width} height={height} className="min-w-full">
           {/* 通常の出題順（縦の連結線） */}
           {ordered.slice(0, -1).map((q, i) => (
@@ -128,18 +128,18 @@ export default function BranchFlow({
               <foreignObject key={q.key} x={NODE_X} y={yOf(i)} width={NODE_W} height={NODE_H}>
                 <div
                   className={`flex h-full flex-col justify-center rounded-lg border px-3 py-1 text-xs ${
-                    isTarget ? 'border-amber-300 bg-amber-50' : 'border-zinc-300 bg-white'
+                    isTarget ? 'border-amber-300 bg-amber-50' : 'border-slate-300 bg-white'
                   }`}
                 >
                   <div className="flex items-center gap-1">
                     <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
                       {i + 1}
                     </span>
-                    <span className="truncate font-medium text-zinc-800">
+                    <span className="truncate font-medium text-slate-800">
                       {q.text.trim() || '（無題の設問）'}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-2 pl-6 text-[10px] text-zinc-400">
+                  <div className="mt-0.5 flex items-center gap-2 pl-6 text-[10px] text-slate-400">
                     <span>{LABEL[q.type]}</span>
                     <span>セクション{q.section_index + 1}</span>
                     {isTarget && <span className="text-amber-600">条件付き</span>}
@@ -151,7 +151,7 @@ export default function BranchFlow({
         </svg>
       </div>
       {sections.length > 1 && (
-        <p className="text-[11px] text-zinc-400">
+        <p className="text-[11px] text-slate-400">
           ※ セクションは {sections.length} 個あります。番号順に出題されます。
         </p>
       )}

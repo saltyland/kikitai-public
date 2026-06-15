@@ -17,7 +17,7 @@ export function FormLabel({
   optional?: boolean;
 }) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-zinc-700 mb-1">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700 mb-1">
       {children}
       {required && (
         <>
@@ -25,7 +25,7 @@ export function FormLabel({
           <span className="sr-only">（必須）</span>
         </>
       )}
-      {optional && <span className="ml-1 text-xs font-normal text-zinc-500">（任意）</span>}
+      {optional && <span className="ml-1 text-xs font-normal text-slate-500">（任意）</span>}
     </label>
   );
 }
