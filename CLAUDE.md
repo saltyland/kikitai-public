@@ -26,6 +26,9 @@
    - Next.js 16 の非同期 `cookies()/params/searchParams`、middleware=`proxy.ts` に注意。
 
 3. **検証する**：`npx tsc --noEmit` → `npm run lint` →（必要時）`npx next build` を通す。
+   - **`npm run dev` は起動しない**。ブラウザ確認が必要な場合のみ一時起動し、確認後に必ず
+     `taskkill /F /IM node.exe /FI "WINDOWTITLE eq next*"` または `Stop-Process` で終了する。
+     起動したまま報告を終えてはならない（孤立プロセスになり次回 `npm run dev` が即終了する原因になる）。
 
 4. **DB反映**（マイグレーションがある場合は **ここで必ず実行**。PR より前）：
    `supabase/migrations/` を変更した場合はエージェントが `npm run sync` を実行してリモートDBへ反映する。
@@ -52,6 +55,7 @@
 
 - [ ] `tsc --noEmit` 通過
 - [ ] `npm run lint` 通過
+- [ ] `npm run dev` を起動した場合 → 報告前に終了済み（孤立プロセス防止）
 - [ ] マイグレーションがある場合 → `npm run sync` 実行済み・反映確認済み
 - [ ] `引継ぎ.md` の「★直前にやったこと」を更新済み・日付修正済み
 - [ ] PR を1本作成済み（既存PRへのpushの場合は push 済み）

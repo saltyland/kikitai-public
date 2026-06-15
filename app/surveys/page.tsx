@@ -3,15 +3,29 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
-import SurveyCard from '@/components/SurveyCard';
+import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
 import RefreshButton from '@/components/ui/RefreshButton';
+import EmptyState from '@/components/EmptyState';
+import Link from 'next/link';
 
 export default async function SurveyListPage() {
   const supabase = await createSupabaseServerClient();
   const profile = await new AuthService(supabase).getCurrentProfile();
   if (!profile) redirect('/login');
 
-  const surveys = await new SurveyService(supabase).listAnswerableSurveys(profile.id);
+  const service = new SurveyService(supabase);
+  const [byTopics, byFollowedUsers, recommended, newest] = await Promise.all([
+    service.listByFollowedTopics(profile.id),
+    service.listByFollowedUsers(profile.id),
+    service.listAnswerableSurveys(profile.id),
+    service.listNewest(profile.id),
+  ]);
+
+  const isEmpty =
+    byTopics.length === 0 &&
+    byFollowedUsers.length === 0 &&
+    recommended.length === 0 &&
+    newest.length === 0;
 
   return (
     <>
@@ -24,20 +38,32 @@ export default async function SurveyListPage() {
           </div>
           <RefreshButton />
         </div>
-        {surveys.length === 0 ? (
-          <div className="card-3d px-4 py-10 text-center">
-            <p className="text-4xl" aria-hidden="true">📭</p>
-            <p className="mt-2 text-sm font-medium text-slate-800">回答できるアンケートはありません</p>
-            <p className="mt-1 text-sm text-slate-500">
-              現在、公開中のアンケートはありません。自分でアンケートを作って交換を始めましょう。
-            </p>
-          </div>
+
+        {isEmpty ? (
+          <EmptyState
+            title="いま回答できるアンケートはありません"
+            description="新しいアンケートが公開されると、ここに表示されます。あなたのアンケートを先に置いて、回答を待つこともできます。"
+          >
+            <Link href="/surveys/new" className="btn-3d btn-3d-primary px-5 py-2.5 text-sm">
+              ＋ アンケートを作る
+            </Link>
+          </EmptyState>
         ) : (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-            {surveys.map((s) => (
-              <SurveyCard key={s.id} survey={s} />
+          <>
+            {byTopics.map(({ topic, surveys }) => (
+              <HorizontalSurveyRow
+                key={topic.id}
+                title={`「${topic.name}」の新着アンケート`}
+                surveys={surveys}
+              />
             ))}
-          </div>
+            <HorizontalSurveyRow
+              title="フォロー中ユーザーの新着アンケート"
+              surveys={byFollowedUsers}
+            />
+            <HorizontalSurveyRow title="あなたへのおすすめ" surveys={recommended} />
+            <HorizontalSurveyRow title="新着アンケート" surveys={newest} />
+          </>
         )}
       </main>
     </>

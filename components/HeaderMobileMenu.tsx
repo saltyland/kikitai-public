@@ -2,14 +2,22 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { logoutAction } from '@/app/actions/auth';
+import Avatar from '@/components/Avatar';
+import IconNavLink from '@/components/ui/IconNavLink';
+import { NAV_ITEMS } from '@/lib/ui/navItems';
 
 /**
  * sm未満で使うハンバーガーメニュー。
  * 通知ベルはサーバー側（Header）で取得するため、ここではナビゲーションのみを扱う。
- * ニックネームが長くてもヘッダーが崩れないよう、ドロップダウンに畳む。
+ * ログアウトは/profileページに移設したため、ここでは扱わない。
  */
-export default function HeaderMobileMenu({ nickname }: { nickname: string }) {
+export default function HeaderMobileMenu({
+  nickname,
+  avatarUrl,
+}: {
+  nickname: string;
+  avatarUrl?: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,23 +41,28 @@ export default function HeaderMobileMenu({ nickname }: { nickname: string }) {
       {open && (
         <nav className="sm:hidden absolute inset-x-0 top-14 z-40 border-b border-brand-100/70 bg-white shadow-sm">
           <div className="mx-auto max-w-4xl px-4 py-2 flex flex-col text-sm">
-            <Link href="/" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              ホーム
-            </Link>
-            <Link href="/surveys/new" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              作成する
-            </Link>
-            <Link href="/surveys" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              回答する
-            </Link>
-            <Link href="/profile" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50">
-              {nickname}（プロフィール）
-            </Link>
-            <form action={logoutAction}>
-              <button type="submit" className="w-full rounded-md px-2 py-2 text-left text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer">
-                ログアウト
-              </button>
-            </form>
+            {NAV_ITEMS.map((item) =>
+              item.icon ? (
+                <IconNavLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  showLabel
+                  onClick={() => setOpen(false)}
+                />
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-2 py-2 text-slate-700 hover:bg-brand-50"
+                >
+                  <Avatar name={nickname} src={avatarUrl} className="h-5 w-5 text-[10px]" />
+                  <span>{`${item.label}（${nickname}）`}</span>
+                </Link>
+              )
+            )}
           </div>
         </nav>
       )}

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Plan, Profile, PublicProfile } from '@/lib/types/database';
+import type { NotificationSettings, Plan, Profile, PublicProfile } from '@/lib/types/database';
 import { BaseRepository } from './baseRepository';
 import { throwDbError } from './dbError';
 
@@ -11,6 +11,7 @@ export type ProfileEditable = Partial<
     | 'affiliation'
     | 'field'
     | 'age'
+    | 'birthday'
     | 'gender'
     | 'occupation'
     | 'grade'
@@ -18,6 +19,7 @@ export type ProfileEditable = Partial<
     | 'private_fields'
     | 'avatar_url'
     | 'sns_links'
+    | 'topics_selected_at'
   >
 >;
 
@@ -34,6 +36,7 @@ export interface IProfileRepository {
   findByIds(ids: string[]): Promise<Map<string, PublicProfile>>;
   update(id: string, data: ProfileEditable): Promise<Profile>;
   updatePlan(id: string, plan: Plan): Promise<Profile>;
+  updateNotificationSettings(id: string, settings: NotificationSettings): Promise<Profile>;
   delete(id: string): Promise<void>;
 }
 
@@ -79,6 +82,17 @@ export class ProfileRepository extends BaseRepository<Profile> implements IProfi
     const { data: updated, error } = await this.supabase
       .from(this.table)
       .update({ plan })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throwDbError(error, 'profiles');
+    return updated as Profile;
+  }
+
+  async updateNotificationSettings(id: string, settings: NotificationSettings): Promise<Profile> {
+    const { data: updated, error } = await this.supabase
+      .from(this.table)
+      .update({ notification_settings: settings })
       .eq('id', id)
       .select('*')
       .single();

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
 import type {
@@ -13,8 +13,14 @@ import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
   createQualityEvaluator,
-  scoreToMultiplier,
+  grade,
+  sanitizeItems,
+  shouldCallLLM,
+  RuleBasedEvaluator,
   type EvaluationItem,
+  type MechSignals,
+  type QualityHints,
+  type QualityResult,
 } from '@/lib/domain/quality';
 import { AttentionCheckQuestion } from '@/lib/domain/questions/AttentionQuestion';
 
@@ -44,6 +50,12 @@ export interface SubmitOptions {
    * 差し戻し後の再送信でユーザーが明示した場合のみ true。
    */
   acceptLowQuality?: boolean;
+  /**
+   * クライアント由来の不正シグナルのヒント（paste/aiStyle/inputDynamics）。
+   * ルーティング（LLMを呼ぶか）の判断材料に使う。
+   * TODO(S2/S3): フォーム側でこれらのヒントを計測して供給する。
+   */
+  qualityHints?: QualityHints;
 }
 
 /** アンケート回答・結果集計のビジネスロジック */
@@ -276,12 +288,34 @@ export class ResponseService {
           : undefined,
       answer: answers.find((a) => a.question_id === q.id),
     }));
-    const result = await createQualityEvaluator().evaluate(items, {
-      durationSec: options.durationSec,
-    });
-    const multiplier = scoreToMultiplier(result.score);
+    const ctx = { durationSec: options.durationSec };
 
-    // 低品質（倍率0）の場合は即ペナルティを与えず、保存前に差し戻して
+    // 送信前サニタイズ（設計書 §2）：LLM へ渡す前に必ず通す（S3実装をバレル経由で import）。
+    const sanitized = sanitizeItems(items);
+
+    // 機械シグナル（設計書 §2/§3）：ルールベース評価（床）＋クライアントヒント。
+    // LLM を呼ぶ前に得られる安価な信号で、ルーティングと grade の双方が参照する。
+    const ruleResult = await new RuleBasedEvaluator().evaluate(sanitized, ctx);
+    const mech: MechSignals = {
+      rulePass: ruleResult.score >= 100,
+      ruleScore: ruleResult.score,
+      hints: options.qualityHints,
+      durationSec: options.durationSec,
+    };
+
+    // ルーティング（設計書 §3）：LLM を呼ぶか機械評価のみで確定するか分岐する。
+    // TODO(S2): RoutingUser に信頼スコア等を供給して連動させる。
+    const routing = shouldCallLLM(sanitized, mech, {});
+    const quality: QualityResult = routing.callLLM
+      ? await createQualityEvaluator().evaluate(sanitized, ctx)
+      : ruleResult;
+
+    // 最終グレーディング（設計書 §1/§7）：ティアと付与率を決定（S5実装をバレル経由で import）。
+    const gradeResult = grade(quality, mech);
+    const result = { score: gradeResult.score, feedback: gradeResult.feedback };
+    const multiplier = gradeResult.payoutRate;
+
+    // 低品質（付与率0）の場合は即ペナルティを与えず、保存前に差し戻して
     // 再回答を促す（B#11 の一方的ペナルティの救済）。
     // ユーザーが acceptLowQuality を明示した再送信のみ、そのまま保存する。
     if (multiplier === 0 && !options.acceptLowQuality) {
@@ -299,8 +333,10 @@ export class ResponseService {
       1,
       visibleQuestions.reduce((sum, q) => sum + QuestionTypeRegistry.get(q.type).pointCost, 0)
     );
+    // 付与率（payoutRate）を下流の報酬付与RPCへ反映する。RPCの契約は earnedPoints
+    // （= 基本コスト × payoutRate）のままなので、ここで換算して渡す。
     const earnedPoints = Math.round(baseCost * multiplier);
-    const trustDelta = result.score === 0 ? -5 : 0;
+    const trustDelta = gradeResult.tier === 'T0' ? -5 : 0;
 
     // 回答保存＋回答者への報酬付与＋作成者からの品質比例課金＋信頼スコア更新＋
     // 上限到達時の自動closeを1トランザクション（RPC）で実行する。
@@ -408,7 +444,7 @@ export class ResponseService {
       byResponse.set(a.response_id, list);
     }
 
-    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const header = ['タイムスタンプ', ...survey.questions.map((q, i) => `Q${i + 1}: ${q.text}`)];
     const rows = sessions.map((s) => {
       const mine = byResponse.get(s.id) ?? [];
       const cells = survey.questions.map((q) => {
@@ -442,7 +478,7 @@ export class ResponseService {
       byResponse.set(a.response_id, list);
     }
 
-    const header = ['タイムスタンプ', ...survey.questions.map((q) => q.text)];
+    const header = ['タイムスタンプ', ...survey.questions.map((q, i) => `Q${i + 1}: ${q.text}`)];
     const rows = sessions.map((s) => {
       const mine = byResponse.get(s.id) ?? [];
       const cells = survey.questions.map((q) => {
@@ -452,15 +488,47 @@ export class ResponseService {
       return [new Date(s.created_at).toLocaleString('ja-JP'), ...cells];
     });
 
-    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    // ヘッダー行を太字にする
-    header.forEach((_, ci) => {
-      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: ci })];
-      if (cell) cell.s = { font: { bold: true } };
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('回答データ');
+
+    // ヘッダー行
+    const headerRow = ws.addRow(header);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+      cell.border = {
+        top: { style: 'medium' }, bottom: { style: 'medium' },
+        left: { style: 'thin' }, right: { style: 'thin' },
+      };
+      cell.alignment = { vertical: 'middle', wrapText: true };
     });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '回答データ');
-    const buffer = Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+
+    // データ行（1行おきに薄い背景色）
+    rows.forEach((row, ri) => {
+      const dataRow = ws.addRow(row);
+      const fill: ExcelJS.Fill = ri % 2 === 0
+        ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+        : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } };
+      dataRow.eachCell({ includeEmpty: true }, (cell) => {
+        cell.fill = fill;
+        cell.border = {
+          top: { style: 'hair' }, bottom: { style: 'hair' },
+          left: { style: 'thin' }, right: { style: 'thin' },
+        };
+        cell.alignment = { vertical: 'middle' };
+      });
+    });
+
+    // 列幅をコンテンツに合わせて調整（最大60文字）
+    ws.columns.forEach((col, ci) => {
+      const maxLen = [header[ci], ...rows.map((r) => r[ci] ?? '')].reduce(
+        (max, v) => Math.max(max, String(v ?? '').length),
+        10
+      );
+      col.width = Math.min(maxLen + 2, 60);
+    });
+
+    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
     return { filename: `${survey.title || 'survey'}_results.xlsx`, buffer };
   }
 }

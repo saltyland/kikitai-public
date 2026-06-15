@@ -1,12 +1,13 @@
 import Link from 'next/link';
-import { logoutAction } from '@/app/actions/auth';
-import Avatar from '@/components/Avatar';
 import Logo from '@/components/Logo';
 import NotificationBell from '@/components/NotificationBell';
 import HeaderMobileMenu from '@/components/HeaderMobileMenu';
+import IconNavLink from '@/components/ui/IconNavLink';
+import ProfileNavMenu from '@/components/ui/ProfileNavMenu';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { NotificationService } from '@/lib/services/notificationService';
+import { NAV_ITEMS } from '@/lib/ui/navItems';
 import type { AppNotification } from '@/lib/types/database';
 
 /**
@@ -38,44 +39,26 @@ export default async function Header({
 
   return (
     <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
-      <div className="mx-auto max-w-4xl px-4 h-14 flex items-center justify-between">
+      <div className="mx-auto max-w-4xl px-4 h-16 flex items-center justify-between">
         <Link href="/" aria-label="キキタイ ホーム">
           <Logo />
         </Link>
 
-        {/* sm以上：横並びナビ */}
-        <nav className="hidden sm:flex items-center gap-4 text-sm">
-          <Link href="/" className="text-slate-600 hover:text-brand-600">
-            ホーム
-          </Link>
-          <Link href="/surveys/new" className="text-slate-600 hover:text-brand-600">
-            作成する
-          </Link>
-          <Link href="/surveys" className="text-slate-600 hover:text-brand-600">
-            回答する
-          </Link>
+        {/* sm以上：アイコンのみの横並びナビ（ホバー/フォーカスでツールチップ表示） */}
+        <nav className="hidden sm:flex items-center gap-1">
+          {NAV_ITEMS.filter((item) => item.href !== '/notifications' && item.href !== '/profile').map(
+            (item) => (
+              <IconNavLink key={item.href} href={item.href} label={item.label} icon={item.icon!} />
+            )
+          )}
           <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 font-medium text-slate-600 hover:text-brand-600"
-          >
-            <Avatar name={nickname} src={avatarUrl} className="h-7 w-7 text-xs" />
-            <span className="max-w-[12rem] truncate">{nickname}</span>
-          </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="text-slate-400 hover:text-red-500 cursor-pointer"
-            >
-              ログアウト
-            </button>
-          </form>
+          <ProfileNavMenu nickname={nickname} avatarUrl={avatarUrl} />
         </nav>
 
         {/* sm未満：ベル＋ハンバーガー */}
         <div className="flex items-center gap-1 sm:hidden">
           <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <HeaderMobileMenu nickname={nickname} />
+          <HeaderMobileMenu nickname={nickname} avatarUrl={avatarUrl} />
         </div>
       </div>
     </header>

@@ -2,23 +2,29 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { completeOnboardingAction, type OnboardingActionState } from '@/app/actions/onboarding';
+import {
+  completeOnboardingAction,
+  saveTopicSelectionAction,
+  type OnboardingActionState,
+} from '@/app/actions/onboarding';
 import { inputClass } from '@/lib/ui/styles';
 import { Spinner } from '@/components/ui/Spinner';
+import type { Topic } from '@/lib/types/database';
 
 const initial: OnboardingActionState = { error: null };
 
-const STEPS = 5;
+const STEPS = 6;
 
 const GENDERS = ['男性', '女性', 'ノンバイナリー', '回答しない'];
-const OCCUPATIONS = ['学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
-const GRADES = ['1年', '2年', '3年', '4年', 'M1', 'M2', 'D1', 'D2', 'D3以上'];
+const OCCUPATIONS = ['中学生', '高校生', '学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
+const GRADES = ['中1', '中2', '中3', '高1', '高2', '高3', '大学1年', '大学2年', '大学3年', '大学4年', 'M1', 'M2', 'D1', 'D2', 'D3以上'];
 
 interface Props {
   nickname: string;
+  topics: Topic[];
 }
 
-export default function OnboardingWizard({ nickname }: Props) {
+export default function OnboardingWizard({ nickname, topics }: Props) {
   const [step, setStep] = useState(1);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -26,7 +32,7 @@ export default function OnboardingWizard({ nickname }: Props) {
   // step4のフォーム値
   const [form, setForm] = useState({
     nickname: nickname,
-    age: '',
+    birthday: '',
     gender: '',
     occupation: '',
     grade: '',
@@ -37,10 +43,33 @@ export default function OnboardingWizard({ nickname }: Props) {
   const [privateFields, setPrivateFields] = useState<string[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // step5（トピック選択）
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [isTopicPending, startTopicTransition] = useTransition();
+  const [topicError, setTopicError] = useState<string | null>(null);
+
   const togglePrivate = (field: string) => {
     setPrivateFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
     );
+  };
+
+  const toggleTopic = (topicId: string) => {
+    setSelectedTopicIds((prev) =>
+      prev.includes(topicId) ? prev.filter((id) => id !== topicId) : [...prev, topicId]
+    );
+  };
+
+  const handleTopicSubmit = (topicIds: string[]) => {
+    setTopicError(null);
+    startTopicTransition(async () => {
+      const result = await saveTopicSelectionAction(topicIds);
+      if (result.error) {
+        setTopicError(result.error);
+      } else {
+        setStep(6);
+      }
+    });
   };
 
   const handleSubmitProfile = () => {
@@ -206,22 +235,21 @@ export default function OnboardingWizard({ nickname }: Props) {
                 />
               </QuestionBlock>
 
-              {/* Q2 年齢 */}
+              {/* Q2 生年月日 */}
               <QuestionBlock
                 number={2}
-                label="年齢"
+                label="生年月日"
                 fieldKey="age"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
               >
                 <input
-                  type="number"
-                  value={form.age}
-                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                  type="date"
+                  value={form.birthday}
+                  onChange={(e) => setForm({ ...form, birthday: e.target.value })}
                   className={inputClass}
-                  placeholder="例：22"
-                  min={10}
-                  max={120}
+                  max={new Date().toISOString().slice(0, 10)}
+                  min="1900-01-01"
                 />
               </QuestionBlock>
 
@@ -364,8 +392,73 @@ export default function OnboardingWizard({ nickname }: Props) {
           </div>
         )}
 
-        {/* ---- STEP 5: 完了・ポイント獲得 ---- */}
+        {/* ---- STEP 5: トピック選択 ---- */}
         {step === 5 && (
+          <div>
+            <p className="text-xs font-semibold text-brand-600">あと1ステップで完了です</p>
+            <h2 className="mt-1 text-xl font-extrabold text-slate-800">興味のあるトピックを選ぶ</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              フォローしたトピックの新着アンケートをホームでお知らせします（0件のままでも進めます）。
+            </p>
+
+            <div className="mt-4 max-h-[55vh] space-y-4 overflow-y-auto pr-1">
+              {Object.entries(
+                topics.reduce<Record<string, Topic[]>>((acc, t) => {
+                  (acc[t.category] ??= []).push(t);
+                  return acc;
+                }, {})
+              ).map(([category, categoryTopics]) => (
+                <div key={category}>
+                  <p className="mb-2 text-xs font-bold text-slate-400">{category}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categoryTopics.map((t) => {
+                      const selected = selectedTopicIds.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => toggleTopic(t.id)}
+                          className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                            selected
+                              ? 'border-brand-500 bg-brand-500 text-white'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+                          }`}
+                        >
+                          {t.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {topicError && (
+              <p role="alert" className="mt-4 text-sm text-red-600">{topicError}</p>
+            )}
+
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => handleTopicSubmit([])}
+                disabled={isTopicPending}
+                className="btn-3d btn-3d-secondary flex-1 py-2 text-sm"
+              >
+                スキップ
+              </button>
+              <button
+                onClick={() => handleTopicSubmit(selectedTopicIds)}
+                disabled={isTopicPending}
+                className="btn-3d btn-3d-primary flex-1 flex items-center justify-center gap-2 py-3 font-bold"
+              >
+                {isTopicPending && <Spinner className="h-4 w-4" />}
+                次へ →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ---- STEP 6: 完了・ポイント獲得 ---- */}
+        {step === 6 && (
           <div className="text-center">
             <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl">
               ✦
