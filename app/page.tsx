@@ -1,8 +1,11 @@
-import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import Header from '@/components/Header';
 import LandingPage from '@/components/LandingPage';
+import MySurveysSummaryCard from '@/components/MySurveysSummaryCard';
+import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
+import FaqAccordion from '@/components/FaqAccordion';
+import { SurveyService } from '@/lib/services/surveyService';
 
 export default async function HomePage({
   searchParams,
@@ -24,10 +27,18 @@ export default async function HomePage({
   // 未ログインはサービス紹介のランディングページを表示
   if (!profile) return <LandingPage />;
 
+  const service = new SurveyService(supabase);
+  const [mySurveys, recommended, byFollowedUsers, newest] = await Promise.all([
+    service.listMySurveys(profile.id),
+    service.listAnswerableSurveys(profile.id),
+    service.listByFollowedUsers(profile.id),
+    service.listNewest(profile.id),
+  ]);
+
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         {answered && (
           <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             回答を送信しました。ご協力ありがとうございました。
@@ -63,27 +74,25 @@ export default async function HomePage({
           </p>
         </section>
 
-        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Link
-            href="/surveys/new"
-            className="card-3d card-3d-hover block p-6"
-          >
-            <p className="text-lg font-extrabold text-brand-600">＋ アンケートを作成する</p>
-            <p className="mt-1 text-sm text-slate-500">設問を作って回答を集めましょう</p>
-          </Link>
-          <Link
-            href="/surveys"
-            className="card-3d card-3d-hover block p-6"
-          >
-            <p className="text-lg font-extrabold text-slate-800">アンケートに回答する</p>
-            <p className="mt-1 text-sm text-slate-500">公開中のアンケートに回答します</p>
-          </Link>
-        </div>
+        <MySurveysSummaryCard surveys={mySurveys} />
 
-        <Link href="/manage" className="card-3d card-3d-hover block p-6">
-          <p className="text-lg font-extrabold text-slate-800">作成したアンケートを管理する</p>
-          <p className="mt-1 text-sm text-slate-500">下書き・公開中・終了済みのアンケートを確認・編集します</p>
-        </Link>
+        <HorizontalSurveyRow
+          title="あなたへのおすすめ"
+          surveys={recommended.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
+        <HorizontalSurveyRow
+          title="フォロー中ユーザーの新着アンケート"
+          surveys={byFollowedUsers.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
+        <HorizontalSurveyRow
+          title="新着アンケート"
+          surveys={newest.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
+
+        <FaqAccordion />
       </main>
     </>
   );

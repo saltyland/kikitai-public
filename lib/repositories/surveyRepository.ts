@@ -18,6 +18,10 @@ export interface ISurveyRepository {
   findOpenSurveys(): Promise<Survey[]>;
   /** 指定トピックが付与された公開中アンケートを取得する */
   findByTopicId(topicId: string): Promise<Survey[]>;
+  /** 複数トピックそれぞれに付与された公開中アンケートを1クエリでまとめて取得する */
+  findByTopicIds(topicIds: string[]): Promise<Map<string, Survey[]>>;
+  /** 指定ユーザーたちが作成した公開中・公開設定のアンケートを取得する */
+  findByUserIds(userIds: string[]): Promise<Survey[]>;
   countResponses(surveyId: string): Promise<number>;
   countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
   /** 複数アンケートの設問プレビュー（先頭数問）を1クエリでまとめて取得する */
@@ -127,6 +131,39 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .map((row) => row.surveys)
       .filter((s): s is Survey => !!s && s.status === 'open' && s.visibility === 'public')
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  }
+
+  async findByTopicIds(topicIds: string[]): Promise<Map<string, Survey[]>> {
+    const map = new Map<string, Survey[]>();
+    if (topicIds.length === 0) return map;
+    const { data, error } = await this.supabase
+      .from('survey_topics')
+      .select('topic_id, surveys(*)')
+      .in('topic_id', topicIds);
+    if (error) throwDbError(error, 'survey_topics');
+    for (const row of (data ?? []) as unknown as { topic_id: string; surveys: Survey | null }[]) {
+      if (!row.surveys || row.surveys.status !== 'open' || row.surveys.visibility !== 'public') continue;
+      const list = map.get(row.topic_id) ?? [];
+      list.push(row.surveys);
+      map.set(row.topic_id, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    }
+    return map;
+  }
+
+  async findByUserIds(userIds: string[]): Promise<Survey[]> {
+    if (userIds.length === 0) return [];
+    const { data, error } = await this.supabase
+      .from('surveys')
+      .select('*')
+      .in('user_id', userIds)
+      .eq('status', 'open')
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false });
+    if (error) throwDbError(error, 'surveys');
+    return (data ?? []) as Survey[];
   }
 
   /** 複数アンケートの回答数を1クエリでまとめて取得する（一覧表示のN+1対策） */
