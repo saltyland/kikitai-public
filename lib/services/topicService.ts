@@ -53,4 +53,9 @@ export class TopicService {
   async unfollowTopic(userId: string, topicId: string): Promise<void> {
     await this.followRepo.unfollowTopic(userId, topicId);
   }
+
+  /** 複数トピックを一括フォローする（オンボーディングのトピック選択など） */
+  async followTopics(userId: string, topicIds: string[]): Promise<void> {
+    await this.followRepo.followTopics(userId, topicIds);
+  }
 }
