@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { loginWithGoogleAction, registerAction, type ActionState } from '@/app/actions/auth';
+import { demoLoginAction, type DemoLoginState } from '@/app/actions/demo';
 import { Spinner } from '@/components/ui/Spinner';
 import { useActionState, useTransition } from 'react';
 
@@ -30,23 +31,52 @@ function GoogleIcon() {
 
 export function LoginForm({ next }: { next?: string }) {
   const [pending, startTransition] = useTransition();
+  const [demoPending, startDemoTransition] = useTransition();
+  const [demoState, demoAction] = useActionState<DemoLoginState, FormData>(
+    demoLoginAction,
+    { error: null }
+  );
   const boundAction = loginWithGoogleAction.bind(null, next);
 
   return (
-    <form
-      action={boundAction}
-      onSubmit={() => startTransition(() => {})}
-      className="space-y-4"
-    >
-      <button
-        type="submit"
-        disabled={pending}
-        className="btn-3d flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+    <div className="space-y-3">
+      <form
+        action={boundAction}
+        onSubmit={() => startTransition(() => {})}
       >
-        {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
-        {pending ? '移動中…' : 'Googleで続ける'}
-      </button>
-    </form>
+        <button
+          type="submit"
+          disabled={pending || demoPending}
+          className="btn-3d flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+        >
+          {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
+          {pending ? '移動中…' : 'Googleで続ける'}
+        </button>
+      </form>
+
+      <div className="relative flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs text-slate-400">または</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <form action={demoAction} onSubmit={() => startDemoTransition(() => {})}>
+        <button
+          type="submit"
+          disabled={pending || demoPending}
+          className="btn-3d flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-brand-50 py-3 text-sm font-medium text-brand-700 shadow-sm hover:bg-brand-100 disabled:opacity-60"
+        >
+          {demoPending ? <Spinner className="h-4 w-4" /> : null}
+          {demoPending ? 'デモ準備中…' : 'デモを試す（登録不要）'}
+        </button>
+      </form>
+
+      {demoState.error && (
+        <p className="text-center text-xs text-red-600" role="alert">
+          {demoState.error}
+        </p>
+      )}
+    </div>
   );
 }
 
