@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { logoutAction } from '@/app/actions/auth';
-import Avatar from '@/components/Avatar';
 import Logo from '@/components/Logo';
 import NotificationBell from '@/components/NotificationBell';
 import HeaderMobileMenu from '@/components/HeaderMobileMenu';
+import IconNavLink from '@/components/ui/IconNavLink';
+import ProfileNavMenu from '@/components/ui/ProfileNavMenu';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { NotificationService } from '@/lib/services/notificationService';
@@ -44,39 +44,21 @@ export default async function Header({
           <Logo />
         </Link>
 
-        {/* sm以上：横並びナビ（5項目） */}
-        <nav className="hidden sm:flex items-center gap-4 text-sm">
-          {NAV_ITEMS.map((item) =>
-            item.href === '/profile' ? (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-2 font-medium text-slate-600 hover:text-brand-600"
-              >
-                <Avatar name={nickname} src={avatarUrl} className="h-7 w-7 text-xs" />
-                <span className="max-w-[8rem] truncate">{item.label}</span>
-              </Link>
-            ) : (
-              <Link key={item.href} href={item.href} className="text-slate-600 hover:text-brand-600">
-                {item.label}
-              </Link>
+        {/* sm以上：アイコンのみの横並びナビ（ホバー/フォーカスでツールチップ表示） */}
+        <nav className="hidden sm:flex items-center gap-1">
+          {NAV_ITEMS.filter((item) => item.href !== '/notifications' && item.href !== '/profile').map(
+            (item) => (
+              <IconNavLink key={item.href} href={item.href} label={item.label} icon={item.icon!} />
             )
           )}
           <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="text-slate-400 hover:text-red-500 cursor-pointer"
-            >
-              ログアウト
-            </button>
-          </form>
+          <ProfileNavMenu nickname={nickname} avatarUrl={avatarUrl} />
         </nav>
 
         {/* sm未満：ベル＋ハンバーガー */}
         <div className="flex items-center gap-1 sm:hidden">
           <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <HeaderMobileMenu nickname={nickname} />
+          <HeaderMobileMenu nickname={nickname} avatarUrl={avatarUrl} />
         </div>
       </div>
     </header>

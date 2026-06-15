@@ -2,39 +2,31 @@
 
 import { useState, type ReactNode } from 'react';
 
-type TabKey = 'profile' | 'followingUsers' | 'followingTopics' | 'notifications';
+type TabKey = 'followingUsers' | 'followingTopics';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'profile', label: 'プロフィール' },
   { key: 'followingUsers', label: 'フォロー中ユーザー' },
   { key: 'followingTopics', label: 'フォロー中トピック' },
-  { key: 'notifications', label: '通知設定' },
 ];
 
-/** /profile のタブ切替（プロフィール／フォロー中ユーザー／フォロー中トピック／通知設定） */
+/** /profile の「その他」内タブ切替（フォロー中ユーザー／フォロー中トピック） */
 export default function ProfileTabs({
-  profileTab,
   followingUsersTab,
   followingTopicsTab,
-  notificationsTab,
 }: {
-  profileTab: ReactNode;
   followingUsersTab: ReactNode;
   followingTopicsTab: ReactNode;
-  notificationsTab: ReactNode;
 }) {
-  const [activeTab, setActiveTab] = useState<TabKey>('profile');
+  const [activeTab, setActiveTab] = useState<TabKey>('followingUsers');
 
   const content: Record<TabKey, ReactNode> = {
-    profile: profileTab,
     followingUsers: followingUsersTab,
     followingTopics: followingTopicsTab,
-    notifications: notificationsTab,
   };
 
   return (
     <div>
-      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist">
+      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist">
         {TABS.map((tab) => (
           <button
             key={tab.key}
