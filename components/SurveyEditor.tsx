@@ -477,7 +477,7 @@ export default function SurveyEditor({
       return;
     }
     if (topicIds.length < 1) {
-      setError('トピックを1〜3個選択してください');
+      setFieldErrors({ general: 'トピックを1〜3個選択してください' });
       return;
     }
     // 公開時のみ：設問単位のエラーが残っていれば一覧モーダルを出して中断する
