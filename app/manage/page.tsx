@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
+import ManageDashboard from '@/components/ManageDashboard';
 import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
 import { changeStatusAction } from '@/app/actions/survey';
 import DeleteSurveyButton from '@/components/DeleteSurveyButton';
@@ -42,6 +43,8 @@ export default async function ManagePage({
           <h1 className="text-lg font-bold text-slate-800">アンケート管理</h1>
           <RefreshButton />
         </div>
+
+        <ManageDashboard surveys={allSurveys} activeTab={activeTab === 'all' ? undefined : activeTab} />
 
         {/* タブ */}
         <div className="mb-4 flex gap-2 border-b border-zinc-200">
