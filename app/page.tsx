@@ -16,16 +16,10 @@ export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{
-    answered?: string;
-    score?: string;
-    pts?: string;
-    closed?: string;
     statusError?: string;
   }>;
 }) {
-  const { answered, score, pts, closed, statusError } = await searchParams;
-  const earnedPts = pts ? Number(pts) : null;
-  const qScore = score ? Number(score) : null;
+  const { statusError } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const auth = new AuthService(supabase);
   const profile = await auth.getCurrentProfile();
@@ -38,24 +32,6 @@ export default async function HomePage({
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        {answered && (
-          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-            回答を送信しました。ありがとう！
-            {earnedPts !== null && qScore !== null && (
-              <span className="mt-1 block text-green-800">
-                {earnedPts > 0
-                  ? `ていねいな回答ありがとう！ ${earnedPts}pt 獲得しました。`
-                  : `今回はポイントがもらえませんでした。次はもう少しくわしく答えてみよう。`}
-              </span>
-            )}
-            {closed && (
-              <span className="mt-1 block text-green-800">
-                このアンケートは必要な回答数が集まったので、自動的に締め切られました。
-              </span>
-            )}
-          </div>
-        )}
-
         {statusError && (
           <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {statusError}
