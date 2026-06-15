@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
+import ProgressBar from '@/components/ui/ProgressBar';
+import { calcProgress } from '@/lib/ui/surveyStats';
 import type { PreviewQuestionLite, SurveyWithStats } from '@/lib/types/database';
 
 /** 設問1問分のコンパクトな見た目（非操作・あくまで雰囲気を見せるだけ） */
@@ -78,10 +80,7 @@ function MiniInput({ q }: { q: PreviewQuestionLite }) {
 export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
   const author = survey.author_nickname ?? '不明';
   const remaining = Math.max(0, survey.required_count - survey.response_count);
-  const progress = Math.min(
-    100,
-    Math.round((survey.response_count / Math.max(1, survey.required_count)) * 100)
-  );
+  const progress = calcProgress(survey.response_count, survey.required_count);
   const preview = survey.preview ?? [];
 
   return (
@@ -130,11 +129,8 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
             </span>
             <span>{progress}%</span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-brand-500 transition-all"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="mt-1">
+            <ProgressBar progress={progress} />
           </div>
         </div>
 
