@@ -131,13 +131,15 @@ function TypePreview({ type }: { type: QuestionType }) {
 export default function QuestionTypePicker({
   value,
   onChange,
+  exclude = [],
 }: {
   value: QuestionType;
   onChange: (type: QuestionType) => void;
+  exclude?: QuestionType[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const types = QuestionTypeRegistry.all().map((d) => d.type);
+  const types = QuestionTypeRegistry.all().map((d) => d.type).filter((t) => !exclude.includes(t));
 
   // 外側クリック・Escで閉じる
   useEffect(() => {
