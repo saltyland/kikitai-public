@@ -400,7 +400,6 @@ export default function PublicSurveyEditor({
   };
 
   // ---- セクション操作 ----
-  const addSection = () => setSections((s) => [...s, { title: '', description: '' }]);
   const updateSection = (i: number, patch: Partial<SectionMeta>) =>
     setSections((s) => s.map((sec, idx) => (idx === i ? { ...sec, ...patch } : sec)));
   const removeSection = (i: number) => {
@@ -1033,15 +1032,6 @@ export default function PublicSurveyEditor({
           </div>
         ))}
 
-        {step === 2 && (
-          <button
-            type="button"
-            onClick={addSection}
-            className="w-full rounded-xl border-2 border-dashed border-brand-300 py-2 text-sm text-brand-600 hover:bg-brand-50 cursor-pointer"
-          >
-            ＋ セクションを追加（ページ分割）
-          </button>
-        )}
 
         {/* ポイントコストの目安 */}
         {step === 3 && (
