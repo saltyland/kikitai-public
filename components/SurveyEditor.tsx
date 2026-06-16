@@ -257,8 +257,10 @@ export default function SurveyEditor({
   const [showValidation, setShowValidation] = useState(false);
   // 作成フローのステップ（1:基本情報 / 2:研究倫理・配信 / 3:設問作成）
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  // 公開モード選択モーダル（新規作成時のみ。null=未選択、選択後は非表示）
+  const [visibilityModal, setVisibilityModal] = useState<boolean>(!survey);
 
-  // ステップ1 → 2：タイトル・回答期限必須
+  // ステップ1 → 次へ：タイトル・回答期限必須
   const goNextFromStep1 = () => {
     const errors: { title?: string; deadline?: string } = {};
     if (!title.trim()) errors.title = 'タイトルを入力してください';
@@ -276,7 +278,8 @@ export default function SurveyEditor({
       return;
     }
     setFieldErrors({});
-    setStep(2);
+    // 限定公開はステップ2（インフォームドコンセント・配信設定）をスキップして設問作成へ
+    setStep(unlisted ? 3 : 2);
     window.scrollTo({ top: 0 });
   };
 
@@ -300,7 +303,12 @@ export default function SurveyEditor({
 
   const goBack = () => {
     setFieldErrors({});
-    setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
+    if (unlisted && step === 3) {
+      // 限定公開はステップ2をスキップしてステップ1へ戻る
+      setStep(1);
+    } else {
+      setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
+    }
     window.scrollTo({ top: 0 });
   };
 
@@ -476,7 +484,7 @@ export default function SurveyEditor({
       }, 0);
       return;
     }
-    if (topicIds.length < 1) {
+    if (!unlisted && topicIds.length < 1) {
       setFieldErrors({ general: 'トピックを1〜3個選択してください' });
       return;
     }
@@ -547,14 +555,74 @@ export default function SurveyEditor({
     if (result?.error) setFieldErrors({ general: result.error });
   };
 
+  // 限定公開時のステップラベル（2ステップ）
+  const UNLISTED_STEP_LABELS = ['基本情報', '設問を作る'] as const;
+  // 限定公開時の表示ステップ番号（実際の step 値 1→1, 3→2 に変換）
+  const unlistedDisplayStep = step === 3 ? 2 : 1;
+
   return (
+    <>
+    {/* 公開モード選択モーダル（新規作成時のみ） */}
+    {visibilityModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl space-y-4">
+          <h2 className="text-base font-bold text-slate-800">公開設定を選んでください</h2>
+          <p className="text-sm text-slate-500">作成後に変更することはできません。</p>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                setUnlisted(false);
+                setVisibilityModal(false);
+              }}
+              className="w-full rounded-xl border-2 border-brand-300 bg-brand-50 p-4 text-left hover:bg-brand-100 cursor-pointer"
+            >
+              <p className="font-bold text-brand-800">通常公開</p>
+              <p className="mt-1 text-xs text-slate-500">
+                アンケート一覧に掲載されます。トピックを設定してポイントで回答を集めます。
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUnlisted(true);
+                setVisibilityModal(false);
+              }}
+              className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 p-4 text-left hover:bg-slate-100 cursor-pointer"
+            >
+              <p className="font-bold text-slate-800">リンクを知っている人に限定公開</p>
+              <p className="mt-1 text-xs text-slate-500">
+                一覧には表示されません。共有リンクを送った相手だけが回答できます。ポイントの消費・付与はなし（無料）です。
+              </p>
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setVisibilityModal(false);
+              setUnlisted(false);
+            }}
+            className="w-full text-center text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            キャンセル（前の画面へ戻る）
+          </button>
+        </div>
+      </div>
+    )}
     <div className={`lg:gap-6 lg:items-start ${step === 3 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
+      {/* 限定公開バッジ */}
+      {unlisted && (
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+          🔒 リンク限定公開モード
+        </div>
+      )}
       {/* ステップインジケーター */}
       <ol className="flex items-center gap-2 text-sm">
-        {STEP_LABELS.map((label, i) => {
+        {(unlisted ? UNLISTED_STEP_LABELS : STEP_LABELS).map((label, i) => {
           const n = (i + 1) as 1 | 2 | 3;
-          const state = n === step ? 'current' : n < step ? 'done' : 'todo';
+          const displayStep = unlisted ? unlistedDisplayStep : step;
+          const state = n === displayStep ? 'current' : n < displayStep ? 'done' : 'todo';
           return (
             <li key={label} className="flex items-center gap-2">
               <span
@@ -579,7 +647,7 @@ export default function SurveyEditor({
                 </span>
                 <span className="hidden sm:inline">{label}</span>
               </span>
-              {n < 3 && <span className="text-slate-300">―</span>}
+              {n < (unlisted ? 2 : 3) && <span className="text-slate-300">―</span>}
             </li>
           );
         })}
@@ -630,13 +698,15 @@ export default function SurveyEditor({
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
-        <TopicPicker
-          topics={topics}
-          selectedIds={topicIds}
-          onChange={setTopicIds}
-          suggestion={topicSuggestion}
-          onSuggestionChange={setTopicSuggestion}
-        />
+        {!unlisted && (
+          <TopicPicker
+            topics={topics}
+            selectedIds={topicIds}
+            onChange={setTopicIds}
+            suggestion={topicSuggestion}
+            onSuggestionChange={setTopicSuggestion}
+          />
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">必要回答数</label>
@@ -665,21 +735,6 @@ export default function SurveyEditor({
             <p className="mt-1 text-xs text-slate-400">本日から最大2週間以内で設定してください</p>
           </div>
         </div>
-        <label className="flex items-start gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={unlisted}
-            onChange={(e) => setUnlisted(e.target.checked)}
-          />
-          <span>
-            限定公開（リンクを知っている人のみ）
-            <span className="block text-xs text-slate-500">
-              回答一覧には表示されません。共有リンクを知っている人のみ回答できます。
-              ポイントの消費・付与はなし（作成者・回答者ともに無料）です。
-            </span>
-          </span>
-        </label>
       </section>
       )}
 
@@ -698,7 +753,7 @@ export default function SurveyEditor({
             onClick={goNextFromStep1}
             className="btn-3d btn-3d-primary px-6 py-2 text-sm cursor-pointer"
           >
-            次へ：説明文と配信設定 ▶
+            {unlisted ? '次へ：設問を作る ▶' : '次へ：説明文と配信設定 ▶'}
           </button>
         </div>
       )}
@@ -1226,8 +1281,8 @@ export default function SurveyEditor({
       </button>
       )}
 
-      {/* ポイントコストの目安（回答ごとの品質比例課金）※ステップ3 */}
-      {step === 3 && (
+      {/* ポイントコストの目安（回答ごとの品質比例課金）※ステップ3・通常公開のみ */}
+      {step === 3 && !unlisted && (
       <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4 text-sm text-slate-700">
         <p className="font-bold text-brand-700">
           1回答あたり 平均 {costPerAnswer}pt
@@ -1386,6 +1441,7 @@ export default function SurveyEditor({
         </div>
       )}
     </div>
+    </>
   );
 }
 
