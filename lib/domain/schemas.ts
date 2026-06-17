@@ -20,23 +20,6 @@ const sectionMetaSchema = z.object({
   description: z.string().max(2000),
 });
 
-const scaleConfigSchema = z.object({
-  min: z.number().int().optional(),
-  max: z.number().int().optional(),
-  minLabel: z.string().max(100).nullable().optional(),
-  maxLabel: z.string().max(100).nullable().optional(),
-});
-
-const gridConfigSchema = z.object({
-  rows: z.array(z.string().max(200)).max(50).optional(),
-  columns: z.array(z.string().max(200)).max(50).optional(),
-  multiple: z.boolean().optional(),
-});
-
-const attentionConfigSchema = z.object({
-  correctOptionText: z.string().max(500).optional(),
-});
-
 const questionInputSchema = z.object({
   type: z.enum([
     'single',
@@ -53,7 +36,9 @@ const questionInputSchema = z.object({
   description: z.string().max(2000).nullable(),
   required: z.boolean(),
   options: z.array(z.string().max(500)).max(100),
-  config: z.union([scaleConfigSchema, gridConfigSchema, attentionConfigSchema]).nullable(),
+  // z.union でフィールドが先頭スキーマにマッチして除去されるのを防ぐため record で受け取る。
+  // 設問タイプ固有のバリデーションはドメイン層（QuestionTypeRegistry.validateDefinition）が担う。
+  config: z.record(z.string(), z.unknown()).nullable(),
   section_index: z.number().int().min(0),
   condition: questionConditionSchema.nullable(),
 });

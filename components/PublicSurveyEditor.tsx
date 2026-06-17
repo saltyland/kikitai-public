@@ -355,6 +355,11 @@ export default function PublicSurveyEditor({
       const signal_meta: SignalMeta = q.type === 'attention'
         ? { ...q.signal_meta, role: 'attention_check' }
         : q.signal_meta;
+      const config = (q.config ?? {}) as Partial<ScaleConfig & GridConfig & AttentionConfig>;
+      // attention タイプで正解が未設定の場合、最初の選択肢を自動で正解にする
+      if (q.type === 'attention' && !config.correctOptionText?.trim() && q.options.length > 0) {
+        config.correctOptionText = q.options[0];
+      }
       return {
         key: uid(),
         type: q.type,
@@ -362,7 +367,7 @@ export default function PublicSurveyEditor({
         description: q.description ?? '',
         required: q.required,
         options: q.options,
-        config: (q.config ?? {}) as Partial<ScaleConfig & GridConfig & AttentionConfig>,
+        config,
         section_index: 0,
         condition: null,
         signal_meta,
@@ -1249,11 +1254,15 @@ export default function PublicSurveyEditor({
         />
       )}
 
-      <SurveyGeneratorModal
-        isOpen={showGeneratorModal}
-        onClose={() => setShowGeneratorModal(false)}
-        onGenerated={handleGenerated}
-      />
+      {showGeneratorModal && (
+        <SurveyGeneratorModal
+          onClose={() => setShowGeneratorModal(false)}
+          onGenerated={handleGenerated}
+          defaultTheme={title}
+          defaultPurpose={description}
+          defaultTargetAudience={(targetConditions.occupations ?? []).join('、')}
+        />
+      )}
 
       {publishIssues && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

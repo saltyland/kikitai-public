@@ -5,29 +5,34 @@ import { generateSurveyDraftAction } from '@/app/actions/generate';
 import type { GeneratedSurveyDraft } from '@/lib/domain/generation';
 
 interface SurveyGeneratorModalProps {
-  isOpen: boolean;
   onClose: () => void;
   /** 生成された下書きをEditorに流し込むコールバック */
   onGenerated: (draft: GeneratedSurveyDraft) => void;
+  /** アンケートタイトルから初期値として設定するテーマ */
+  defaultTheme?: string;
+  /** アンケート説明文から初期値として設定する調査目的 */
+  defaultPurpose?: string;
+  /** 配信設定の職業条件から初期値として設定する想定回答者 */
+  defaultTargetAudience?: string;
 }
 
 const inputClass =
   'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 export default function SurveyGeneratorModal({
-  isOpen,
   onClose,
   onGenerated,
+  defaultTheme = '',
+  defaultPurpose = '',
+  defaultTargetAudience = '',
 }: SurveyGeneratorModalProps) {
-  const [theme, setTheme] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
+  const [theme, setTheme] = useState(defaultTheme);
+  const [purpose, setPurpose] = useState(defaultPurpose);
+  const [targetAudience, setTargetAudience] = useState(defaultTargetAudience);
   const [questionCount, setQuestionCount] = useState(10);
   const [includeAttentionCheck, setIncludeAttentionCheck] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
