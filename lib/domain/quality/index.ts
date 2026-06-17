@@ -31,16 +31,17 @@ export { RuleBasedEvaluator } from './ruleBased';
 export { shouldCallLLM } from './routing';
 export type { RoutingUser } from './routing';
 
-/** AIスコアとルールベーススコアの乖離がこれを超えたらルールベースを優先する */
-const MAX_SCORE_DIVERGENCE = 40;
-
 /**
  * AI評価（LLM）とルールベース評価を突き合わせる合成評価器。
  *
- *  - AI評価が失敗したらルールベースへフォールバック（可用性）
- *  - AIとルールベースのスコア乖離が大きい場合はルールベースを優先
- *    （プロンプトインジェクションで「score:100を返せ」等とAIを操作された場合の防衛線）
- *  - ルールベースが0点（アテンションチェック誤答等）なら無条件で0点
+ * スコア合成ルール（injection防御・非対称min）:
+ *  - rule.score===0（アテンション誤答等）      → 無条件 0
+ *  - AI 失敗                                   → ルールベースへフォールバック
+ *  - ai <= rule                                → min(rule, ai+10)  // LLMが厳しい→尊重
+ *  - ai > rule+15 かつ !(ai>=80 && rule>=70)   → rule              // 吊り上げ疑い→rule天井
+ *  - それ以外                                  → ai
+ *
+ * feedbackは採用側（スコアを決定した評価器）から取る。
  */
 class CompositeEvaluator implements IQualityEvaluator {
   constructor(
@@ -60,13 +61,38 @@ class CompositeEvaluator implements IQualityEvaluator {
       return rule;
     }
 
-    if (Math.abs(aiResult.score - rule.score) > MAX_SCORE_DIVERGENCE) {
-      console.warn(
-        `[quality] AIスコア(${aiResult.score})とルールベース(${rule.score})の乖離が大きいためルールベースを採用`
-      );
-      return rule;
+    const aiScore   = aiResult.score;
+    const ruleScore = rule.score;
+
+    let finalScore: number;
+    let useAiFeedback: boolean;
+
+    if (aiScore <= ruleScore) {
+      // LLM が厳しく評価している → 尊重しつつ rule との差を緩和
+      finalScore    = Math.min(ruleScore, aiScore + 10);
+      useAiFeedback = true;
+    } else if (aiScore > ruleScore + 15) {
+      // AI スコアが rule を大幅に上回る → 吊り上げ（injection）疑い → rule 天井
+      // ヒステリシス: 両者ともに高スコアなら AI を許容
+      if (aiScore >= 80 && ruleScore >= 70) {
+        finalScore    = aiScore;
+        useAiFeedback = true;
+      } else {
+        console.warn(
+          `[quality] AIスコア(${aiScore})がルールベース(${ruleScore})を大幅に上回るためルール天井を適用`
+        );
+        finalScore    = ruleScore;
+        useAiFeedback = false;
+      }
+    } else {
+      finalScore    = aiScore;
+      useAiFeedback = true;
     }
-    return aiResult;
+
+    return {
+      score:    finalScore,
+      feedback: useAiFeedback ? aiResult.feedback : rule.feedback,
+    };
   }
 }
 
