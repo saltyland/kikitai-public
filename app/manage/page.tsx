@@ -46,7 +46,7 @@ export default async function ManagePage({
 
   return (
     <>
-      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} pageLabel="アンケート管理" />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h1 className="text-lg font-bold text-slate-800">作成・管理</h1>
