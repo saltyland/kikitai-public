@@ -52,14 +52,14 @@ export async function submitResponseAction(
   }
 
   revalidatePath('/surveys');
-  // 品質スコアと付与ポイントをホームに渡して結果を伝える
+  // 品質スコア・付与ポイント・アドバイスを結果画面に渡す
   const params = new URLSearchParams({
-    answered: '1',
     score: String(result.score),
     pts: String(result.earnedPoints),
   });
+  if (result.feedback) params.set('feedback', result.feedback);
   if (result.surveyClosed) params.set('closed', '1');
-  redirect(`/?${params.toString()}`);
+  redirect(`/answered?${params.toString()}`);
 }
 
 /**
@@ -107,10 +107,10 @@ export async function submitSharedLinkResponseAction(
 
   revalidatePath('/surveys');
   const params = new URLSearchParams({
-    answered: '1',
     score: String(result.score),
     pts: String(result.earnedPoints),
   });
+  if (result.feedback) params.set('feedback', result.feedback);
   if (result.surveyClosed) params.set('closed', '1');
-  redirect(`/?${params.toString()}`);
+  redirect(`/answered?${params.toString()}`);
 }
