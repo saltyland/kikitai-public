@@ -118,6 +118,11 @@ export interface MechSignals {
   hints?: QualityHints;
   /** 回答所要秒数（クライアント計測・参考値） */
   durationSec?: number;
+  /**
+   * ローカル埋め込みによる関連性リスク（0〜1）。
+   * LocalEmbeddingEvaluator が供給する。未供給時は 0（安全側＝減点しない）。
+   */
+  relevanceRisk?: number;
 }
 
 /**

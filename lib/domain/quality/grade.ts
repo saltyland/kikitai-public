@@ -19,6 +19,11 @@ export interface GradeInput {
   mechScore: number;
   /** LLMリスク = (100 − llm_score) / 100、0〜1（1 = 高リスク） */
   llmRisk: number;
+  /**
+   * 関連性リスク 0〜1（LocalEmbeddingEvaluator が供給）。
+   * 未供給時は 0（安全側＝判定不能は減点しない）。
+   */
+  relRisk?: number;
   /** ユーザー信頼スコア 0〜100（省略時は中立値として扱う） */
   trust?: number;
   /** 機械層から申し送られたhintフラグ群 */
@@ -62,6 +67,9 @@ const RESCUE_PASTE_JUSTIFIED = 0.02;
 /** 救済量の上限（ゲーミング防止・≈1ティア幅） */
 const RESCUE_MAX = 0.12;
 
+/** 関連性リスク項の重み（W_REL・設計書 §13.2）。未供給時は 0 として無効化される。 */
+const W_REL = 0.5;
+
 // ────────────────────────────────────────────────
 // 内部ヘルパ
 // ────────────────────────────────────────────────
@@ -92,8 +100,10 @@ function computeRescue(trust?: number, hints?: string[]): number {
  */
 export function grade(input: GradeInput): GradeResult {
   const { mechScore, llmRisk, trust, hints } = input;
+  const relRisk = input.relRisk ?? 0;
 
-  const raw = 1 - (1 - mechScore) * (1 - llmRisk) - computeRescue(trust, hints);
+  // 第3項（関連性リスク）を確率合成に組み込む（設計書 §13.2）
+  const raw = 1 - (1 - mechScore) * (1 - llmRisk) * (1 - W_REL * relRisk) - computeRescue(trust, hints);
   const finalRisk = Math.max(0, Math.min(1, raw));
 
   let tier: GradeTier;

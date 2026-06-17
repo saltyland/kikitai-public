@@ -21,9 +21,9 @@ import { extractContentWords } from './text';
  *   AI生成・手抜きは別軸（機械層＝ruleBased）が担当する。
  *
  * 安全側の原則:
- *   - 参照ベクトルが無い／空間不一致 → 関連性は判定不能として減点しない。
+ *   - 参照ベクトルが無い／空間不一致 → 関連性は判定不能として減点しない（relRisk=0）。
  *   - 古典ML分類器が未学習（重み未配置）→ 減点しない（return 100相当）。
- *   - 丸写し（likelyCopy）は**ここでは破棄せず**、feedbackに注意を添えるのみ（機械層が判断）。
+ *   - likelyCopy（設問丸写し）→ relevance スコアは使わず relRisk=0.6 固定。
  */
 export class LocalEmbeddingEvaluator implements IQualityEvaluator {
   constructor(
@@ -31,6 +31,41 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
     private readonly encoderProvider: () => Promise<ILocalEncoder> = getLocalEncoder,
     private readonly classifier: LocalQualityClassifier = new LocalQualityClassifier()
   ) {}
+
+  /**
+   * 各自由記述の関連性リスク（0〜1）を計算し、その平均を返す。
+   * responseService が MechSignals.relevanceRisk に供給するためのメソッド。
+   *
+   * ルール:
+   *   - likelyCopy   → 0.6 固定（relevance スコア不使用）
+   *   - !indeterminate && !likelyCopy → 1 - relevance
+   *   - indeterminate → 0（安全側＝減点しない）
+   *   - 自由記述なし → 0
+   */
+  async computeRelRisk(items: EvaluationItem[]): Promise<number> {
+    const encoder = await this.encoderProvider();
+    const textItems = items.filter(
+      (i) =>
+        (i.question.type === 'text' || i.question.type === 'paragraph') &&
+        (i.answer?.text_answer ?? '').trim().length > 0
+    );
+    if (textItems.length === 0) return 0;
+
+    const perItemRisks: number[] = [];
+    for (const item of textItems) {
+      const text = (item.answer?.text_answer ?? '').trim();
+      const emb = await encoder.embed(text);
+      const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
+      if (r.likelyCopy) {
+        perItemRisks.push(0.6);
+      } else if (!r.indeterminate) {
+        perItemRisks.push(Math.max(0, 1 - r.relevance));
+      } else {
+        perItemRisks.push(0);
+      }
+    }
+    return perItemRisks.reduce((a, b) => a + b, 0) / perItemRisks.length;
+  }
 
   async evaluate(items: EvaluationItem[], context?: EvaluationContext): Promise<QualityResult> {
     void context;
@@ -43,7 +78,6 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
         (i.answer?.text_answer ?? '').trim().length > 0
     );
 
-    // 自由記述が無ければ関連性は測れない（安全側＝満点）。
     if (textItems.length === 0) {
       return { score: 100, feedback: 'ローカル評価: 自由記述がないため関連性判定は対象外です。' };
     }
@@ -55,16 +89,18 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
       const text = (item.answer?.text_answer ?? '').trim();
       const emb = await encoder.embed(text);
       const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
-      if (!r.indeterminate) {
+      if (r.likelyCopy) {
+        // 丸写し → relRisk=0.6 相当のスコア（40）を採用。relevance は使わない。
+        relevanceScores.push(0.4);
+        copyFlags++;
+        reasons.push('設問文の丸写しに近い自由記述があります（コピペ判定は機械層で確認）。');
+      } else if (!r.indeterminate) {
         relevanceScores.push(r.relevance);
         if (!r.onTopic) {
           reasons.push('設問の主旨から外れている可能性のある自由記述があります（関連性）。');
         }
-        if (r.likelyCopy) copyFlags++;
       }
-    }
-    if (copyFlags > 0) {
-      reasons.push('設問文の丸写しに近い自由記述があります（コピペ判定は機械層で確認）。');
+      // indeterminate → relevanceScores に加えない（安全側）
     }
 
     // ── 古典ML分類器（未学習なら null＝減点しない。設計書 §4.2 B-2）────────
@@ -82,7 +118,7 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
       }
     }
 
-    // 関連性スコアを0〜100へ。判定不能なら100（安全側）。
+    // 関連性スコア（床なし・素通し）。判定不能なら 100（安全側）。
     const relevance100 =
       relevanceScores.length > 0
         ? Math.round((relevanceScores.reduce((a, b) => a + b, 0) / relevanceScores.length) * 100)
@@ -92,14 +128,13 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
         ? Math.round(mlScores.reduce((a, b) => a + b, 0) / mlScores.length)
         : 100;
 
-    // 補正1: 関連性は単独で破棄しない＝床を高めに取り、緩やかに反映する。
-    const relevanceComponent = Math.max(60, relevance100);
-    const score = Math.max(0, Math.min(100, Math.min(relevanceComponent, ml100)));
+    const score = Math.max(0, Math.min(100, Math.min(relevance100, ml100)));
 
+    void copyFlags;
     const feedback =
       reasons.length === 0
         ? 'ローカル評価: 設問との関連性に問題は見られませんでした。'
-        : reasons.join(' ');
+        : [...new Set(reasons)].join(' ');
     return { score, feedback };
   }
 }
