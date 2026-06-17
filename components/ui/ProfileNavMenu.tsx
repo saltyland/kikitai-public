@@ -38,9 +38,10 @@ export default function ProfileNavMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="flex items-center gap-1.5 rounded-full px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         <Avatar name={nickname} src={avatarUrl} className="h-8 w-8 text-xs" />
+        <span className="max-w-[5rem] truncate text-sm font-medium text-slate-700">{nickname}</span>
       </button>
 
       {open && (
