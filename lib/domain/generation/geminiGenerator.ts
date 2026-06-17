@@ -102,21 +102,32 @@ export async function generateSurveyDraft(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent` +
     `?key=${encodeURIComponent(apiKey)}`;
 
-  // Gemini 2.5 Flash は大きなリクエストで 30〜60 秒かかることがある。
-  // Vercel のデフォルトタイムアウト（30 秒）より長く設定して 504 を防ぐ。
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    signal: AbortSignal.timeout(45_000),
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        responseMimeType: 'application/json',
-        responseSchema,
-      },
-    }),
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.7,
+      responseMimeType: 'application/json',
+      responseSchema,
+    },
   });
+
+  // 503（過負荷）は一時的なので指数バックオフでリトライする
+  const MAX_RETRIES = 3;
+  let res!: Response;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 2 ** attempt * 1000)); // 2s, 4s
+    }
+    // Gemini 2.5 Flash は大きなリクエストで 30〜60 秒かかることがある。
+    // Vercel のデフォルトタイムアウト（30 秒）より長く設定して 504 を防ぐ。
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(45_000),
+      body,
+    });
+    if (res.status !== 503) break;
+  }
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => '(body unreadable)');
