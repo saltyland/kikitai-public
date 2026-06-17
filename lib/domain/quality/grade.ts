@@ -52,6 +52,12 @@ const THETA_L1B  = 0.50;
 /** L1a/PASS 境界（θ_soft） */
 const THETA_SOFT = 0.30;
 
+/**
+ * 安全弁: mechScore がこの値未満のとき finalRisk ≥ THETA_HARD でも T0 にしない。
+ * LLM 単独の誤検知で完全無効化されるのを防ぐ（合算原則 §0.3）。
+ */
+const MECH_SAFE_THRESHOLD = 0.15;
+
 /** 高信頼ユーザーと判定する trust_score の下限 */
 const RESCUE_HIGH_TRUST_THRESHOLD = 80;
 /** 高信頼による救済量 */
@@ -89,7 +95,9 @@ function computeRescue(trust?: number, hints?: string[]): number {
  *
  *   finalRisk = clamp(1 − (1−mechScore)(1−llmRisk) − rescue, 0, 1)
  *
- * finalRisk ≥ THETA_HARD なら mechScore 問わず T0(0%)。
+ * 安全弁: mechScore < MECH_SAFE_THRESHOLD（0.15）の場合、
+ * finalRisk ≥ THETA_HARD でも T0 にせず L1c 止まりとする
+ * （LLM 単独の誤検知による完全無効化を防ぐ）。
  */
 export function grade(input: GradeInput): GradeResult {
   const { mechScore, llmRisk, trust, hints } = input;
@@ -103,8 +111,14 @@ export function grade(input: GradeInput): GradeResult {
   let payoutRate: PayoutRate;
 
   if (finalRisk >= THETA_HARD) {
-    tier = 'T0';
-    payoutRate = 0;
+    // 安全弁: 機械スコアが低リスク圏なら LLM 単独で T0 にしない
+    if (mechScore < MECH_SAFE_THRESHOLD) {
+      tier = 'L1c';
+      payoutRate = 0.3;
+    } else {
+      tier = 'T0';
+      payoutRate = 0;
+    }
   } else if (finalRisk >= THETA_L1C) {
     tier = 'L1c';
     payoutRate = 0.3;
