@@ -3,6 +3,8 @@
  * mech_score と llm_risk を合流させ、5段ティアと付与率を決定する。
  *
  * 全パラメータは定数化されており、後日キャリブレーション可能。
+ *
+ * 安全弁なし: finalRisk >= THETA_HARD なら mechScore 問わず T0(0%)。
  */
 
 // ────────────────────────────────────────────────
@@ -19,6 +21,11 @@ export interface GradeInput {
   mechScore: number;
   /** LLMリスク = (100 − llm_score) / 100、0〜1（1 = 高リスク） */
   llmRisk: number;
+  /**
+   * 関連性リスク 0〜1（LocalEmbeddingEvaluator が供給）。
+   * 未供給時は 0（安全側＝判定不能は減点しない）。
+   */
+  relRisk?: number;
   /** ユーザー信頼スコア 0〜100（省略時は中立値として扱う） */
   trust?: number;
   /** 機械層から申し送られたhintフラグ群 */
@@ -36,23 +43,24 @@ export interface GradeResult {
 // キャリブレーション可能な定数（§7.1 初期値）
 // ────────────────────────────────────────────────
 
-/** 機械スコアの重み（初期 0.5 / 0.5） */
-const W_MECH = 0.5;
-/** LLMリスクの重み（初期 0.5 / 0.5） */
-const W_LLM  = 0.5;
-
 /** T0 境界（機械フィルタ設計書 §4.3 θ_hard と統一） */
-const THETA_HARD = 0.70;
+const THETA_HARD = 0.80;
 /** L1c/L1b 境界 */
-const THETA_L1C  = 0.58;
+const THETA_L1C  = 0.65;
 /** L1b/L1a 境界 */
-const THETA_L1B  = 0.47;
+const THETA_L1B  = 0.50;
 /** L1a/PASS 境界（θ_soft） */
-const THETA_SOFT = 0.35;
+const THETA_SOFT = 0.30;
+
+/**
+ * 安全弁: mechScore がこの値未満のとき finalRisk ≥ THETA_HARD でも T0 にしない。
+ * LLM 単独の誤検知で完全無効化されるのを防ぐ（合算原則 §0.3）。
+ */
+const MECH_SAFE_THRESHOLD = 0.15;
 
 /** 高信頼ユーザーと判定する trust_score の下限 */
 const RESCUE_HIGH_TRUST_THRESHOLD = 80;
-/** 高信頼による救済量（1ティア幅 ≈ 0.12 の約2/3） */
+/** 高信頼による救済量 */
 const RESCUE_HIGH_TRUST    = 0.08;
 /** 短答可メタによる救済量 */
 const RESCUE_SHORT_ANSWER  = 0.04;
@@ -60,6 +68,9 @@ const RESCUE_SHORT_ANSWER  = 0.04;
 const RESCUE_PASTE_JUSTIFIED = 0.02;
 /** 救済量の上限（ゲーミング防止・≈1ティア幅） */
 const RESCUE_MAX = 0.12;
+
+/** 関連性リスク項の重み（W_REL・設計書 §13.2）。未供給時は 0 として無効化される。 */
+const W_REL = 0.5;
 
 // ────────────────────────────────────────────────
 // 内部ヘルパ
@@ -80,24 +91,28 @@ function computeRescue(trust?: number, hints?: string[]): number {
 // ────────────────────────────────────────────────
 
 /**
- * mech_score と llm_risk を統合し、5段ティアと付与率を返す（LLM設計書 §7.1）。
+ * mech_score と llm_risk を確率合成し、5段ティアと付与率を返す（LLM設計書 §7.1）。
  *
- * 安全弁:
- *   - mechScore < θ_soft（機械が PASS 圏と判断）の場合、
- *     LLM 単独では T0 にしない（合算原則 §0.3）。
+ *   finalRisk = clamp(1 − (1−mechScore)(1−llmRisk) − rescue, 0, 1)
+ *
+ * 安全弁: mechScore < MECH_SAFE_THRESHOLD（0.15）の場合、
+ * finalRisk ≥ THETA_HARD でも T0 にせず L1c 止まりとする
+ * （LLM 単独の誤検知による完全無効化を防ぐ）。
  */
 export function grade(input: GradeInput): GradeResult {
   const { mechScore, llmRisk, trust, hints } = input;
+  const relRisk = input.relRisk ?? 0;
 
-  const raw = W_MECH * mechScore + W_LLM * llmRisk - computeRescue(trust, hints);
+  // 第3項（関連性リスク）を確率合成に組み込む（設計書 §13.2）
+  const raw = 1 - (1 - mechScore) * (1 - llmRisk) * (1 - W_REL * relRisk) - computeRescue(trust, hints);
   const finalRisk = Math.max(0, Math.min(1, raw));
 
   let tier: GradeTier;
   let payoutRate: PayoutRate;
 
   if (finalRisk >= THETA_HARD) {
-    // 安全弁: 機械スコアが PASS 圏（低リスク）なら LLM 単独で T0 にしない
-    if (mechScore < THETA_SOFT) {
+    // 安全弁: 機械スコアが低リスク圏なら LLM 単独で T0 にしない
+    if (mechScore < MECH_SAFE_THRESHOLD) {
       tier = 'L1c';
       payoutRate = 0.3;
     } else {
