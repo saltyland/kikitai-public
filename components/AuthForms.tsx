@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { loginWithGoogleAction, registerAction, type ActionState } from '@/app/actions/auth';
 import { demoLoginAction, type DemoLoginState } from '@/app/actions/demo';
@@ -81,9 +82,29 @@ export function LoginForm({ next }: { next?: string }) {
 }
 
 export function RegisterForm({ next }: { next?: string }) {
+  const [agreed, setAgreed] = React.useState(false);
+
   return (
     <div className="space-y-4">
-      <LoginForm next={next} />
+      <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-brand-600"
+        />
+        <span>
+          <Link href="/terms" target="_blank" className="font-medium text-brand-600 hover:underline">
+            利用規約
+          </Link>
+          を読み、同意します
+        </span>
+      </label>
+
+      <div className={agreed ? '' : 'pointer-events-none opacity-40'}>
+        <LoginForm next={next} />
+      </div>
+
       <p className="text-center text-sm text-slate-600">
         すでにアカウントをお持ちの方も{' '}
         <Link
