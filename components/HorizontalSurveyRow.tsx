@@ -62,7 +62,7 @@ export default function HorizontalSurveyRow({
   }
 
   return (
-    <section className="mb-10">
+    <section className="mb-6 rounded-2xl bg-brand-50/30 px-4 py-4">
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-800">{title}</h2>
         {viewMoreHref && (

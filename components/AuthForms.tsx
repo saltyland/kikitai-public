@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { loginWithGoogleAction, registerAction, type ActionState } from '@/app/actions/auth';
 import { demoLoginAction, type DemoLoginState } from '@/app/actions/demo';
 import { Spinner } from '@/components/ui/Spinner';
-import { useActionState, useTransition } from 'react';
+import { useTransition, useActionState } from 'react';
 
 function GoogleIcon() {
   return (

@@ -42,7 +42,7 @@
 }
 
 body {
-  background: linear-gradient(to bottom, var(--color-brand-50) 0%, #ffffff 55%, color-mix(in srgb, var(--color-brand-100) 60%, transparent) 100%);
+  background: linear-gradient(to bottom, var(--color-brand-50) 0%, color-mix(in srgb, var(--color-brand-50) 40%, #ffffff) 55%, color-mix(in srgb, var(--color-brand-100) 60%, transparent) 100%);
   background-attachment: fixed;
   color: var(--color-slate-800);
   font-family: var(--font-sans);

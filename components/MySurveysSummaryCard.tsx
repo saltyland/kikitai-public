@@ -23,15 +23,20 @@ export default function MySurveysSummaryCard({ surveys }: { surveys: SurveyWithS
 
   return (
     <div className="card-3d mb-8 p-6">
-      <div className="mb-1 flex items-baseline justify-between gap-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
         <p className="text-lg font-extrabold text-slate-800">
           公開中のアンケート {openSurveys.length}件
         </p>
-        {openSurveys.length > 4 && (
-          <Link href="/manage" className="text-sm font-medium text-brand-600 hover:underline">
-            すべて見る
+        <div className="flex items-center gap-2">
+          <Link href="/surveys/new" className="btn-3d btn-3d-primary px-3 py-1.5 text-xs">
+            ＋ 新規作成
           </Link>
-        )}
+          {openSurveys.length > 4 && (
+            <Link href="/manage" className="text-sm font-medium text-brand-600 hover:underline">
+              すべて見る
+            </Link>
+          )}
+        </div>
       </div>
       <p className="mb-3 text-sm text-slate-500">
         アンケートの管理・結果の確認は「作成・管理」から行えます。
@@ -43,7 +48,7 @@ export default function MySurveysSummaryCard({ surveys }: { surveys: SurveyWithS
             <Link
               key={s.id}
               href={`/surveys/${s.id}/results`}
-              className="card-3d card-3d-hover block p-4"
+              className="card-3d card-3d-hover block bg-brand-50 p-4"
             >
               <p className="line-clamp-1 text-sm font-bold text-slate-800">{s.title}</p>
               <div className="mt-2 flex items-center justify-between text-xs text-slate-500">

@@ -46,7 +46,7 @@ export default async function ManagePage({
 
   return (
     <>
-      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
+      <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} pageLabel="アンケート管理" />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h1 className="text-lg font-bold text-slate-800">作成・管理</h1>
@@ -64,7 +64,7 @@ export default async function ManagePage({
         <ManageDashboard surveys={allSurveys} />
 
         {/* タブ */}
-        <div className="mb-4 flex gap-2 border-b border-zinc-200">
+        <div className="mb-4 flex gap-2 rounded-t-xl bg-brand-50/60 border-b border-slate-200 px-2">
           {TABS.map((t) => (
             <Link
               key={t.key}
@@ -98,7 +98,7 @@ export default async function ManagePage({
         ) : (
           <ul className="space-y-3">
             {surveys.map((s) => (
-              <li key={s.id} className="card-3d p-4">
+              <li key={s.id} className="card-3d p-4 transition-colors hover:bg-brand-50/30">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
