@@ -217,6 +217,7 @@ export function createQualityEvaluator(): IQualityEvaluator {
  * ========================================================================== */
 
 export { sanitizeItems } from './sanitize';
+export { LocalEmbeddingEvaluator } from './embedding/localEvaluator';
 
 /**
  * 最終グレーディング（設計書 §1/§7）。S5実装（grade.ts）をバレル経由でラップする。
@@ -235,6 +236,6 @@ export const grade: GradeFn = (quality, mech) => {
         .filter(([, v]) => v)
         .map(([k]) => k)
     : undefined;
-  const r = gradeImpl({ mechScore, llmRisk, hints });
+  const r = gradeImpl({ mechScore, llmRisk, hints, relRisk: mech.relevanceRisk });
   return { tier: r.tier, payoutRate: r.payoutRate, score: quality.score, feedback: quality.feedback };
 };

@@ -25,12 +25,10 @@ export function setLocalEncoderForTest(encoder: ILocalEncoder | null): void {
 }
 
 async function build(): Promise<ILocalEncoder> {
-  if (process.env.LOCAL_ENCODER === 'onnx') {
-    try {
-      return await OnnxEncoder.create({ modelPath: process.env.LOCAL_ENCODER_MODEL_PATH });
-    } catch (e) {
-      console.warn('[quality/embedding] ONNXエンコーダのロードに失敗。Hashingにフォールバック:', e);
-    }
+  try {
+    return await OnnxEncoder.create();
+  } catch (e) {
+    console.warn('[quality/embedding] OnnxEncoder のロードに失敗。HashingEncoder にフォールバック:', e);
   }
   return new HashingEncoder();
 }
