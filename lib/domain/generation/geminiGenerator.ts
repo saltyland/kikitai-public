@@ -55,8 +55,8 @@ export async function generateSurveyDraft(
   ].filter(Boolean).join('\n');
 
   // responseSchema で型を強制する
-  // 注意: Gemini responseSchema は OpenAPI サブセットであり nullable: true は非サポート。
-  //       null 許容は type 配列 ["string", "null"] で表現する。
+  // 注意: Gemini responseSchema は OpenAPI サブセット。nullable フィールドは nullable: true で表現する。
+  //       type 配列（["string", "null"]）は object を含む場合に 400 エラーになることがある。
   const responseSchema = {
     type: 'object',
     properties: {
@@ -73,10 +73,10 @@ export async function generateSurveyDraft(
               enum: ['single', 'multiple', 'dropdown', 'text', 'paragraph', 'attention'],
             },
             text: { type: 'string' },
-            description: { type: ['string', 'null'] },
+            description: { type: 'string', nullable: true },
             required: { type: 'boolean' },
             options: { type: 'array', items: { type: 'string' } },
-            config: { type: ['object', 'null'] },
+            config: { type: 'object', nullable: true },
             signal_meta: {
               type: 'object',
               properties: {
@@ -84,7 +84,7 @@ export async function generateSurveyDraft(
                   type: 'string',
                   enum: ['standard', 'attention_check', 'consistency_anchor', 'consistency_check', 'open_signal'],
                 },
-                pairKey: { type: ['string', 'null'] },
+                pairKey: { type: 'string', nullable: true },
                 contradictsWith: { type: 'array', items: { type: 'string' } },
                 positiveOptions: { type: 'array', items: { type: 'string' } },
               },
@@ -118,7 +118,10 @@ export async function generateSurveyDraft(
     }),
   });
 
-  if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '(body unreadable)');
+    throw new Error(`Gemini API error: ${res.status} — ${errBody.slice(0, 500)}`);
+  }
 
   const json = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
