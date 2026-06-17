@@ -31,7 +31,7 @@ export default async function SurveyListPage() {
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-2">
+        <div className="mb-6 flex items-center justify-between gap-2 rounded-xl bg-brand-50/50 px-4 py-3">
           <div>
             <h1 className="text-xl font-bold text-slate-800">回答できるアンケート</h1>
             <p className="mt-1 text-sm text-slate-400">スクロールしていろんなアンケートを見てみましょう。</p>
