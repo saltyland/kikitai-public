@@ -172,6 +172,41 @@ export class RuleBasedEvaluator implements IQualityEvaluator {
       reasons.push('複数の自由記述がほぼ同じ内容で、使い回しの可能性があります。');
     }
 
+    // 10. 一貫性ペアの矛盾チェック（consistency_anchor / consistency_check）
+    const anchors = items.filter((i) => i.question.signal_meta?.role === 'consistency_anchor');
+    for (const anchor of anchors) {
+      const pairKey = anchor.question.signal_meta?.pairKey;
+      if (!pairKey) continue;
+
+      const check = items.find(
+        (i) =>
+          i.question.signal_meta?.role === 'consistency_check' &&
+          i.question.signal_meta?.pairKey === pairKey,
+      );
+      if (!check) continue;
+
+      const anchorAnswer = anchor.answer?.option_ids?.[0];
+      const anchorOption = anchor.question.options.find((o) => o.id === anchorAnswer);
+      const checkAnswer = check.answer?.option_ids?.[0];
+      const checkOption = check.question.options.find((o) => o.id === checkAnswer);
+
+      const positiveOptions = anchor.question.signal_meta?.positiveOptions ?? [];
+      const contradictsWith = check.question.signal_meta?.contradictsWith ?? [];
+
+      // trim() で前後の空白・改行の差異を吸収する
+      const anchorIsPositive = positiveOptions.some(
+        (p) => p.trim() === anchorOption?.text.trim(),
+      );
+      const checkIsContradicting = contradictsWith.some(
+        (c) => c.trim() === checkOption?.text.trim(),
+      );
+
+      if (anchorIsPositive && checkIsContradicting) {
+        score -= 20;
+        reasons.push('回答に矛盾が検出されました。');
+      }
+    }
+
     score = Math.max(0, Math.min(100, score));
     const feedback =
       reasons.length === 0
