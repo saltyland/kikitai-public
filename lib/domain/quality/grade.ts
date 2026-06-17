@@ -52,6 +52,7 @@ const THETA_L1B  = 0.50;
 /** L1a/PASS 境界（θ_soft） */
 const THETA_SOFT = 0.30;
 
+
 /** 高信頼ユーザーと判定する trust_score の下限 */
 const RESCUE_HIGH_TRUST_THRESHOLD = 80;
 /** 高信頼による救済量 */
@@ -89,8 +90,7 @@ function computeRescue(trust?: number, hints?: string[]): number {
  *
  *   finalRisk = clamp(1 − (1−mechScore)(1−llmRisk) − rescue, 0, 1)
  *
- * finalRisk ≥ THETA_HARD なら mechScore 問わず T0(0%)。
- */
+
 export function grade(input: GradeInput): GradeResult {
   const { mechScore, llmRisk, trust, hints } = input;
   const relRisk = input.relRisk ?? 0;
@@ -103,8 +103,7 @@ export function grade(input: GradeInput): GradeResult {
   let payoutRate: PayoutRate;
 
   if (finalRisk >= THETA_HARD) {
-    tier = 'T0';
-    payoutRate = 0;
+
   } else if (finalRisk >= THETA_L1C) {
     tier = 'L1c';
     payoutRate = 0.3;
