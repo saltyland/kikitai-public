@@ -74,7 +74,20 @@ export default async function HomePage({
           </p>
         </section>
 
+        {/* アンケート作成・管理セクション */}
+        <div className="mb-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            アンケートを作成・管理する
+          </h2>
+        </div>
         <MySurveysSummaryCard surveys={mySurveys} />
+
+        {/* アンケート回答セクション */}
+        <div className="mb-4 mt-6 border-t border-slate-100 pt-6">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            アンケートに回答する
+          </h2>
+        </div>
 
         <HorizontalSurveyRow
           title="あなたへのおすすめ"
