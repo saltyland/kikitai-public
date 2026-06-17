@@ -79,6 +79,8 @@ export const surveyInputSchema = z.object({
   retention_months: z.number().int().min(1).max(120).nullable(),
   visibility: z.enum(['public', 'unlisted']),
   share_link_no_reward: z.boolean(),
+  topic_ids: z.array(z.string().uuid()).min(1).max(3),
+  topic_suggestion: z.string().max(200).nullable(),
 });
 
 const gridRowAnswerSchema = z.object({

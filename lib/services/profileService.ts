@@ -3,6 +3,8 @@ import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { PointLotRepository } from '@/lib/repositories/pointLotRepository';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import type {
+  NotificationSettings,
+  NotificationType,
   Plan,
   PointsSummary,
   PrivateField,
@@ -168,6 +170,19 @@ export class ProfileService {
       .filter((lot) => new Date(lot.expires_at).getTime() <= threshold)
       .map((lot) => ({ amount: lot.amount, expires_at: lot.expires_at }));
     return { available, expiringSoon };
+  }
+
+  /**
+   * 通知種別ごとのON/OFF設定を更新する（マイページの通知設定タブから）。
+   * 渡された種別のみ上書きし、それ以外の既存設定は保持する。
+   */
+  async updateNotificationSettings(
+    userId: string,
+    changes: Partial<Record<NotificationType, boolean>>
+  ): Promise<Profile> {
+    const current = await this.profileRepo.findById(userId);
+    const merged: NotificationSettings = { ...(current?.notification_settings ?? {}), ...changes };
+    return this.profileRepo.updateNotificationSettings(userId, merged);
   }
 
   /**

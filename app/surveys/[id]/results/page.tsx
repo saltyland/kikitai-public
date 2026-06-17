@@ -81,7 +81,7 @@ export default async function ResultsPage({
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-        <Link href="/" className="text-sm text-brand-600 hover:underline">← ホームに戻る</Link>
+        <Link href="/manage" className="text-sm text-brand-600 hover:underline">← 作成・管理に戻る</Link>
         <h1 className="mt-2 mb-1 text-xl font-bold text-slate-800">{survey.title}</h1>
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="text-sm text-slate-600">回答数：{responseCount}件</p>

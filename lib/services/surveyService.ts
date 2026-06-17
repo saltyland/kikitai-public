@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
+import { TopicRepository } from '@/lib/repositories/topicRepository';
+import { FollowRepository } from '@/lib/repositories/followRepository';
 import type {
   Survey,
   SurveyInput,
@@ -9,6 +11,7 @@ import type {
   SurveyWithQuestions,
   SurveyWithStats,
   QuestionInput,
+  Topic,
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
@@ -24,11 +27,15 @@ export class SurveyService {
   private readonly surveyRepo: SurveyRepository;
   private readonly profileRepo: ProfileRepository;
   private readonly responseRepo: ResponseRepository;
+  private readonly topicRepo: TopicRepository;
+  private readonly followRepo: FollowRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.profileRepo = new ProfileRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
+    this.topicRepo = new TopicRepository(supabase);
+    this.followRepo = new FollowRepository(supabase);
   }
 
   /** 入力バリデーション。設問タイプ固有の検証はレジストリ経由で各タイプ定義に委譲する。 */
@@ -36,6 +43,9 @@ export class SurveyService {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
     if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
+    if (input.topic_ids.length < 1 || input.topic_ids.length > 3) {
+      throw new Error('トピックは1〜3個選択してください');
+    }
     // インフォームドコンセント文は「あり/なし」を作成者が選べる（任意）。
     // 「なし」の場合は consent_text が null となり、回答画面では汎用の説明文を表示する。
     input.questions.forEach((q: QuestionInput, i: number) => {
@@ -124,6 +134,12 @@ export class SurveyService {
     return d.toISOString();
   }
 
+  /** 新規トピック提案があれば保存する（自由記述・任意） */
+  private async saveTopicSuggestion(surveyId: string, userId: string, input: SurveyInput) {
+    const text = input.topic_suggestion?.trim();
+    if (text) await this.topicRepo.createSuggestion(surveyId, userId, text);
+  }
+
   /**
    * 参照ベクトル群を生成して survey に保存する（設計書 §13.2 作成フェーズ）。
    *
@@ -168,6 +184,8 @@ export class SurveyService {
       ...this.toSurveyColumns(input),
     });
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
+    await this.surveyRepo.replaceSurveyTopics(survey.id, input.topic_ids);
+    await this.saveTopicSuggestion(survey.id, userId, input);
     await this.saveReferenceVectors(survey.id, this.toReferenceSources(input.questions));
     return survey;
   }
@@ -185,6 +203,8 @@ export class SurveyService {
 
     const survey = await this.surveyRepo.updateSurvey(surveyId, this.toSurveyColumns(input));
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
+    await this.surveyRepo.replaceSurveyTopics(surveyId, input.topic_ids);
+    await this.saveTopicSuggestion(surveyId, userId, input);
     await this.saveReferenceVectors(surveyId, this.toReferenceSources(input.questions));
     return survey;
   }
@@ -240,6 +260,16 @@ export class SurveyService {
     await this.surveyRepo.delete(surveyId);
   }
 
+  /** トピック詳細ページ：そのトピックが付与された公開中アンケート（回答数つき）。 */
+  async listSurveysByTopic(topicId: string): Promise<SurveyWithStats[]> {
+    const surveys = await this.surveyRepo.findByTopicId(topicId);
+    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
+    return surveys.map((s) => ({
+      ...s,
+      response_count: counts.get(s.id) ?? 0,
+    }));
+  }
+
   /** 他人のプロフィールページ：公開中アンケートのみ（回答数つき）。 */
   async listSurveysByUser(targetUserId: string): Promise<SurveyWithStats[]> {
     const surveys = (await this.surveyRepo.findByOwner(targetUserId)).filter(
@@ -263,23 +293,12 @@ export class SurveyService {
   }
 
   /**
-   * 回答可能なアンケート一覧：
-   * 公開中 / 自分が作成したもの除外 / 回答済み除外 /
-   * 属性マッチング（target_conditions）と最低信頼スコア（min_trust_score）を満たすもののみ。
-   * 回答済み判定・回答数・作成者プロフィールはそれぞれ1クエリで一括取得する（N+1対策）。
+   * アンケート配列に回答数・作成者・設問プレビュー・報酬目安を付与し、
+   * 自分が回答済みのものを除外して SurveyWithStats[] にする（一覧表示の共通処理）。
+   * 回答済み判定・回答数・作成者プロフィール・プレビュー・設問タイプはそれぞれ
+   * 1クエリで一括取得する（N+1対策）。
    */
-  async listAnswerableSurveys(userId: string): Promise<SurveyWithStats[]> {
-    const me = await this.profileRepo.findById(userId);
-    const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
-      (s) =>
-        s.user_id !== userId &&
-        // 限定公開（unlisted）は一覧に出さない（共有リンクを知っている人のみ）
-        s.visibility !== 'unlisted' &&
-        // 属性マッチング配信：条件を満たす回答者にのみ表示する
-        (!me || matches(me, s.target_conditions)) &&
-        // 高信頼フィルター：信頼スコアが基準未満の回答者には配信しない
-        (s.min_trust_score == null || (me?.trust_score ?? 0) >= s.min_trust_score)
-    );
+  private async decorateSurveys(userId: string, surveys: Survey[]): Promise<SurveyWithStats[]> {
     const ids = surveys.map((s) => s.id);
     const [respondedIds, counts, authors, previews, questionTypes] = await Promise.all([
       this.responseRepo.findRespondedSurveyIds(userId, ids),
@@ -313,5 +332,71 @@ export class SurveyService {
           max_reward_points: Math.ceil(base * 1.5),
         };
       });
+  }
+
+  /**
+   * 回答可能なアンケート一覧（おすすめ）：
+   * 公開中 / 自分が作成したもの除外 / 回答済み除外 /
+   * 属性マッチング（target_conditions）と最低信頼スコア（min_trust_score）を満たすもののみ。
+   */
+  async listAnswerableSurveys(userId: string): Promise<SurveyWithStats[]> {
+    const me = await this.profileRepo.findById(userId);
+    const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
+      (s) =>
+        s.user_id !== userId &&
+        // 限定公開（unlisted）は一覧に出さない（共有リンクを知っている人のみ）
+        s.visibility !== 'unlisted' &&
+        // 属性マッチング配信：条件を満たす回答者にのみ表示する
+        (!me || matches(me, s.target_conditions)) &&
+        // 高信頼フィルター：信頼スコアが基準未満の回答者には配信しない
+        (s.min_trust_score == null || (me?.trust_score ?? 0) >= s.min_trust_score)
+    );
+    return this.decorateSurveys(userId, surveys);
+  }
+
+  /**
+   * 新着アンケート一覧：属性マッチング・信頼スコア条件を問わず、
+   * 公開中・公開設定・自分以外・未回答のものを新着順に返す（発見性を優先する行）。
+   */
+  async listNewest(userId: string, limit = 10): Promise<SurveyWithStats[]> {
+    const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
+      (s) => s.user_id !== userId && s.visibility !== 'unlisted'
+    );
+    return (await this.decorateSurveys(userId, surveys)).slice(0, limit);
+  }
+
+  /**
+   * フォロー中トピックそれぞれの新着公開アンケート（トピックごとに最大 limitPerTopic 件）。
+   * /surveys のタイムラインでトピックごとに横スクロール行として表示する。
+   */
+  async listByFollowedTopics(
+    userId: string,
+    limitPerTopic = 10
+  ): Promise<{ topic: Topic; surveys: SurveyWithStats[] }[]> {
+    const topicIds = await this.followRepo.listFollowedTopicIds(userId);
+    if (topicIds.length === 0) return [];
+    const [topics, surveysByTopic] = await Promise.all([
+      this.topicRepo.findByIds(topicIds),
+      this.surveyRepo.findByTopicIds(topicIds),
+    ]);
+    const topicById = new Map(topics.map((t) => [t.id, t]));
+    const result: { topic: Topic; surveys: SurveyWithStats[] }[] = [];
+    for (const topicId of topicIds) {
+      const topic = topicById.get(topicId);
+      const raw = (surveysByTopic.get(topicId) ?? []).filter((s) => s.user_id !== userId);
+      if (!topic || raw.length === 0) continue;
+      const decorated = await this.decorateSurveys(userId, raw);
+      if (decorated.length === 0) continue;
+      result.push({ topic, surveys: decorated.slice(0, limitPerTopic) });
+    }
+    return result;
+  }
+
+  /** フォロー中ユーザーが新たに公開したアンケート（新着順、最大 limit 件）。 */
+  async listByFollowedUsers(userId: string, limit = 10): Promise<SurveyWithStats[]> {
+    const followedIds = await this.followRepo.listFollowedUserIds(userId);
+    if (followedIds.length === 0) return [];
+    const surveys = await this.surveyRepo.findByUserIds(followedIds);
+    return (await this.decorateSurveys(userId, surveys)).slice(0, limit);
   }
 }

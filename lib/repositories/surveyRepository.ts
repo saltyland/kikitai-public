@@ -16,6 +16,12 @@ export interface ISurveyRepository {
   findWithQuestions(id: string): Promise<SurveyWithQuestions | null>;
   findByOwner(userId: string): Promise<Survey[]>;
   findOpenSurveys(): Promise<Survey[]>;
+  /** 指定トピックが付与された公開中アンケートを取得する */
+  findByTopicId(topicId: string): Promise<Survey[]>;
+  /** 複数トピックそれぞれに付与された公開中アンケートを1クエリでまとめて取得する */
+  findByTopicIds(topicIds: string[]): Promise<Map<string, Survey[]>>;
+  /** 指定ユーザーたちが作成した公開中・公開設定のアンケートを取得する */
+  findByUserIds(userIds: string[]): Promise<Survey[]>;
   countResponses(surveyId: string): Promise<number>;
   countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
   /** 複数アンケートの設問プレビュー（先頭数問）を1クエリでまとめて取得する */
@@ -44,6 +50,8 @@ export interface ISurveyRepository {
   delete(id: string): Promise<void>;
   /** 設問と選択肢を一括で置き換える（既存削除 → 新規挿入） */
   replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void>;
+  /** アンケートに紐づくトピックを一括で置き換える（既存削除 → 新規挿入） */
+  replaceSurveyTopics(surveyId: string, topicIds: string[]): Promise<void>;
 }
 
 /** replaceQuestions が受け取る設問1件分の保存データ */
@@ -69,13 +77,15 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
   async findWithQuestions(id: string): Promise<SurveyWithQuestions | null> {
     const { data, error } = await this.supabase
       .from('surveys')
-      .select('*, questions(*, options(*))')
+      .select('*, questions(*, options(*)), survey_topics(topic_id)')
       .eq('id', id)
       .maybeSingle();
     if (error) throwDbError(error, 'surveys');
     if (!data) return null;
 
-    const survey = data as unknown as SurveyWithQuestions;
+    const survey = data as unknown as SurveyWithQuestions & {
+      survey_topics?: { topic_id: string }[];
+    };
     // 設問・選択肢をorder_indexで並べ替え
     survey.questions = (survey.questions ?? [])
       .map((q: QuestionWithOptions) => ({
@@ -83,6 +93,8 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
         options: (q.options ?? []).sort((a, b) => a.order_index - b.order_index),
       }))
       .sort((a, b) => a.order_index - b.order_index);
+    survey.topic_ids = (survey.survey_topics ?? []).map((t) => t.topic_id);
+    delete survey.survey_topics;
     return survey;
   }
 
@@ -104,6 +116,51 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       .select('*')
       .eq('status', 'open')
       .or(`deadline.is.null,deadline.gte.${today}`)
+      .order('created_at', { ascending: false });
+    if (error) throwDbError(error, 'surveys');
+    return (data ?? []) as Survey[];
+  }
+
+  async findByTopicId(topicId: string): Promise<Survey[]> {
+    const { data, error } = await this.supabase
+      .from('survey_topics')
+      .select('surveys(*)')
+      .eq('topic_id', topicId);
+    if (error) throwDbError(error, 'survey_topics');
+    return ((data ?? []) as unknown as { surveys: Survey | null }[])
+      .map((row) => row.surveys)
+      .filter((s): s is Survey => !!s && s.status === 'open' && s.visibility === 'public')
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  }
+
+  async findByTopicIds(topicIds: string[]): Promise<Map<string, Survey[]>> {
+    const map = new Map<string, Survey[]>();
+    if (topicIds.length === 0) return map;
+    const { data, error } = await this.supabase
+      .from('survey_topics')
+      .select('topic_id, surveys(*)')
+      .in('topic_id', topicIds);
+    if (error) throwDbError(error, 'survey_topics');
+    for (const row of (data ?? []) as unknown as { topic_id: string; surveys: Survey | null }[]) {
+      if (!row.surveys || row.surveys.status !== 'open' || row.surveys.visibility !== 'public') continue;
+      const list = map.get(row.topic_id) ?? [];
+      list.push(row.surveys);
+      map.set(row.topic_id, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    }
+    return map;
+  }
+
+  async findByUserIds(userIds: string[]): Promise<Survey[]> {
+    if (userIds.length === 0) return [];
+    const { data, error } = await this.supabase
+      .from('surveys')
+      .select('*')
+      .in('user_id', userIds)
+      .eq('status', 'open')
+      .eq('visibility', 'public')
       .order('created_at', { ascending: false });
     if (error) throwDbError(error, 'surveys');
     return (data ?? []) as Survey[];
@@ -282,6 +339,21 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
         );
         if (oError) throwDbError(oError, 'options.insert');
       }
+    }
+  }
+
+  async replaceSurveyTopics(surveyId: string, topicIds: string[]): Promise<void> {
+    const { error: delError } = await this.supabase
+      .from('survey_topics')
+      .delete()
+      .eq('survey_id', surveyId);
+    if (delError) throwDbError(delError, 'survey_topics.delete');
+
+    if (topicIds.length > 0) {
+      const { error: insError } = await this.supabase
+        .from('survey_topics')
+        .insert(topicIds.map((topicId) => ({ survey_id: surveyId, topic_id: topicId })));
+      if (insError) throwDbError(insError, 'survey_topics.insert');
     }
   }
 }

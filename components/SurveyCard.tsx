@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
+import ProgressBar from '@/components/ui/ProgressBar';
+import { calcProgress } from '@/lib/ui/surveyStats';
 import type { PreviewQuestionLite, SurveyWithStats } from '@/lib/types/database';
 
 /** 設問1問分のコンパクトな見た目（非操作・あくまで雰囲気を見せるだけ） */
@@ -78,14 +80,11 @@ function MiniInput({ q }: { q: PreviewQuestionLite }) {
 export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
   const author = survey.author_nickname ?? '不明';
   const remaining = Math.max(0, survey.required_count - survey.response_count);
-  const progress = Math.min(
-    100,
-    Math.round((survey.response_count / Math.max(1, survey.required_count)) * 100)
-  );
+  const progress = calcProgress(survey.response_count, survey.required_count);
   const preview = survey.preview ?? [];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       {/* 投稿者（カード枠の外・上） */}
       <Link
         href={survey.author_id ? `/users/${survey.author_id}` : '#'}
@@ -101,26 +100,30 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
         </div>
       </Link>
 
-      <article className="card-3d card-3d-hover flex flex-1 flex-col overflow-hidden p-0">
+      <article className="card-3d card-3d-hover flex h-full flex-1 flex-col overflow-hidden p-0">
         {/* タイトル・説明 */}
         <div className="px-5 pt-5">
           <h3 className="line-clamp-2 text-base font-bold text-slate-800">{survey.title}</h3>
-          {survey.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
-          )}
+          <p className="mt-1 min-h-[2.5rem] line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
 
         {/* 設問プレビュー（下が見切れて「もっとある」感を出す） */}
-        {preview.length > 0 && (
-          <div className="relative mx-5 mt-3">
-            <div className="max-h-44 space-y-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-              {preview.map((q, i) => (
-                <MiniQuestion key={i} q={q} index={i} />
-              ))}
+        <div className="relative mx-5 mt-3">
+          {preview.length > 0 ? (
+            <>
+              <div className="h-44 space-y-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                {preview.map((q, i) => (
+                  <MiniQuestion key={i} q={q} index={i} />
+                ))}
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 rounded-b-xl bg-gradient-to-t from-white via-white/80 to-transparent" />
+            </>
+          ) : (
+            <div className="flex h-44 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/40 text-xs text-slate-400">
+              設問プレビューはありません
             </div>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 rounded-b-xl bg-gradient-to-t from-white via-white/80 to-transparent" />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 回答の集まり具合（required_count に到達すると自動で締め切られる） */}
         <div className="px-5 pt-3">
@@ -130,11 +133,8 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
             </span>
             <span>{progress}%</span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-brand-500 transition-all"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="mt-1">
+            <ProgressBar progress={progress} />
           </div>
         </div>
 

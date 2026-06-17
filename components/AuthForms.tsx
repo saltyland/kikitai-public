@@ -94,6 +94,55 @@ export function RegisterForm({ next }: { next?: string }) {
         </Link>
         から
       </p>
+      {process.env.NODE_ENV !== 'production' && <DevRegisterForm next={next} />}
     </div>
+  );
+}
+
+/** 開発環境限定：Googleアカウントなしで新規登録をテストするためのメール/パスワード登録フォーム */
+function DevRegisterForm({ next }: { next?: string }) {
+  const initialState: ActionState = { error: null };
+  const [state, action, pending] = useActionState(registerAction, initialState);
+
+  return (
+    <form action={action} className="space-y-3 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4">
+      <p className="text-xs font-bold text-amber-700">テストモード：メール・パスワードで新規登録</p>
+      {next && <input type="hidden" name="next" value={next} />}
+      <div>
+        <label htmlFor="dev-register-email" className="text-xs text-slate-600">メールアドレス</label>
+        <input
+          id="dev-register-email"
+          name="email"
+          type="email"
+          required
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label htmlFor="dev-register-password" className="text-xs text-slate-600">
+          パスワード（8文字以上・英小文字と数字を含む）
+        </label>
+        <input
+          id="dev-register-password"
+          name="password"
+          type="password"
+          required
+          minLength={8}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        />
+      </div>
+      {state.error && (
+        <p className="text-sm text-red-600" role="alert">
+          {state.error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn-3d w-full rounded-xl bg-amber-500 py-2 text-sm font-medium text-white disabled:opacity-60"
+      >
+        {pending ? '登録中…' : 'テスト用アカウントを作成'}
+      </button>
+    </form>
   );
 }

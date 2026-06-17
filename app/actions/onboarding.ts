@@ -3,7 +3,9 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
+import { TopicService } from '@/lib/services/topicService';
 import { PointLotRepository } from '@/lib/repositories/pointLotRepository';
+import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import type { PrivateField } from '@/lib/types/database';
 
 export interface OnboardingActionState {
@@ -69,4 +71,33 @@ export async function completeOnboardingAction(
   }
 
   return { error: null, success: true };
+}
+
+export interface SaveTopicSelectionState {
+  error: string | null;
+}
+
+/**
+ * オンボーディングのトピック選択を保存する。
+ * 選択されたトピックを一括フォローし、profiles.topics_selected_at を現在時刻に更新する。
+ * フォロー登録に失敗した場合は topics_selected_at を更新せず、再訪時に
+ * このステップが再表示される（再試行可能）状態を維持する。
+ */
+export async function saveTopicSelectionAction(topicIds: string[]): Promise<SaveTopicSelectionState> {
+  const supabase = await createSupabaseServerClient();
+  const user = await new AuthService(supabase).getCurrentUser();
+  if (!user) return { error: 'ログインが必要です' };
+
+  try {
+    if (topicIds.length > 0) {
+      await new TopicService(supabase).followTopics(user.id, topicIds);
+    }
+    await new ProfileRepository(supabase).update(user.id, {
+      topics_selected_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'トピックの保存に失敗しました' };
+  }
+
+  return { error: null };
 }

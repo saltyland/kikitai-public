@@ -178,6 +178,15 @@ body {
   animation: kikitai-spin 0.7s linear infinite;
 }
 
+/* 横スクロール行：スクロールバーを隠す（ネイティブスクロール+snapは維持） */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── 倫理審査サマリー印刷用（A4 1枚に収める） ── */
 @media print {
   @page {

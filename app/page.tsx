@@ -1,16 +1,11 @@
-import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
-import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
-import { SurveyStatusBadge } from '@/components/SurveyStatusBadge';
-import { changeStatusAction } from '@/app/actions/survey';
-import DeleteSurveyButton from '@/components/DeleteSurveyButton';
-import ShareLinkButton from '@/components/ShareLinkButton';
 import LandingPage from '@/components/LandingPage';
-import RefreshButton from '@/components/ui/RefreshButton';
-import PublishSurveyButton from '@/components/PublishSurveyButton';
-import EmptyState from '@/components/EmptyState';
+import MySurveysSummaryCard from '@/components/MySurveysSummaryCard';
+import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
+import FaqAccordion from '@/components/FaqAccordion';
+import { SurveyService } from '@/lib/services/surveyService';
 
 export default async function HomePage({
   searchParams,
@@ -26,7 +21,13 @@ export default async function HomePage({
   // 未ログインはサービス紹介のランディングページを表示
   if (!profile) return <LandingPage />;
 
-  const surveys = await new SurveyService(supabase).listMySurveys(profile.id);
+  const service = new SurveyService(supabase);
+  const [mySurveys, recommended, byFollowedUsers, newest] = await Promise.all([
+    service.listMySurveys(profile.id),
+    service.listAnswerableSurveys(profile.id),
+    service.listByFollowedUsers(profile.id),
+    service.listNewest(profile.id),
+  ]);
 
   return (
     <>
@@ -49,96 +50,25 @@ export default async function HomePage({
           </p>
         </section>
 
-        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Link
-            href="/surveys"
-            className="card-3d card-3d-hover block p-6"
-          >
-            <p className="text-lg font-extrabold text-brand-600">アンケートに答えてポイントをためる</p>
-            <p className="mt-1 text-sm text-slate-500">答えるとポイントがたまります。まずはここから。</p>
-          </Link>
-          <Link
-            href="/surveys/new"
-            className="card-3d card-3d-hover block p-6"
-          >
-            <p className="text-lg font-extrabold text-slate-800">＋ アンケートを作る</p>
-            <p className="mt-1 text-sm text-slate-500">ためたポイントで回答者を集めましょう</p>
-          </Link>
-        </div>
+        <MySurveysSummaryCard surveys={mySurveys} />
 
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-slate-800">作成したアンケート</h2>
-          <RefreshButton />
-        </div>
-        {surveys.length === 0 ? (
-          <EmptyState
-            title="まだ作ったアンケートはありません"
-            description="まずは他の人のアンケートに答えてポイントをため、そのポイントで自分のアンケートに回答者を集めましょう。"
-          >
-            <Link href="/surveys" className="btn-3d btn-3d-primary px-5 py-2.5 text-sm">
-              アンケートに答えてポイントをためる
-            </Link>
-            <Link href="/surveys/new" className="btn-3d btn-3d-secondary px-5 py-2.5 text-sm">
-              ＋ アンケートを作る
-            </Link>
-          </EmptyState>
-        ) : (
-          <ul className="space-y-3">
-            {surveys.map((s) => (
-              <li
-                key={s.id}
-                className="card-3d p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate font-bold text-slate-800">{s.title}</h3>
-                      <SurveyStatusBadge status={s.status} />
-                      {s.visibility === 'unlisted' && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                          限定公開
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      回答数 {s.response_count} / {s.required_count}
-                      {s.deadline && ` ・期限 ${s.deadline}`}
-                    </p>
-                  </div>
-                </div>
+        <HorizontalSurveyRow
+          title="あなたへのおすすめ"
+          surveys={recommended.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
+        <HorizontalSurveyRow
+          title="フォロー中ユーザーの新着アンケート"
+          surveys={byFollowedUsers.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
+        <HorizontalSurveyRow
+          title="新着アンケート"
+          surveys={newest.slice(0, 8)}
+          viewMoreHref="/surveys"
+        />
 
-                <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  <Link
-                    href={`/surveys/${s.id}/results`}
-                    className="btn-3d btn-3d-secondary px-3 py-1"
-                  >
-                    結果を見る
-                  </Link>
-                  {s.status === 'draft' && (
-                    <Link
-                      href={`/surveys/${s.id}/edit`}
-                      className="btn-3d btn-3d-secondary px-3 py-1"
-                    >
-                      編集
-                    </Link>
-                  )}
-                  {s.status === 'draft' && <PublishSurveyButton surveyId={s.id} />}
-                  {s.status === 'open' && (
-                    <form action={changeStatusAction}>
-                      <input type="hidden" name="surveyId" value={s.id} />
-                      <input type="hidden" name="status" value="closed" />
-                      <button className="btn-3d btn-3d-danger px-3 py-1">
-                        終了する
-                      </button>
-                    </form>
-                  )}
-                  {s.status === 'open' && <ShareLinkButton token={s.share_token} />}
-                  <DeleteSurveyButton surveyId={s.id} title={s.title} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <FaqAccordion />
       </main>
     </>
   );
