@@ -48,7 +48,7 @@ export default function MySurveysSummaryCard({ surveys }: { surveys: SurveyWithS
             <Link
               key={s.id}
               href={`/surveys/${s.id}/results`}
-              className="card-3d card-3d-hover block p-4"
+              className="card-3d card-3d-hover block bg-brand-50 p-4"
             >
               <p className="line-clamp-1 text-sm font-bold text-slate-800">{s.title}</p>
               <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
