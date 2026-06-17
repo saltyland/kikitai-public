@@ -39,7 +39,7 @@ interface EditorQuestion {
   options: string[];
   config: Partial<ScaleConfig & GridConfig & AttentionConfig>;
   section_index: number;
-  condition: { sourceKey: string; optionText: string } | null;
+  condition: { sourceKey: string; optionTexts: string[] } | null;
 }
 
 const inputClass =
@@ -176,7 +176,7 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     const cond = q.condition;
     if (!cond) return;
     const sourceKey = keyByOrder.get(cond.sourceQuestionOrder);
-    if (sourceKey) questions[i].condition = { sourceKey, optionText: cond.optionText };
+    if (sourceKey) questions[i].condition = { sourceKey, optionTexts: cond.optionTexts ?? (cond.optionText ? [cond.optionText] : []) };
   });
   return {
     title: survey.title,
@@ -471,7 +471,7 @@ export default function PublicSurveyEditor({
         const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
         const condition =
           q.condition && srcOrder !== undefined && srcOrder < qi
-            ? { sourceQuestionOrder: srcOrder, optionText: q.condition.optionText }
+            ? { sourceQuestionOrder: srcOrder, optionTexts: q.condition.optionTexts }
             : null;
         return {
           type: q.type,
@@ -1020,13 +1020,6 @@ export default function PublicSurveyEditor({
                 >
                   ＋ 設問を追加
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { setTemplateSection(si); setShowTemplates(true); }}
-                  className="rounded-xl border-2 border-dashed border-brand-300 px-4 py-3 text-sm text-brand-600 hover:bg-brand-50 cursor-pointer"
-                >
-                  テンプレート
-                </button>
               </div>
             </div>
           </div>
@@ -1190,7 +1183,7 @@ function ConditionEditor({
 }: {
   question: EditorQuestion;
   candidates: EditorQuestion[];
-  onChange: (condition: { sourceKey: string; optionText: string } | null) => void;
+  onChange: (condition: { sourceKey: string; optionTexts: string[] } | null) => void;
 }) {
   const sources = candidates.filter(
     (c) => canBeConditionSource(c.type) && conditionSourceValues(c).length > 0
@@ -1209,7 +1202,8 @@ function ConditionEditor({
           onChange={(e) => {
             if (e.target.checked) {
               const first = sources[0];
-              onChange({ sourceKey: first.key, optionText: conditionSourceValues(first)[0] ?? '' });
+              const opts = conditionSourceValues(first);
+              onChange({ sourceKey: first.key, optionTexts: opts.length > 0 ? [opts[0]] : [] });
             } else {
               onChange(null);
             }
@@ -1218,32 +1212,44 @@ function ConditionEditor({
         条件付きで表示する（特定の回答をした人だけに見せる）
       </label>
       {enabled && cond && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">
-          <select
-            className="rounded-md border border-slate-300 px-2 py-1"
-            value={cond.sourceKey}
-            onChange={(e) => {
-              const next = sources.find((s) => s.key === e.target.value)!;
-              onChange({ sourceKey: next.key, optionText: conditionSourceValues(next)[0] ?? '' });
-            }}
-          >
-            {sources.map((s, i) => (
-              <option key={s.key} value={s.key}>{`設問「${s.text.trim() || `（無題 ${i + 1}）`}」`}</option>
-            ))}
-          </select>
-          <span>で</span>
-          <select
-            className="rounded-md border border-slate-300 px-2 py-1"
-            value={cond.optionText}
-            onChange={(e) => onChange({ sourceKey: cond.sourceKey, optionText: e.target.value })}
-          >
-            {sourceOptions.map((o, i) => (
-              <option key={i} value={o}>
-                {source ? conditionSourceValueLabel(source, o, sourceOptions) : o}
-              </option>
-            ))}
-          </select>
-          <span>を選んだ人だけに表示</span>
+        <div className="mt-3 space-y-2 text-sm text-slate-700">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1"
+              value={cond.sourceKey}
+              onChange={(e) => {
+                const next = sources.find((s) => s.key === e.target.value)!;
+                const opts = conditionSourceValues(next);
+                onChange({ sourceKey: next.key, optionTexts: opts.length > 0 ? [opts[0]] : [] });
+              }}
+            >
+              {sources.map((s, i) => (
+                <option key={s.key} value={s.key}>{`設問「${s.text.trim() || `（無題 ${i + 1}）`}」`}</option>
+              ))}
+            </select>
+            <span>で以下のいずれかを選んだ人だけに表示：</span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 pl-1">
+            {sourceOptions.map((o, i) => {
+              const checked = cond.optionTexts.includes(o);
+              return (
+                <label key={i} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...cond.optionTexts, o]
+                        : cond.optionTexts.filter((t) => t !== o);
+                      if (next.length === 0) return;
+                      onChange({ sourceKey: cond.sourceKey, optionTexts: next });
+                    }}
+                  />
+                  {source ? conditionSourceValueLabel(source, o, sourceOptions) : o}
+                </label>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

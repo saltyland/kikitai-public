@@ -13,7 +13,7 @@ export interface PreviewQuestion {
   options: string[];
   config: Partial<ScaleConfig & GridConfig>;
   section_index: number;
-  condition: { sourceKey: string; optionText: string } | null;
+  condition: { sourceKey: string; optionTexts: string[] } | null;
 }
 
 export interface PreviewData {
@@ -57,7 +57,7 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
       }
       const srcVisible = visible.has(q.condition.sourceKey);
       const selectedTexts = get(q.condition.sourceKey).options;
-      if (srcVisible && selectedTexts.includes(q.condition.optionText)) visible.add(q.key);
+      if (srcVisible && q.condition.optionTexts.some((t) => selectedTexts.includes(t))) visible.add(q.key);
     }
     return visible;
     // answers が変わるたび再評価

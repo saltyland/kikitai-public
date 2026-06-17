@@ -8,7 +8,7 @@ export interface FlowQuestion {
   type: QuestionType;
   text: string;
   section_index: number;
-  condition: { sourceKey: string; optionText: string } | null;
+  condition: { sourceKey: string; optionTexts: string[] } | null;
 }
 
 /**
@@ -56,7 +56,7 @@ export default function BranchFlow({
       if (!q.condition) return null;
       const from = indexByKey.get(q.condition.sourceKey);
       if (from === undefined) return null;
-      return { fromIndex: from, toIndex: i, label: q.condition.optionText };
+      return { fromIndex: from, toIndex: i, label: q.condition.optionTexts.join(' / ') };
     })
     .filter((e): e is { fromIndex: number; toIndex: number; label: string } => e !== null);
 
