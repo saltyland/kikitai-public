@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { loginWithGoogleAction } from '@/app/actions/auth';
+import { loginWithGoogleAction, registerAction, type ActionState } from '@/app/actions/auth';
 import { demoLoginAction, type DemoLoginState } from '@/app/actions/demo';
 import { Spinner } from '@/components/ui/Spinner';
 import { useTransition, useActionState } from 'react';
