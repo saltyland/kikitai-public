@@ -17,11 +17,13 @@ import {
   sanitizeItems,
   shouldCallLLM,
   RuleBasedEvaluator,
+  LocalEmbeddingEvaluator,
   type EvaluationItem,
   type MechSignals,
   type QualityHints,
   type QualityResult,
 } from '@/lib/domain/quality';
+import type { SurveyReferenceVectors } from '@/lib/domain/quality/referenceVector';
 import { AttentionCheckQuestion } from '@/lib/domain/questions/AttentionQuestion';
 
 /** 回答送信の結果（品質評価とポイント付与のサマリ） */
@@ -296,11 +298,23 @@ export class ResponseService {
     // 機械シグナル（設計書 §2/§3）：ルールベース評価（床）＋クライアントヒント。
     // LLM を呼ぶ前に得られる安価な信号で、ルーティングと grade の双方が参照する。
     const ruleResult = await new RuleBasedEvaluator().evaluate(sanitized, ctx);
+
+    // 関連性リスク（設計書 §13.2）：ローカル埋め込みで参照ベクトルとの近さを判定。
+    // survey.reference_vectors は DB の jsonb 列（Survey 型未定義のため unknown 経由でキャスト）。
+    const rawRefs = (survey as unknown as { reference_vectors: unknown }).reference_vectors;
+    const refs = rawRefs ? (rawRefs as SurveyReferenceVectors) : null;
+    const localEval = new LocalEmbeddingEvaluator(refs);
+    const relevanceRisk = await localEval.computeRelRisk(sanitized).catch((e) => {
+      console.warn('[responseService] LocalEmbeddingEvaluator.computeRelRisk に失敗:', e);
+      return 0;
+    });
+
     const mech: MechSignals = {
       rulePass: ruleResult.score >= 100,
       ruleScore: ruleResult.score,
       hints: options.qualityHints,
       durationSec: options.durationSec,
+      relevanceRisk,
     };
 
     // ルーティング（設計書 §3）：LLM を呼ぶか機械評価のみで確定するか分岐する。

@@ -14,51 +14,25 @@
 ユーザーから指示を受けたら、原則として次の流れを **エージェント側で最後まで自動実行** する
 （途中でユーザーに作業を投げ返さない。外部公開や破壊的操作の前だけ必要に応じ確認する）。
 
-## ステップ一覧
-
 1. **読む**：`CLAUDE.md` → `@AGENTS.md` → `@引継ぎ.md` を読み、前提・落とし穴・PR状況・
    未対応TODOを把握する（上の2ファイルは自動読込）。
-
 2. **作業する**：要件に沿って実装・修正する。環境の落とし穴を守る：
    - Node はPATH未設定。コマンド前に `$env:Path = "C:\Program Files\nodejs;" + $env:Path`。
    - 作業ディレクトリは `kikitai`（Next.jsプロジェクト直下）。
    - `.env.local` は UTF-8（BOMなし）。コミットしない。
    - Next.js 16 の非同期 `cookies()/params/searchParams`、middleware=`proxy.ts` に注意。
-
 3. **検証する**：`npx tsc --noEmit` → `npm run lint` →（必要時）`npx next build` を通す。
-   - **`npm run dev` は起動しない**。ブラウザ確認が必要な場合のみ一時起動し、確認後に必ず
-     `taskkill /F /IM node.exe /FI "WINDOWTITLE eq next*"` または `Stop-Process` で終了する。
-     起動したまま報告を終えてはならない（孤立プロセスになり次回 `npm run dev` が即終了する原因になる）。
-
-4. **DB反映**（マイグレーションがある場合は **ここで必ず実行**。PR より前）：
-   `supabase/migrations/` を変更した場合はエージェントが `npm run sync` を実行してリモートDBへ反映する。
-   - PATH を通してから `kikitai` ディレクトリで実行する。
-   - `npm run sync` は `SUPABASE_ACCESS_TOKEN` だけで動く（DBパスワード不要）。
-   - **マイグレーションは必ず冪等**に書く（`add column if not exists` 等）。再実行で壊れるSQLは書かない。
-   - 反映後、必要なら新カラム/テーブルの存在をManagement APIクエリで確認する。
-
-5. **引継ぎを更新する**：`引継ぎ.md` を実態に合わせて書き換える。
-   - 「★直前にやったこと」を今回の作業内容で**上書き**する（古い経緯は消す）。
-   - 完了したTODOは削除またはチェック済みにし、肥大化を防ぐ。
-   - 冒頭「最終更新」日付も直す。
-
-6. **Git/PR**：**コードを1行でも変更したら必ずPRを出す。例外なし。**
-   - `git add`（`.env.local` を含めない）
-   - `git commit`（末尾に `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`）
-   - `git push`
-   - `gh pr create`（同ブランチに既存PRがあれば push のみ、なければ新規作成）
-   - コミット/PR本文は日本語で簡潔に。
-   - **「PR出しておきます」等の宣言だけで終えない。必ず `gh pr create` の出力URLを確認してから次に進む。**
-
-7. **出力する**：実施内容・検証結果・**PRのURL**・残課題を日本語でまとめて報告する。
-   PRのURLは必ず含める。できたことは断定し、失敗・スキップはそのまま正直に書く。
-
-## チェックリスト（各作業の完了前に確認）
-
-- [ ] `tsc --noEmit` 通過
-- [ ] `npm run lint` 通過
-- [ ] `npm run dev` を起動した場合 → 報告前に終了済み（孤立プロセス防止）
-- [ ] マイグレーションがある場合 → `npm run sync` 実行済み・反映確認済み
-- [ ] `引継ぎ.md` の「★直前にやったこと」を更新済み・日付修正済み
-- [ ] **コード変更があった → `gh pr create` 実行済み・PRのURLを報告に含めた**
-- [ ] `.env.local` がコミットに含まれていないことを確認
+4. **引継ぎを更新する**：`引継ぎ.md` を実態に合わせて書き換える。**古く不要になった記述・
+   完了したTODOは削除/チェック済みに**して肥大化を防ぐ。冒頭「最終更新」日付も直す。
+5. **Git/PR**：作業ブランチで `git commit`（末尾に `Co-Authored-By: Claude Opus 4.8
+   <noreply@anthropic.com>`）→ `git push` → `gh pr create`（既存PRがあるなら新規PRとして生成）。
+   コミット/PR本文は日本語で簡潔に。`.env.local` は絶対に含めない。
+   かならず，一定の変化をしたらPRをすること
+6. **DB自動反映**：`supabase/migrations/` を変更した場合は **エージェントが `npm run sync` を
+   実行** してリモートDBへ反映する（PATHを通し `kikitai` で実行）。
+   - `npm run sync` は DBパスワード未設定でも **Management API でマイグレーションSQLを直接適用**
+     する（`SUPABASE_ACCESS_TOKEN` だけで反映可能）。**マイグレーションは必ず冪等**に書く
+     （`add column if not exists` 等）。再実行で壊れるSQLは書かない。
+   - 反映後、必要なら新カラム/テーブルの存在をAPIクエリで確認する。
+7. **出力する**：実施内容・検証結果・PRのURL・残課題を日本語でまとめて報告する。
+   できたことは断定し、失敗・スキップはそのまま正直に書く。
