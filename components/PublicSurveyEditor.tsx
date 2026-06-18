@@ -11,9 +11,12 @@ import QuestionTemplates from '@/components/QuestionTemplates';
 import TopicPicker from '@/components/TopicPicker';
 import { validateEditorQuestion, hasBlockingWarning, type QuestionWarning } from '@/lib/domain/validation';
 import type { QuestionSeed } from '@/lib/domain/questionTemplates';
+import SurveyGeneratorModal from '@/components/SurveyGeneratorModal';
+import type { GeneratedSurveyDraft } from '@/lib/domain/generation';
 import type {
   QuestionType,
   SectionMeta,
+  SignalMeta,
   SurveyInput,
   SurveyStatus,
   SurveyWithQuestions,
@@ -22,6 +25,7 @@ import type {
   AttentionConfig,
   TargetConditions,
   Topic,
+  EvaluationRole,
 } from '@/lib/types/database';
 
 /**
@@ -40,6 +44,7 @@ interface EditorQuestion {
   config: Partial<ScaleConfig & GridConfig & AttentionConfig>;
   section_index: number;
   condition: { sourceKey: string; optionTexts: string[] } | null;
+  signal_meta?: SignalMeta | null;
 }
 
 const inputClass =
@@ -93,6 +98,28 @@ function uid() {
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 }
+
+/** pairKey から決定論的なTailwindボーダー色クラスを生成する */
+function pairKeyBorderColor(pairKey: string): string {
+  let hash = 0;
+  for (const ch of pairKey) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const colors = [
+    'border-l-blue-400',
+    'border-l-purple-400',
+    'border-l-emerald-400',
+    'border-l-orange-400',
+    'border-l-pink-400',
+  ];
+  return colors[hash % colors.length];
+}
+
+const ROLE_LABELS: Record<EvaluationRole, string> = {
+  standard: '通常',
+  attention_check: 'アテンションチェック',
+  consistency_anchor: '一貫性アンカー',
+  consistency_check: '一貫性チェック',
+  open_signal: '品質シグナル（自由記述）',
+};
 
 function newQuestion(sectionIndex: number): EditorQuestion {
   return {
@@ -217,6 +244,7 @@ export default function PublicSurveyEditor({
   const [retentionMonths, setRetentionMonths] = useState<number | null>(initial.retentionMonths);
   const [topicIds, setTopicIds] = useState<string[]>(initial.topicIds);
   const [topicSuggestion, setTopicSuggestion] = useState(initial.topicSuggestion);
+  const [showGeneratorModal, setShowGeneratorModal] = useState(false);
 
   const maxDeadline = useMemo(() => {
     const d = new Date();
@@ -312,6 +340,45 @@ export default function PublicSurveyEditor({
   const insertSeeds = (seeds: QuestionSeed[]) => {
     setQuestions((qs) => [...qs, ...seeds.map((s) => questionFromSeed(s, templateSection))]);
     setShowTemplates(false);
+  };
+
+  /** GeneratedSurveyDraft をEditorの設問リストに流し込む */
+  const handleGenerated = (draft: GeneratedSurveyDraft) => {
+    if (questions.length > 0) {
+      const ok = window.confirm(
+        `現在の${questions.length}問の設問が削除され、AIが生成した${draft.questions.length}問に置き換えられます。続けますか？`
+      );
+      if (!ok) return;
+    }
+    const newQuestions: EditorQuestion[] = draft.questions.map((q) => {
+      // attention タイプと attention_check ロールの整合性を保つ
+      const signal_meta: SignalMeta = q.type === 'attention'
+        ? { ...q.signal_meta, role: 'attention_check' }
+        : q.signal_meta;
+      const config = (q.config ?? {}) as Partial<ScaleConfig & GridConfig & AttentionConfig>;
+      // attention タイプで正解が未設定の場合、最初の選択肢を自動で正解にする
+      if (q.type === 'attention' && !config.correctOptionText?.trim() && q.options.length > 0) {
+        config.correctOptionText = q.options[0];
+      }
+      return {
+        key: uid(),
+        type: q.type,
+        text: q.text,
+        description: q.description ?? '',
+        required: q.required,
+        options: q.options,
+        config,
+        section_index: 0,
+        condition: null,
+        signal_meta,
+      };
+    });
+    setTitle(draft.title);
+    setDescription(draft.description);
+    setQuestions(newQuestions);
+    // ステップ3（設問作成）に移動してすぐ確認できるようにする
+    setStep(3);
+    window.scrollTo({ top: 0 });
   };
 
   const currentSeeds: QuestionSeed[] = questions.map((q) => ({
@@ -482,6 +549,7 @@ export default function PublicSurveyEditor({
           config: needsConfig(q.type) ? (q.config as SurveyInput['questions'][number]['config']) : null,
           section_index: q.section_index,
           condition,
+          signal_meta: q.signal_meta ?? null,
         };
       }),
     };
@@ -537,6 +605,13 @@ export default function PublicSurveyEditor({
         {/* ステップ3ツールバー */}
         {step === 3 && (
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowGeneratorModal(true)}
+              className="rounded-md border border-brand-400 bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-100 cursor-pointer flex items-center gap-1.5"
+            >
+              ✨ AIで設問を生成
+            </button>
             <button
               type="button"
               onClick={() => { setTemplateSection(0); setShowTemplates(true); }}
@@ -812,6 +887,8 @@ export default function PublicSurveyEditor({
                 const globalIndex = questions.findIndex((x) => x.key === q.key);
                 const warns = warningsByKey.get(q.key) ?? [];
                 const hasError = warns.some((w) => w.level === 'error');
+                const pairKey = q.signal_meta?.pairKey;
+                const pairBorder = pairKey ? `border-l-4 ${pairKeyBorderColor(pairKey)}` : '';
                 return (
                   <section
                     key={q.key}
@@ -819,7 +896,7 @@ export default function PublicSurveyEditor({
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => dropOnQuestion(q.key)}
                     onDragEnd={() => setDragKey(null)}
-                    className={`rounded-xl bg-white border p-5 shadow-sm space-y-3 ${dragKey === q.key ? 'opacity-50' : ''} ${showValidation && hasError ? 'border-red-400' : 'border-slate-200'}`}
+                    className={`rounded-xl bg-white border p-5 shadow-sm space-y-3 ${pairBorder} ${dragKey === q.key ? 'opacity-50' : ''} ${showValidation && hasError ? 'border-red-400' : 'border-slate-200'}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
@@ -875,6 +952,51 @@ export default function PublicSurveyEditor({
                       value={q.description}
                       onChange={(e) => updateQuestion(q.key, { description: e.target.value })}
                     />
+
+                    {/* 品質シグナルの役割 */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <label className="text-slate-500 whitespace-nowrap">役割:</label>
+                        <select
+                          className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-700 bg-slate-50"
+                          value={q.signal_meta?.role ?? 'standard'}
+                          onChange={(e) => {
+                            const role = e.target.value as EvaluationRole;
+                            updateQuestion(q.key, {
+                              signal_meta: role === 'standard'
+                                ? null
+                                : { ...(q.signal_meta ?? {}), role },
+                            });
+                          }}
+                        >
+                          {(Object.entries(ROLE_LABELS) as [EvaluationRole, string][]).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* 一貫性ペアのIDと連動バッジ */}
+                      {(q.signal_meta?.role === 'consistency_anchor' || q.signal_meta?.role === 'consistency_check') && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <label className="text-slate-500 whitespace-nowrap">ペアID:</label>
+                          <input
+                            className="rounded border border-slate-300 px-2 py-1 text-xs w-32"
+                            placeholder="例: sleep_q1"
+                            value={q.signal_meta?.pairKey ?? ''}
+                            onChange={(e) => {
+                              const base: SignalMeta = q.signal_meta ?? { role: 'consistency_anchor' };
+                              updateQuestion(q.key, {
+                                signal_meta: { ...base, pairKey: e.target.value || undefined },
+                              });
+                            }}
+                          />
+                        </div>
+                      )}
+                      {pairKey && (
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
+                          ↔ ペア: {pairKey}
+                        </span>
+                      )}
+                    </div>
 
                     {needsOptions(q.type) && (
                       <div className="space-y-2 pl-1">
@@ -1122,6 +1244,16 @@ export default function PublicSurveyEditor({
           onInsert={insertSeeds}
           onClose={() => setShowTemplates(false)}
           currentQuestions={currentSeeds}
+        />
+      )}
+
+      {showGeneratorModal && (
+        <SurveyGeneratorModal
+          onClose={() => setShowGeneratorModal(false)}
+          onGenerated={handleGenerated}
+          defaultTheme={title}
+          defaultPurpose={description}
+          defaultTargetAudience={(targetConditions.occupations ?? []).join('、')}
         />
       )}
 

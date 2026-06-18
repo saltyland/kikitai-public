@@ -1,4 +1,4 @@
-import type { GridConfig, QuestionType, ScaleConfig } from '@/lib/types/database';
+import type { AttentionConfig, GridConfig, QuestionType, ScaleConfig } from '@/lib/types/database';
 import { QuestionTypeRegistry } from './questions/registry';
 
 /**
@@ -10,7 +10,7 @@ export interface EditorQuestionLike {
   type: QuestionType;
   text: string;
   options: string[];
-  config: Partial<ScaleConfig & GridConfig>;
+  config: Partial<ScaleConfig & GridConfig & AttentionConfig>;
   condition: { sourceKey: string; optionTexts: string[] } | null;
 }
 
@@ -54,6 +54,12 @@ export function validateEditorQuestion(
     const dup = filled.length !== new Set(filled).size;
     if (dup) {
       warnings.push({ level: 'warn', message: '同じ選択肢が重複しています' });
+    }
+  }
+
+  if (q.type === 'attention') {
+    if (!q.config.correctOptionText?.trim()) {
+      warnings.push({ level: 'error', message: '正解の選択肢を指定してください' });
     }
   }
 

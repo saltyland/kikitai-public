@@ -16,6 +16,34 @@ export type SurveyVisibility = 'public' | 'unlisted';
 export type Plan = 'free' | 'pro';
 
 /**
+ * 品質評価シグナルにおける設問の役割。
+ * AI生成時に付与され、評価エンジンが重み付けの参考にする。
+ */
+export type EvaluationRole =
+  | 'standard'            // 通常の設問（デフォルト）
+  | 'attention_check'     // アテンションチェック（不正解で品質スコア0）
+  | 'consistency_anchor'  // 一貫性ペアの起点問
+  | 'consistency_check'   // 一貫性ペアの確認問（anchorとpairKeyが一致）
+  | 'open_signal';        // 自由記述品質シグナル（Geminiの具体性評価を強化）
+
+export interface SignalMeta {
+  role: EvaluationRole;
+  /** 一貫性ペアの識別キー。consistency_anchor / consistency_check のみ使用 */
+  pairKey?: string;
+  /**
+   * 矛盾とみなす相手問の選択肢テキスト配列。
+   * consistency_check の設問のみ使用。
+   */
+  contradictsWith?: string[];
+  /**
+   * anchorの「肯定回答」とみなす選択肢テキスト配列。
+   * consistency_anchor の設問のみ使用。
+   * 選択肢の順序は保証されないためインデックスではなくテキストで指定する。
+   */
+  positiveOptions?: string[];
+}
+
+/**
  * 設問タイプ。Googleフォーム相当の種類を網羅する。
  * 新タイプを足す場合は、ここに識別子を追加し、対応する QuestionTypeDefinition の
  * サブクラスを作ってレジストリに登録するだけでよい（開放閉鎖の原則）。
@@ -305,6 +333,8 @@ export interface Answer {
 /** 設問＋選択肢をまとめた集約型 */
 export interface QuestionWithOptions extends Question {
   options: Option[];
+  /** 品質評価シグナルのメタ情報。AI生成時に付与。null / undefined は standard 扱い。 */
+  signal_meta?: SignalMeta | null;
 }
 
 /** アンケート＋設問をまとめた集約型 */
@@ -350,6 +380,11 @@ export interface QuestionInput {
   section_index: number;
   /** 表示条件（分岐）。null は常に表示。 */
   condition: QuestionCondition | null;
+  /**
+   * 品質評価シグナルのメタ情報。AI生成時に付与。
+   * undefined / null はいずれも standard 扱い。
+   */
+  signal_meta?: SignalMeta | null;
 }
 
 /** アンケート作成・更新の入力データ */
