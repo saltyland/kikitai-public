@@ -24,7 +24,7 @@ function makeItem(
       config: null,
       section_index: 0,
       order_index: 0,
-      condition: { sourceQuestionOrder: 1, optionText: '条件' },
+      condition: { sourceQuestionOrder: 1, optionTexts: ['条件'] },
       options: opts.map((t, i) => ({
         id: `opt${i}`,
         question_id: 'q1',

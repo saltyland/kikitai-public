@@ -26,10 +26,11 @@ export function computeVisibleQuestionIds(
     }
     const source = byOrder.get(cond.sourceQuestionOrder);
     // 条件元が存在し、かつ表示されていて、必要な選択肢が選ばれていれば表示
+    const condTexts = cond.optionTexts ?? (cond.optionText ? [cond.optionText] : []);
     if (
       source &&
       visible.has(source.id) &&
-      selectedOptionTexts(source.id).includes(cond.optionText)
+      condTexts.some((t) => selectedOptionTexts(source.id).includes(t))
     ) {
       visible.add(q.id);
     }

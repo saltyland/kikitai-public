@@ -11,7 +11,7 @@ export interface EditorQuestionLike {
   text: string;
   options: string[];
   config: Partial<ScaleConfig & GridConfig & AttentionConfig>;
-  condition: { sourceKey: string; optionText: string } | null;
+  condition: { sourceKey: string; optionTexts: string[] } | null;
 }
 
 /** 警告の重大度。error は公開を妨げ、warn は注意喚起のみ。 */
@@ -83,7 +83,7 @@ export function validateEditorQuestion(
     const source = byKey.get(q.condition.sourceKey);
     if (!source) {
       warnings.push({ level: 'warn', message: '表示条件の参照先の設問が見つかりません' });
-    } else if (!source.options.map((o) => o.trim()).includes(q.condition.optionText.trim())) {
+    } else if (q.condition.optionTexts.some((t) => !source.options.map((o) => o.trim()).includes(t.trim()))) {
       warnings.push({ level: 'warn', message: '表示条件で参照している選択肢が存在しません' });
     }
   }

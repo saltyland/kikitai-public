@@ -85,14 +85,16 @@ export type QuestionConfig = ScaleConfig | GridConfig | AttentionConfig;
 
 /**
  * 設問の表示条件（分岐ロジック）。
- * 「先行設問 sourceQuestionOrder で optionText の選択肢が選ばれた時だけ、この設問を表示する」。
+ * 「先行設問 sourceQuestionOrder で optionTexts のいずれかが選ばれた時だけ、この設問を表示する」。
  * null（未設定）の設問は常に表示。
  */
 export interface QuestionCondition {
   /** 条件元となる先行設問の order_index */
   sourceQuestionOrder: number;
-  /** その設問でこの選択肢テキストが選ばれていれば表示する */
-  optionText: string;
+  /** その設問でこれらの選択肢テキストのいずれかが選ばれていれば表示する */
+  optionTexts: string[];
+  /** @deprecated 旧形式との後方互換。optionTexts がなければこちらを使う */
+  optionText?: string;
 }
 
 /** セクション（ページ）メタ情報。survey.sections の各要素。 */

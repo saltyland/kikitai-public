@@ -46,7 +46,7 @@ describe('validateEditorQuestion', () => {
   });
 
   it('表示条件の参照先が無ければwarn', () => {
-    const q = base({ type: 'single', options: ['A', 'B'], condition: { sourceKey: 'missing', optionText: 'A' } });
+    const q = base({ type: 'single', options: ['A', 'B'], condition: { sourceKey: 'missing', optionTexts: ['A'] } });
     const w = validateEditorQuestion(q, new Map());
     expect(w.some((x) => x.level === 'warn' && x.message.includes('参照先'))).toBe(true);
   });
