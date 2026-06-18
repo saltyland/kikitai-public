@@ -89,8 +89,7 @@ function computeRescue(trust?: number, hints?: string[]): number {
  * mech_score と llm_risk を確率合成し、5段ティアと付与率を返す（LLM設計書 §7.1）。
  *
  *   finalRisk = clamp(1 − (1−mechScore)(1−llmRisk) − rescue, 0, 1)
- *
-
+ */
 export function grade(input: GradeInput): GradeResult {
   const { mechScore, llmRisk, trust, hints } = input;
   const relRisk = input.relRisk ?? 0;
@@ -103,7 +102,8 @@ export function grade(input: GradeInput): GradeResult {
   let payoutRate: PayoutRate;
 
   if (finalRisk >= THETA_HARD) {
-
+    tier = 'T0';
+    payoutRate = 0;
   } else if (finalRisk >= THETA_L1C) {
     tier = 'L1c';
     payoutRate = 0.3;
