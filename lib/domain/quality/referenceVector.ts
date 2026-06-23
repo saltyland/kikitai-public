@@ -42,6 +42,15 @@ export interface SurveyReferenceVectors {
   generatedAt: string;
   /** 設問ごとの参照。 */
   questions: QuestionReference[];
+  /**
+   * 等方化用のベースライン重心（全アンカー＋設問ベクトルの平均）。
+   *
+   * e5 等の文埋め込みは異方性が強く、無関係な文どうしでも cos が 0.85+ に張り付く。
+   * スコア時に「回答ベクトル − baseline」と「アンカー − baseline」のコサインを取ると
+   * 共通成分が除去され、関連／無関係（さらに一般論的な薄い回答）が明確に分離する。
+   * 旧形式（baseline 無し）との後方互換のため任意。無ければ従来どおり生ベクトルで判定する。
+   */
+  baseline?: number[];
 }
 
 /** 参照生成の入力（設問1問ぶん）。 */
@@ -88,8 +97,11 @@ export async function buildReferenceVectors(
   sources: ReferenceSource[]
 ): Promise<SurveyReferenceVectors> {
   const questions: QuestionReference[] = [];
+  // 等方化ベースライン算出用に、生成した全ベクトルを蓄積する。
+  const allVectors: number[][] = [];
   for (const src of sources) {
     const questionVector = await encoder.embed(src.questionText);
+    allVectors.push(questionVector);
 
     // 領域化（補正3）：理想回答例文を複数アンカーに。空なら設問文自身を最小アンカーに退避。
     const anchorTexts = (src.idealAnswers ?? []).map((t) => t.trim()).filter((t) => t.length > 0);
@@ -97,9 +109,11 @@ export async function buildReferenceVectors(
       anchorTexts.length > 0
         ? await encoder.embedBatch(anchorTexts)
         : [questionVector];
+    allVectors.push(...anchors);
 
     const conceptTexts = (src.keyConcepts ?? []).map((t) => t.trim()).filter((t) => t.length > 0);
     const keyConcepts = conceptTexts.length > 0 ? await encoder.embedBatch(conceptTexts) : undefined;
+    if (keyConcepts) allVectors.push(...keyConcepts);
 
     questions.push({
       questionOrder: src.questionOrder,
@@ -115,7 +129,24 @@ export async function buildReferenceVectors(
     dim: encoder.dim,
     generatedAt: new Date().toISOString(),
     questions,
+    baseline: centroid(allVectors, encoder.dim),
   };
+}
+
+/** ベクトル群の重心（成分ごとの平均）。空なら零ベクトル。 */
+function centroid(vectors: number[][], dim: number): number[] {
+  const m = new Array<number>(dim).fill(0);
+  const valid = vectors.filter((v) => v.length === dim);
+  if (valid.length === 0) return m;
+  for (const v of valid) for (let i = 0; i < dim; i++) m[i] += v[i];
+  for (let i = 0; i < dim; i++) m[i] /= valid.length;
+  return m;
+}
+
+/** v からベースラインを引く（等方化）。dim 不一致や baseline 無しなら v をそのまま返す。 */
+function center(v: number[], baseline: number[] | undefined): number[] {
+  if (!baseline || baseline.length !== v.length) return v;
+  return v.map((x, i) => x - baseline[i]);
 }
 
 /**
@@ -152,10 +183,13 @@ export function scoreRelevance(
   if (!qref || qref.anchors.length === 0) return safe;
 
   // 補正3: 領域化＝複数アンカーへの最大類似度を関連性とする。
+  // 等方化：baseline があれば回答・アンカー双方を中心化してから cos を取る。
+  // これにより e5 等の異方性（無関係でも cos が高止まり）を除去し、関連／無関係を分離する。
+  const ansC = center(answerEmbedding, refs.baseline);
   let maxSim = -1;
   for (const anchor of qref.anchors) {
     if (anchor.length !== encoder.dim) continue;
-    maxSim = Math.max(maxSim, cosineSimilarity(answerEmbedding, anchor));
+    maxSim = Math.max(maxSim, cosineSimilarity(ansC, center(anchor, refs.baseline)));
   }
   if (maxSim < -1) return safe;
 

@@ -42,3 +42,7 @@ next-env.d.ts
 
 # 引継ぎファイル（ローカル専用）
 引継ぎ.md
+
+# 品質採点ベンチマークの実行時生成物（personas.json は凍結なのでコミットする）
+_benchmark_result.txt
+_sim_result.tsv

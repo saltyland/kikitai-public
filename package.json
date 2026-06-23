@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "benchmark:gen": "node scripts/gen_personas.mjs",
+    "benchmark": "node scripts/run_benchmark.mjs",
     "sync": "node scripts/supabase-sync.mjs",
     "db:push": "supabase db push",
     "db:new": "supabase migration new"
