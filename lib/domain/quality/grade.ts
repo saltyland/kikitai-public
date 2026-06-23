@@ -62,12 +62,50 @@ export function loadCalibration(): CalibrationParams | null {
   }
 }
 
+/**
+ * Reject a degenerate calibration whose validation stats indicate it collapsed
+ * to a trivial "predict everything positive (keep)" model. Such a calibration
+ * silently overrides the sane defaults and disables the filter (the root cause
+ * of the over-lenient scoring observed in the 10-persona simulation).
+ *
+ * Heuristics (any one triggers rejection):
+ *   - fpr >= 0.95      : almost all bad answers pass (filter is off)
+ *   - accuracy < 0.55  : barely better than constant prediction
+ *   - rocAuc < 0.6     : ranking power is near chance
+ */
+export function isDegenerateCalibration(c: CalibrationParams | null): boolean {
+  const s = c?.stats as
+    | { fpr?: number; accuracy?: number; rocAuc?: number }
+    | undefined;
+  if (!s) return false;
+  if (typeof s.fpr === 'number' && s.fpr >= 0.95) return true;
+  if (typeof s.accuracy === 'number' && s.accuracy < 0.55) return true;
+  if (typeof s.rocAuc === 'number' && s.rocAuc < 0.6) return true;
+  return false;
+}
+
 /** Cache: read once per process startup. */
 let _calibCache: CalibrationParams | null | undefined = undefined;
 
 function getCalib(): CalibrationParams | null {
-  if (_calibCache === undefined) _calibCache = loadCalibration();
+  if (_calibCache === undefined) {
+    const loaded = loadCalibration();
+    if (isDegenerateCalibration(loaded)) {
+      console.warn(
+        '[quality/grade] calibration.json が退化（fpr/accuracy/rocAuc が不健全）のため棄却し、' +
+          '厳格なデフォルト閾値を使用します。再キャリブレーションを推奨します。'
+      );
+      _calibCache = null;
+    } else {
+      _calibCache = loaded;
+    }
+  }
   return _calibCache;
+}
+
+/** テスト用: calibration キャッシュをリセットする。 */
+export function resetCalibrationCacheForTest(): void {
+  _calibCache = undefined;
 }
 
 // ----------------------------------------------------------------
@@ -107,14 +145,19 @@ export interface GradeResult {
 // Overridden by calibration.json when present.
 // ----------------------------------------------------------------
 
+/**
+ * 厳格化したデフォルト閾値（2026-06 改訂・10ペルソナ診断を受けて）。
+ * 旧値 (0.80/0.65/0.50/0.30) は noisy-OR の希釈と相まって of-topic / AI生成一般論を
+ * PASS させていた。max 合成（下記 grade()）と併せ、PASS 帯を狭めて中品質を L1a/L1b へ送る。
+ */
 /** T0 boundary (machine filter design doc S4.3 theta_hard) */
-const DEFAULT_THETA_HARD = 0.80;
+const DEFAULT_THETA_HARD = 0.72;
 /** L1c/L1b boundary */
-const DEFAULT_THETA_L1C  = 0.65;
+const DEFAULT_THETA_L1C  = 0.58;
 /** L1b/L1a boundary */
-const DEFAULT_THETA_L1B  = 0.50;
+const DEFAULT_THETA_L1B  = 0.42;
 /** L1a/PASS boundary (theta_soft) */
-const DEFAULT_THETA_SOFT = 0.30;
+const DEFAULT_THETA_SOFT = 0.22;
 
 /**
  * Safety valve: when mechScore < this threshold, do not assign T0
@@ -188,13 +231,23 @@ export function grade(input: GradeInput): GradeResult {
   const MECH_SAFE_THRESHOLD = t?.mechSafeThreshold  ?? DEFAULT_MECH_SAFE_THRESHOLD;
   const REL_OFFTOPIC_RISK   = t?.relOffTopicRisk    ?? DEFAULT_REL_OFFTOPIC_RISK;
 
-  // Gate pattern (S13.2): off-topic uses fixed value; short_answer_ok disables rel axis.
-  const relRisk_eff =
-    hints?.includes('short_answer_ok') ? 0
-    : relRisk > 0 ? REL_OFFTOPIC_RISK
-    : 0;
+  // 関連性軸（S13.2 改訂）: short_answer_ok は無効化。それ以外は LocalEmbeddingEvaluator が
+  // 供給する連続値 relRisk をそのまま用いる（旧: relRisk>0 を一律 0.5 にする二値ゲート）。
+  // 後方互換: 0/1 の二値しか来ない呼び出し元では従来どおり 0/REL_OFFTOPIC_RISK 相当に丸める。
+  const relRisk_eff = hints?.includes('short_answer_ok')
+    ? 0
+    : relRisk >= 0.999
+      ? REL_OFFTOPIC_RISK // 旧二値(=1.0)互換: off-topic/コピペの固定リスク
+      : relRisk;
 
-  const raw = 1 - (1 - mechScore) * (1 - llmRisk) * (1 - relRisk_eff) - computeRescue(trust, hints, calib);
+  // リスク合成（改訂）: noisy-OR は各軸が中程度でも低リスクに希釈してしまい、
+  // 単一軸が高リスク（明確 off-topic・LLM が低評価）でも PASS させていた。
+  // 「希釈に強い max」と「積み上げる noisy-OR」の大きい方を採用し、最強の単一シグナルが
+  // 必ず効くようにする。rescue は両者から引く（救済の効果は維持）。
+  const rescue = computeRescue(trust, hints, calib);
+  const noisyOR = 1 - (1 - mechScore) * (1 - llmRisk) * (1 - relRisk_eff);
+  const strongest = Math.max(mechScore, llmRisk, relRisk_eff);
+  const raw = Math.max(noisyOR, strongest) - rescue;
   const finalRisk = Math.max(0, Math.min(1, raw));
 
   let tier: GradeTier;

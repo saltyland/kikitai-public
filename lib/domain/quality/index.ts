@@ -37,7 +37,7 @@ export type { RoutingUser } from './routing';
  * スコア合成ルール（injection防御・非対称min）:
  *  - rule.score===0（アテンション誤答等）      → 無条件 0
  *  - AI 失敗                                   → ルールベースへフォールバック
- *  - ai <= rule                                → min(rule, ai+10)  // LLMが厳しい→尊重
+ *  - ai <= rule                                → ai               // LLMが厳しい→そのまま尊重
  *  - ai > rule+15 かつ !(ai>=80 && rule>=70)   → rule              // 吊り上げ疑い→rule天井
  *  - それ以外                                  → ai
  *
@@ -68,8 +68,9 @@ class CompositeEvaluator implements IQualityEvaluator {
     let useAiFeedback: boolean;
 
     if (aiScore <= ruleScore) {
-      // LLM が厳しく評価している → 尊重しつつ rule との差を緩和
-      finalScore    = Math.min(ruleScore, aiScore + 10);
+      // LLM が厳しく評価している → そのまま尊重する。
+      // （旧実装は aiScore+10 の下駄を履かせ、LLM の厳格な低評価を緩めて甘さの一因になっていた）
+      finalScore    = aiScore;
       useAiFeedback = true;
     } else if (aiScore > ruleScore + 15) {
       // AI スコアが rule を大幅に上回る → 吊り上げ（injection）疑い → rule 天井

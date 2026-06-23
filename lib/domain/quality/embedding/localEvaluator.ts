@@ -8,6 +8,8 @@ import type { ILocalEncoder } from './encoder';
 import { getLocalEncoder } from './factory';
 import {
   scoreRelevance,
+  OFF_TOPIC_HARD,
+  ON_TOPIC_THRESHOLD,
   type SurveyReferenceVectors,
 } from '../referenceVector';
 import { LocalQualityClassifier } from './classifier';
@@ -25,6 +27,20 @@ import { extractContentWords } from './text';
  *   - 古典ML分類器が未学習（重み未配置）→ 減点しない（return 100相当）。
  *   - likelyCopy（設問丸写し）→ relevance スコアは使わず relRisk=0.6 固定。
  */
+/**
+ * cos 類似度（relevance, 0〜1）を関連性リスク（0〜1）へ写像する（線形・graded）。
+ *   relevance ≥ REL_SAFE             → 0   （十分関連）
+ *   OFF_TOPIC_HARD ≤ relevance < SAFE → (SAFE - relevance)/(SAFE - HARD) を線形補間
+ *   relevance < OFF_TOPIC_HARD        → 1.0 （明確 off-topic）
+ * REL_SAFE は ON_TOPIC_THRESHOLD（0.25）を「安全」境界として流用する。
+ */
+export function gradedRelRisk(relevance: number): number {
+  const SAFE = ON_TOPIC_THRESHOLD;
+  if (relevance >= SAFE) return 0;
+  if (relevance < OFF_TOPIC_HARD) return 1;
+  return (SAFE - relevance) / (SAFE - OFF_TOPIC_HARD);
+}
+
 export class LocalEmbeddingEvaluator implements IQualityEvaluator {
   constructor(
     private readonly references: SurveyReferenceVectors | null = null,
@@ -36,12 +52,17 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
    * 各自由記述の関連性リスク（0〜1）を計算し、その平均を返す。
    * responseService が MechSignals.relevanceRisk に供給するためのメソッド。
    *
-   * ルール（ゲート式・§13.2）:
-   *   - likelyCopy    → 1.0（grade.ts で REL_OFFTOPIC_RISK に変換される固定リスク信号）
-   *   - !onTopic（明確 off-topic: cos < OFF_TOPIC_HARD） → 1.0（同上）
-   *   - onTopic かつ非 copy → 0（中間帯も含め減点しない）
+   * ルール（連続値・§13.2 改訂）:
+   *   - likelyCopy    → 1.0（設問丸写し）
+   *   - !onTopic（明確 off-topic: cos < OFF_TOPIC_HARD） → 1.0
+   *   - 中間帯（OFF_TOPIC_HARD ≤ cos < REL_SAFE）→ 線形で 1.0〜0 に逓減（graded）
+   *   - cos ≥ REL_SAFE（十分関連）→ 0
    *   - indeterminate → 0（安全側）
    *   - 自由記述なし → 0
+   *
+   * 旧実装は二値（0 か 1）で中間帯を全通ししていたため、表層的に少しだけ関連する
+   * off-topic（例: 業務アンケートに雑談）を relRisk=0 で素通しさせていた。連続化により
+   * 関連の薄い回答が grade() の関連性軸へ比例的に効く。
    */
   async computeRelRisk(items: EvaluationItem[]): Promise<number> {
     const encoder = await this.encoderProvider();
@@ -58,14 +79,11 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
       const emb = await encoder.embed(text);
       const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
       if (r.likelyCopy) {
-        // 設問丸写し: 非ゼロ信号（grade.ts が REL_OFFTOPIC_RISK に固定）
         perItemRisks.push(1.0);
-      } else if (!r.indeterminate && !r.onTopic) {
-        // 明確 off-topic (cos < OFF_TOPIC_HARD): 非ゼロ信号
-        perItemRisks.push(1.0);
+      } else if (r.indeterminate) {
+        perItemRisks.push(0); // 判定不能は安全側
       } else {
-        // on-topic・中間帯・indeterminate は全て 0（減点しない）
-        perItemRisks.push(0);
+        perItemRisks.push(gradedRelRisk(r.relevance));
       }
     }
     return perItemRisks.reduce((a, b) => a + b, 0) / perItemRisks.length;
