@@ -14,7 +14,7 @@ import {
 } from './embedding/text';
 
 /** 1設問あたりこの秒数を下回るペースの回答は「速すぎる」とみなす */
-const MIN_SECONDS_PER_QUESTION = 2;
+const MIN_SECONDS_PER_QUESTION = 4;
 /** 速すぎる回答の減点 */
 const TOO_FAST_PENALTY = 30;
 /** 選択式の直線回答（全問同じ位置の選択肢）を判定する最低設問数 */
@@ -36,8 +36,6 @@ const COPY_QUESTION_SIMILARITY = 0.85;
 const COPY_QUESTION_PENALTY = 15;
 /** B-1: 回答どうしの近傍重複（SimHashハミング距離）の閾値。小さいほど厳しい */
 const NEAR_DUP_HAMMING_THRESHOLD = 6;
-/** B-1: 回答使い回し（近傍重複）の減点 */
-const NEAR_DUP_PENALTY = 15;
 
 /**
  * ルールベースの品質評価器（DESIGN_SPEC §2）。
@@ -81,12 +79,18 @@ export class RuleBasedEvaluator implements IQualityEvaluator {
     const textItems = items.filter(
       (i) => i.question.type === 'text' || i.question.type === 'paragraph'
     );
-    const shortAnswers = textItems.filter((i) => {
-      const t = (i.answer?.text_answer ?? '').trim();
-      return t.length > 0 && t.length < 10;
-    });
+    const answeredTextItems = textItems.filter(
+      (i) => (i.answer?.text_answer ?? '').trim().length > 0
+    );
+    const shortAnswers = answeredTextItems.filter(
+      (i) => (i.answer?.text_answer ?? '').trim().length < 10
+    );
+    // 件数比例で減点（旧: 何問該当しても一律 -20）。短文が回答の過半なら追加減点。
     if (shortAnswers.length > 0) {
-      score -= 20;
+      score -= Math.min(40, 15 * shortAnswers.length);
+      if (answeredTextItems.length > 0 && shortAnswers.length / answeredTextItems.length >= 0.5) {
+        score -= 10;
+      }
       reasons.push('自由記述の回答が短く、内容の充実度に改善の余地があります。');
     }
 
@@ -134,9 +138,12 @@ export class RuleBasedEvaluator implements IQualityEvaluator {
       .map((i) => ({ item: i, text: (i.answer?.text_answer ?? '').trim() }))
       .filter((x) => x.text.length >= MIN_TEXT_LEN_FOR_CONTENT_RULES);
 
-    // 6. 情報量（定型句率）
-    if (contentTexts.some((x) => formulaicRatio(x.text) >= FORMULAIC_RATIO_THRESHOLD)) {
-      score -= FORMULAIC_PENALTY;
+    // 6. 情報量（定型句率）— 該当件数に比例して減点
+    const formulaicCount = contentTexts.filter(
+      (x) => formulaicRatio(x.text) >= FORMULAIC_RATIO_THRESHOLD
+    ).length;
+    if (formulaicCount > 0) {
+      score -= Math.min(30, FORMULAIC_PENALTY * formulaicCount);
       reasons.push('「特になし」等の定型的な記述が中心で、回答の情報量が乏しい可能性があります。');
     }
 
@@ -157,18 +164,21 @@ export class RuleBasedEvaluator implements IQualityEvaluator {
     }
 
     // 9. 自由記述どうしの近傍重複（コピペの使い回し。簡易SimHash）
+    //    使い回しに巻き込まれた設問数に比例して減点する（旧: 1組でも全件でも一律 -15）。
     const hashes = contentTexts.map((x) => simHash64(x.text));
-    let nearDup = false;
-    for (let a = 0; a < hashes.length && !nearDup; a++) {
+    const dupSet = new Set<number>();
+    for (let a = 0; a < hashes.length; a++) {
       for (let b = a + 1; b < hashes.length; b++) {
         if (hammingDistance(hashes[a], hashes[b]) <= NEAR_DUP_HAMMING_THRESHOLD) {
-          nearDup = true;
-          break;
+          dupSet.add(a);
+          dupSet.add(b);
         }
       }
     }
-    if (nearDup) {
-      score -= NEAR_DUP_PENALTY;
+    if (dupSet.size > 0) {
+      // 使い回しは明確なゲーミング信号。巻き込まれた設問数に強く比例させる。
+      // 2件 -18 / 3件 -35 / 4件以上 -48（上限）。
+      score -= Math.min(48, 18 + (dupSet.size - 2) * 17);
       reasons.push('複数の自由記述がほぼ同じ内容で、使い回しの可能性があります。');
     }
 

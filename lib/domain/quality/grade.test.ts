@@ -20,52 +20,53 @@ function byRisk(r: number) {
 // ────────────────────────────────────────────────
 
 describe('grade() — ティア境界', () => {
-  it('PASS: finalRisk < 0.30', () => {
-    const res = byRisk(0.29);
+  // 閾値（2026-06 厳格化）: PASS<0.22 / L1a<0.42 / L1b<0.58 / L1c<0.72 / T0≥0.72
+  it('PASS: finalRisk < 0.22', () => {
+    const res = byRisk(0.20);
     expect(res.tier).toBe('PASS');
     expect(res.payoutRate).toBe(1.0);
   });
 
-  it('PASS/L1a 境界ちょうど(0.30)は L1a', () => {
-    const res = byRisk(0.30);
+  it('PASS/L1a 境界ちょうど(0.22)は L1a', () => {
+    const res = byRisk(0.22);
     expect(res.tier).toBe('L1a');
     expect(res.payoutRate).toBe(0.8);
   });
 
-  it('L1a: 0.30 ≤ finalRisk < 0.50', () => {
+  it('L1a: 0.22 ≤ finalRisk < 0.42', () => {
     const res = byRisk(0.40);
     expect(res.tier).toBe('L1a');
     expect(res.payoutRate).toBe(0.8);
   });
 
-  it('L1a/L1b 境界ちょうど(0.50)は L1b', () => {
+  it('L1a/L1b 境界ちょうど(0.42)は L1b', () => {
+    const res = byRisk(0.42);
+    expect(res.tier).toBe('L1b');
+    expect(res.payoutRate).toBe(0.5);
+  });
+
+  it('L1b: 0.42 ≤ finalRisk < 0.58', () => {
     const res = byRisk(0.50);
     expect(res.tier).toBe('L1b');
     expect(res.payoutRate).toBe(0.5);
   });
 
-  it('L1b: 0.50 ≤ finalRisk < 0.65', () => {
-    const res = byRisk(0.57);
-    expect(res.tier).toBe('L1b');
-    expect(res.payoutRate).toBe(0.5);
+  it('L1b/L1c 境界ちょうど(0.58)は L1c', () => {
+    const res = byRisk(0.58);
+    expect(res.tier).toBe('L1c');
+    expect(res.payoutRate).toBe(0.3);
   });
 
-  it('L1b/L1c 境界ちょうど(0.65)は L1c', () => {
+  it('L1c: 0.58 ≤ finalRisk < 0.72', () => {
     const res = byRisk(0.65);
     expect(res.tier).toBe('L1c');
     expect(res.payoutRate).toBe(0.3);
   });
 
-  it('L1c: 0.65 ≤ finalRisk < 0.80', () => {
-    const res = byRisk(0.72);
-    expect(res.tier).toBe('L1c');
-    expect(res.payoutRate).toBe(0.3);
-  });
-
-  it('T0 境界ちょうど(0.80)は T0（mechScore が十分高い場合）', () => {
-    // 1-(1-0.50)(1-0.60) = 1-0.20 = 0.80, mechScore=0.50 >= 0.15 → T0
-    const res = grade({ mechScore: 0.50, llmRisk: 0.60 });
-    expect(res.finalRisk).toBeCloseTo(0.80);
+  it('T0 境界ちょうど(0.72)は T0（mechScore が十分高い場合）', () => {
+    // max(noisyOR, strongest): mechScore=0.72 → strongest=0.72 ≥ THETA_HARD → T0
+    const res = grade({ mechScore: 0.72, llmRisk: 0.0 });
+    expect(res.finalRisk).toBeCloseTo(0.72);
     expect(res.tier).toBe('T0');
     expect(res.payoutRate).toBe(0);
   });
@@ -128,10 +129,10 @@ describe('grade() — LLM 単独 T0 防止（mechScore < 0.15）', () => {
 // ────────────────────────────────────────────────
 
 describe('grade() — 確率合成 finalRisk', () => {
-  it('mech=0.5, llm=0.5 → finalRisk = 1-(0.5)(0.5) = 0.75', () => {
+  it('mech=0.5, llm=0.5 → finalRisk = max(noisyOR 0.75, strongest 0.5) = 0.75', () => {
     const res = grade({ mechScore: 0.5, llmRisk: 0.5 });
     expect(res.finalRisk).toBeCloseTo(0.75);
-    expect(res.tier).toBe('L1c'); // 0.65 ≤ 0.75 < 0.80
+    expect(res.tier).toBe('T0'); // 0.75 ≥ THETA_HARD(0.72), mechScore 0.5 ≥ 0.15
   });
 
   it('mech=0, llm=r → finalRisk = r（単純一変数）', () => {
@@ -189,12 +190,12 @@ describe('grade() — 救済（rescue）', () => {
   });
 
   it('救済で L1c → L1b への1段降格が起きる', () => {
-    // raw = 1-(1-0.30)(1-0.52) = 1-(0.70)(0.48) = 1-0.336 = 0.664 → L1c
-    const without = grade({ mechScore: 0.30, llmRisk: 0.52 });
+    // max(noisyOR, strongest): noisyOR = 1-(0.70)(0.53) = 0.629 → L1c [0.58,0.72)
+    const without = grade({ mechScore: 0.30, llmRisk: 0.47 });
     expect(without.tier).toBe('L1c');
 
-    // 高信頼救済: 0.664 - 0.08 = 0.584 → L1b
-    const withRescue = grade({ mechScore: 0.30, llmRisk: 0.52, trust: 85 });
+    // 高信頼救済: 0.629 - 0.08 = 0.549 → L1b [0.42,0.58)
+    const withRescue = grade({ mechScore: 0.30, llmRisk: 0.47, trust: 85 });
     expect(withRescue.tier).toBe('L1b');
   });
 });
@@ -224,25 +225,30 @@ describe('grade() — クランプ', () => {
 // 関連性リスク（ゲート式・§13.2）
 // ────────────────────────────────────────────────
 
-describe('grade() — 関連性リスク（ゲート式）', () => {
+describe('grade() — 関連性リスク（連続値・2026-06改訂）', () => {
   it('relRisk=0（on-topic）は finalRisk に影響しない', () => {
     const without = grade({ mechScore: 0.4, llmRisk: 0.4 });
     const withZero = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 0 });
     expect(withZero.finalRisk).toBeCloseTo(without.finalRisk);
   });
 
-  it('relRisk>0（off-topic 信号）は REL_OFFTOPIC_RISK=0.5 で固定ペナルティ', () => {
-    // mech=0.4, llm=0.4, relRisk_eff=0.5
-    // 1-(0.6)(0.6)(0.5) = 1-0.18 = 0.82
+  it('relRisk=1.0（明確 off-topic）は REL_OFFTOPIC_RISK=0.5 へ丸めて固定（二値互換）', () => {
+    // relRisk>=0.999 は旧二値互換で 0.5 に丸める。
+    // max(noisyOR, strongest): noisyOR=1-(0.6)(0.6)(0.5)=0.82, strongest=0.5 → 0.82
     const res = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 1.0 });
-    expect(res.finalRisk).toBeCloseTo(1 - (1 - 0.4) * (1 - 0.4) * (1 - 0.5));
     expect(res.finalRisk).toBeCloseTo(0.82);
   });
 
-  it('relRisk の値が 0.1 でも 1.0 でもペナルティは同じ（ゲート＝量に依存しない）', () => {
+  it('relRisk は連続値: 0.1 より 0.5 の方がペナルティが大きい（量に依存する）', () => {
     const low  = grade({ mechScore: 0.3, llmRisk: 0.3, relRisk: 0.1 });
-    const high = grade({ mechScore: 0.3, llmRisk: 0.3, relRisk: 1.0 });
-    expect(low.finalRisk).toBeCloseTo(high.finalRisk);
+    const high = grade({ mechScore: 0.3, llmRisk: 0.3, relRisk: 0.5 });
+    expect(high.finalRisk).toBeGreaterThan(low.finalRisk);
+  });
+
+  it('relRisk が最強軸なら max 合成で必ず効く（希釈されない）', () => {
+    // mech=0.1, llm=0.1, relRisk=0.5 → strongest=0.5 が finalRisk の下限になる
+    const res = grade({ mechScore: 0.1, llmRisk: 0.1, relRisk: 0.5 });
+    expect(res.finalRisk).toBeGreaterThanOrEqual(0.5);
   });
 
   it('short_answer_ok hint があると relRisk_eff=0（関連性軸オフ）', () => {
