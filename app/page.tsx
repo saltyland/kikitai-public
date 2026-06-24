@@ -59,7 +59,7 @@ export default async function HomePage({
         <MySurveysSummaryCard surveys={mySurveys} />
 
         {/* アンケート回答セクション */}
-        <div className="mt-6 border-t border-slate-200 pt-6">
+        <div className="mt-6 border-t border-slate-300/70 pt-6">
           <div className="mb-4 border-l-4 border-brand-400 pl-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               アンケートに回答する
