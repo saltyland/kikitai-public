@@ -13,6 +13,15 @@ export interface OnboardingActionState {
   success?: boolean;
 }
 
+/** 学年入力が必要な職業と、その学年の選択肢一覧 */
+const GRADE_OPTIONS: Record<string, string[]> = {
+  '中学生': ['1年', '2年', '3年'],
+  '高校生': ['1年', '2年', '3年'],
+  '学部生': ['1年', '2年', '3年', '4年'],
+  '大学院生（修士）': ['M1', 'M2'],
+  '大学院生（博士）': ['D1', 'D2', 'D3以上'],
+};
+
 /** プロフィール登録アンケートを完了し、20pt × 1.5倍 = 30pt を付与する */
 export async function completeOnboardingAction(
   _prev: OnboardingActionState,
@@ -31,6 +40,23 @@ export async function completeOnboardingAction(
   if (!nickname) return { error: 'ニックネームは必須です' };
 
   const birthday = str('birthday');
+  if (!birthday) return { error: '生年月日は必須です' };
+
+  const gender = str('gender');
+  if (!gender) return { error: '性別は必須です' };
+
+  const occupation = str('occupation');
+  if (!occupation) return { error: '職業・立場は必須です' };
+
+  const grade = str('grade');
+  if (GRADE_OPTIONS[occupation] && !grade) return { error: '学年は必須です' };
+
+  const affiliation = str('affiliation');
+  if (!affiliation) return { error: '所属機関・大学名は必須です' };
+
+  const field = str('field');
+  if (!field) return { error: '研究分野・専攻は必須です' };
+
   const age = (() => {
     if (!birthday) return null;
     const birth = new Date(birthday);
@@ -51,13 +77,13 @@ export async function completeOnboardingAction(
   try {
     await service.updateProfile(user.id, {
       nickname,
-      affiliation: str('affiliation'),
-      field: str('field'),
+      affiliation,
+      field,
       age,
       birthday,
-      gender: str('gender'),
-      occupation: str('occupation'),
-      grade: str('grade'),
+      gender,
+      occupation,
+      grade,
       major: str('major'),
       private_fields: privateFields,
     });

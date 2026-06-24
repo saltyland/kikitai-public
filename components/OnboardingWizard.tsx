@@ -9,15 +9,24 @@ import {
 } from '@/app/actions/onboarding';
 import { inputClass } from '@/lib/ui/styles';
 import { Spinner } from '@/components/ui/Spinner';
+import OnboardingIntro from '@/components/OnboardingIntro';
 import type { Topic } from '@/lib/types/database';
 
 const initial: OnboardingActionState = { error: null };
 
-const STEPS = 6;
+/** 紹介の後のフォーム工程数（プロフィール→トピック→完了） */
+const FORM_STEPS = 3;
 
 const GENDERS = ['男性', '女性', 'ノンバイナリー', '回答しない'];
 const OCCUPATIONS = ['中学生', '高校生', '学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
-const GRADES = ['中1', '中2', '中3', '高1', '高2', '高3', '大学1年', '大学2年', '大学3年', '大学4年', 'M1', 'M2', 'D1', 'D2', 'D3以上'];
+/** 職業ごとの学年の選択肢。ここに無い職業（研究者・教員、社会人、その他）は学年を聞かない */
+const GRADE_OPTIONS: Record<string, string[]> = {
+  '中学生': ['1年', '2年', '3年'],
+  '高校生': ['1年', '2年', '3年'],
+  '学部生': ['1年', '2年', '3年', '4年'],
+  '大学院生（修士）': ['M1', 'M2'],
+  '大学院生（博士）': ['D1', 'D2', 'D3以上'],
+};
 
 interface Props {
   nickname: string;
@@ -25,7 +34,10 @@ interface Props {
 }
 
 export default function OnboardingWizard({ nickname, topics }: Props) {
-  const [step, setStep] = useState(1);
+  // 'intro'＝ゲームフリーク風のスクロール紹介、'form'＝プロフィール登録以降
+  const [phase, setPhase] = useState<'intro' | 'form'>('intro');
+  // フォーム工程は 4(プロフィール)→5(トピック)→6(完了)
+  const [step, setStep] = useState(4);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -87,7 +99,33 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
     });
   };
 
-  const progress = Math.round((step / STEPS) * 100);
+  const gradeOptions = GRADE_OPTIONS[form.occupation] ?? null;
+  const isProfileComplete =
+    !!form.nickname.trim() &&
+    !!form.birthday &&
+    !!form.gender &&
+    !!form.occupation &&
+    (!gradeOptions || !!form.grade) &&
+    !!form.affiliation.trim() &&
+    !!form.field.trim();
+
+  // 紹介（ストーリーテリング）パート：読み終えたらプロフィール登録へ
+  if (phase === 'intro') {
+    return (
+      <OnboardingIntro
+        nickname={nickname}
+        onStart={() => {
+          setPhase('form');
+          setStep(4);
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }}
+      />
+    );
+  }
+
+  // フォーム工程の進捗（4→1, 5→2, 6→3 of 3）
+  const formIndex = step - 3;
+  const progress = Math.round((formIndex / FORM_STEPS) * 100);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
@@ -99,114 +137,10 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-1 text-right text-xs text-slate-400">{step} / {STEPS}</p>
+        <p className="mt-1 text-right text-xs text-slate-400">{formIndex} / {FORM_STEPS}</p>
       </div>
 
       <div className="card-3d w-full max-w-lg p-8 animate-[fade-in-up_0.4s_ease-out]">
-
-        {/* ---- STEP 1: ようこそ ---- */}
-        {step === 1 && (
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-4xl">
-              🎉
-            </div>
-            <h1 className="text-2xl font-extrabold text-slate-800">ようこそ、キキタイへ！</h1>
-            <p className="mt-3 text-slate-600">
-              <span className="font-semibold text-brand-600">{nickname}</span> さん、登録ありがとうございます。
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              キキタイは、アンケートで繋がる学生・研究者のためのプラットフォームです。
-              ちょっと説明させてください！
-            </p>
-            <button
-              onClick={() => setStep(2)}
-              className="btn-3d btn-3d-primary mt-8 w-full py-3 text-base font-bold"
-            >
-              さっそく見てみる →
-            </button>
-          </div>
-        )}
-
-        {/* ---- STEP 2: サービス説明 ---- */}
-        {step === 2 && (
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-800">キキタイってどんなサービス？</h2>
-            <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-4 rounded-xl bg-brand-50 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg text-white font-bold">1</div>
-                <div>
-                  <p className="font-bold text-slate-800">アンケートに回答してポイントを獲得</p>
-                  <p className="mt-1 text-sm text-slate-600">他の人のアンケートに答えるとポイントがもらえます。良質な回答なら1.5倍！</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 rounded-xl bg-brand-50 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg text-white font-bold">2</div>
-                <div>
-                  <p className="font-bold text-slate-800">アンケート作成は完全無料</p>
-                  <p className="mt-1 text-sm text-slate-600">Googleフォーム感覚でアンケートを作れます。公開はポイントを使います。</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 rounded-xl bg-brand-50 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg text-white font-bold">3</div>
-                <div>
-                  <p className="font-bold text-slate-800">学生・研究者同士で回答し合う</p>
-                  <p className="mt-1 text-sm text-slate-600">回答してもらいながら、あなたも他の研究に貢献。Win-Winの交換経済圏。</p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setStep(1)}
-                className="btn-3d btn-3d-secondary flex-1 py-2 text-sm"
-              >
-                ← 戻る
-              </button>
-              <button
-                onClick={() => setStep(3)}
-                className="btn-3d btn-3d-primary flex-1 py-3 font-bold"
-              >
-                なるほど！ →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ---- STEP 3: ポイントゲット ---- */}
-        {step === 3 && (
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl">
-              ✦
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-800">まずはポイントをゲットしよう！</h2>
-            <p className="mt-3 text-slate-600">
-              あなたのことを教えてもらうことで、
-              <br />
-              ポイントを獲得できます。
-            </p>
-            <div className="mt-6 rounded-2xl border-2 border-brand-200 bg-brand-50 p-5">
-              <p className="text-sm text-slate-500">次のアンケートを完了すると</p>
-              <p className="mt-1 text-3xl font-extrabold text-brand-600">
-                20pt <span className="text-lg text-slate-500">×</span> <span className="text-amber-500">1.5倍</span>
-              </p>
-              <p className="mt-1 text-2xl font-extrabold text-slate-800">= 30ポイント獲得！</p>
-              <p className="mt-2 text-xs text-slate-400">良質な回答として高評価扱いで確定します</p>
-            </div>
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setStep(2)}
-                className="btn-3d btn-3d-secondary flex-1 py-2 text-sm"
-              >
-                ← 戻る
-              </button>
-              <button
-                onClick={() => setStep(4)}
-                className="btn-3d btn-3d-primary flex-1 py-3 font-bold"
-              >
-                アンケートに答える →
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ---- STEP 4: プロフィールアンケート ---- */}
         {step === 4 && (
@@ -239,6 +173,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
               <QuestionBlock
                 number={2}
                 label="生年月日"
+                required
                 fieldKey="age"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -257,6 +192,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
               <QuestionBlock
                 number={3}
                 label="性別"
+                required
                 fieldKey="gender"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -283,6 +219,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
               <QuestionBlock
                 number={4}
                 label="職業・立場"
+                required
                 fieldKey="occupation"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -292,7 +229,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
                     <button
                       key={o}
                       type="button"
-                      onClick={() => setForm({ ...form, occupation: form.occupation === o ? '' : o })}
+                      onClick={() => setForm({ ...form, occupation: form.occupation === o ? '' : o, grade: '' })}
                       className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                         form.occupation === o
                           ? 'border-brand-500 bg-brand-500 text-white'
@@ -305,17 +242,18 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
                 </div>
               </QuestionBlock>
 
-              {/* Q5 学年（学生の場合） */}
-              {(form.occupation.includes('学部生') || form.occupation.includes('大学院生')) && (
+              {/* Q5 学年（職業に応じた学年の選択肢を表示） */}
+              {gradeOptions && (
                 <QuestionBlock
                   number={5}
-                  label="学年"
+                  label={`学年（${form.occupation}）`}
+                  required
                   fieldKey="grade"
                   privateFields={privateFields}
                   onTogglePrivate={togglePrivate}
                 >
                   <div className="flex flex-wrap gap-2">
-                    {GRADES.map((g) => (
+                    {gradeOptions.map((g) => (
                       <button
                         key={g}
                         type="button"
@@ -335,8 +273,9 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
 
               {/* Q6 所属機関 */}
               <QuestionBlock
-                number={form.occupation.includes('学部生') || form.occupation.includes('大学院生') ? 6 : 5}
+                number={gradeOptions ? 6 : 5}
                 label="所属機関・大学名"
+                required
                 fieldKey="affiliation"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -352,8 +291,9 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
 
               {/* Q7 研究分野・専攻 */}
               <QuestionBlock
-                number={form.occupation.includes('学部生') || form.occupation.includes('大学院生') ? 7 : 6}
+                number={gradeOptions ? 7 : 6}
                 label="研究分野・専攻"
+                required
                 fieldKey="field"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -374,15 +314,15 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
 
             <div className="mt-8 flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setPhase('intro')}
                 disabled={isPending}
                 className="btn-3d btn-3d-secondary flex-1 py-2 text-sm"
               >
-                ← 戻る
+                ← 紹介に戻る
               </button>
               <button
                 onClick={handleSubmitProfile}
-                disabled={isPending || !form.nickname.trim()}
+                disabled={isPending || !isProfileComplete}
                 className="btn-3d btn-3d-primary flex-1 flex items-center justify-center gap-2 py-3 font-bold"
               >
                 {isPending && <Spinner className="h-4 w-4" />}
