@@ -67,7 +67,13 @@ export interface RelevanceResult {
   indeterminate: boolean;
 }
 
-/** ゆるい閾値（補正3）。多様な正答を誤検知しないため低めに置く。要較正（§13.3）。 */
+/**
+ * 明確 off-topic 判定の下限閾値（§13.3）。
+ * 全アンカーへの cos がこれ未満のときだけ onTopic=false（ハード判定）。
+ * 中間帯（OFF_TOPIC_HARD ≤ cos < ON_TOPIC_THRESHOLD）は onTopic=true のまま通す。
+ */
+export const OFF_TOPIC_HARD = 0.15;
+/** ゆるい閾値（参考値・現在は onTopic 判定に使わない）。 */
 export const ON_TOPIC_THRESHOLD = 0.25;
 /** 設問文との高類似＝丸写しとみなす編集類似度の閾値（補正3）。 */
 export const COPY_EDIT_SIMILARITY_THRESHOLD = 0.85;
@@ -151,13 +157,6 @@ export function scoreRelevance(
     if (anchor.length !== encoder.dim) continue;
     maxSim = Math.max(maxSim, cosineSimilarity(answerEmbedding, anchor));
   }
-  // キー概念があれば補助的に加味（最大値で底上げ）。
-  if (qref.keyConcepts) {
-    for (const c of qref.keyConcepts) {
-      if (c.length !== encoder.dim) continue;
-      maxSim = Math.max(maxSim, cosineSimilarity(answerEmbedding, c));
-    }
-  }
   if (maxSim < -1) return safe;
 
   const relevance = Math.max(0, Math.min(1, maxSim));
@@ -174,7 +173,8 @@ export function scoreRelevance(
 
   return {
     relevance,
-    onTopic: relevance >= ON_TOPIC_THRESHOLD,
+    // OFF_TOPIC_HARD 未満のときだけ off-topic（中間帯は onTopic=true のまま通す）
+    onTopic: relevance >= OFF_TOPIC_HARD,
     likelyCopy,
     indeterminate: false,
   };

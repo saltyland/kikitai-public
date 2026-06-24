@@ -122,11 +122,16 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
   questions: EditorQuestion[];
 } {
   if (!survey) {
+    const defaultDeadline = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 14);
+      return d.toISOString().split('T')[0];
+    })();
     return {
       title: '',
       description: '',
       requiredCount: 10,
-      deadline: '',
+      deadline: defaultDeadline,
       sections: [{ title: '', description: '' }],
       questions: [newQuestion(0)],
     };

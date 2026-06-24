@@ -25,9 +25,9 @@
 4. **引継ぎを更新する**：`引継ぎ.md` を実態に合わせて書き換える。**古く不要になった記述・
    完了したTODOは削除/チェック済みに**して肥大化を防ぐ。冒頭「最終更新」日付も直す。
 5. **Git/PR**：作業ブランチで `git commit`（末尾に `Co-Authored-By: Claude Opus 4.8
-   <noreply@anthropic.com>`）→ `git push` → `gh pr create`（既存PRがあるなら新規PRとして生成）。
+   <noreply@anthropic.com>`）→ `git push` → `gh pr create --base main`（既存PRがあるなら新規PRとして生成）。
    コミット/PR本文は日本語で簡潔に。`.env.local` は絶対に含めない。
-   かならず，一定の変化をしたらPRをすること
+   かならず，一定の変化をしたらPRをすること。**`--base main` を必ず明示すること。省略するとbaseが別ブランチになり、mainに反映されない事故が起きる。**
 6. **DB自動反映**：`supabase/migrations/` を変更した場合は **エージェントが `npm run sync` を
    実行** してリモートDBへ反映する（PATHを通し `kikitai` で実行）。
    - `npm run sync` は DBパスワード未設定でも **Management API でマイグレーションSQLを直接適用**

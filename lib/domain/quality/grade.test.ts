@@ -221,6 +221,47 @@ describe('grade() — クランプ', () => {
 });
 
 // ────────────────────────────────────────────────
+// 関連性リスク（ゲート式・§13.2）
+// ────────────────────────────────────────────────
+
+describe('grade() — 関連性リスク（ゲート式）', () => {
+  it('relRisk=0（on-topic）は finalRisk に影響しない', () => {
+    const without = grade({ mechScore: 0.4, llmRisk: 0.4 });
+    const withZero = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 0 });
+    expect(withZero.finalRisk).toBeCloseTo(without.finalRisk);
+  });
+
+  it('relRisk>0（off-topic 信号）は REL_OFFTOPIC_RISK=0.5 で固定ペナルティ', () => {
+    // mech=0.4, llm=0.4, relRisk_eff=0.5
+    // 1-(0.6)(0.6)(0.5) = 1-0.18 = 0.82
+    const res = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 1.0 });
+    expect(res.finalRisk).toBeCloseTo(1 - (1 - 0.4) * (1 - 0.4) * (1 - 0.5));
+    expect(res.finalRisk).toBeCloseTo(0.82);
+  });
+
+  it('relRisk の値が 0.1 でも 1.0 でもペナルティは同じ（ゲート＝量に依存しない）', () => {
+    const low  = grade({ mechScore: 0.3, llmRisk: 0.3, relRisk: 0.1 });
+    const high = grade({ mechScore: 0.3, llmRisk: 0.3, relRisk: 1.0 });
+    expect(low.finalRisk).toBeCloseTo(high.finalRisk);
+  });
+
+  it('short_answer_ok hint があると relRisk_eff=0（関連性軸オフ）', () => {
+    // hint あり: relRisk_eff=0（ゲート無効）＋rescue=0.04
+    const withHint = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 1.0, hints: ['short_answer_ok'] });
+    // hint なし: relRisk_eff=0.5（ゲート発動）・rescue=0
+    const withoutHint = grade({ mechScore: 0.4, llmRisk: 0.4, relRisk: 1.0 });
+    // hint によりペナルティが消えるので finalRisk が低くなる
+    expect(withHint.finalRisk).toBeLessThan(withoutHint.finalRisk);
+  });
+
+  it('off-topic ペナルティは finalRisk を上げる方向のみ（下げない）', () => {
+    const without = grade({ mechScore: 0.2, llmRisk: 0.2 });
+    const withRel  = grade({ mechScore: 0.2, llmRisk: 0.2, relRisk: 1.0 });
+    expect(withRel.finalRisk).toBeGreaterThan(without.finalRisk);
+  });
+});
+
+// ────────────────────────────────────────────────
 // 付与率の確認
 // ────────────────────────────────────────────────
 

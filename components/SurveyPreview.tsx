@@ -64,7 +64,11 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ordered, answers]);
 
-  const visible = ordered.filter((q) => visibleKeys.has(q.key));
+  // 条件なし → 常に表示、条件あり → 常に表示（条件充足かどうかで外観を変える）
+  const displayQuestions = ordered.map((q) => ({
+    ...q,
+    conditionMet: visibleKeys.has(q.key),
+  }));
 
   const frame =
     device === 'mobile'
@@ -100,16 +104,18 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
             {data.description && <p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{data.description}</p>}
           </div>
 
-          {visible.length === 0 && (
+          {displayQuestions.length === 0 && (
             <p className="rounded-md bg-slate-50 p-4 text-center text-xs text-slate-400">
               表示できる設問がありません。
             </p>
           )}
 
-          {visible.map((q, i) => {
+          {displayQuestions.map((q, i) => {
             const showSectionHead =
-              i === 0 || visible[i - 1].section_index !== q.section_index;
+              i === 0 || displayQuestions[i - 1].section_index !== q.section_index;
             const section = data.sections[Math.min(q.section_index, data.sections.length - 1)];
+            const hasCondition = !!q.condition;
+            const conditionMet = q.conditionMet;
             return (
               <div key={q.key} className="space-y-3">
                 {showSectionHead && section && (section.title || section.description) && (
@@ -120,7 +126,26 @@ export default function SurveyPreview({ data }: { data: PreviewData }) {
                     )}
                   </div>
                 )}
-                <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+                <div
+                  className={`rounded-lg border p-4 space-y-2 transition-opacity ${
+                    hasCondition
+                      ? conditionMet
+                        ? 'border-amber-400 bg-amber-100'
+                        : 'border-amber-300 bg-amber-50 opacity-60'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  {hasCondition && (
+                    <div className="flex items-center gap-1 text-[10px] text-amber-700">
+                      <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                      条件付き表示
+                      {q.condition && (
+                        <span className="text-amber-500">
+                          （「{q.condition.optionTexts.join(' / ')}」を選択時）
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <p className="text-sm font-medium text-slate-800">
                     <span className="text-brand-600 mr-1">Q{i + 1}.</span>
                     {q.text || '（設問文未入力）'}

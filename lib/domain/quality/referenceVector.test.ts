@@ -64,13 +64,13 @@ describe('referenceVector（§13.2 参照ベクトル方式）', () => {
     expect(r.relevance).toBeGreaterThan(0.8);
   });
 
-  it('off-topic な回答は関連性が低く onTopic=false', async () => {
+  it('off-topic な回答は関連性が低く onTopic=false（OFF_TOPIC_HARD=0.15 未満）', async () => {
     const enc = new DummyEncoder(TABLE);
     const refs = await makeRefs(enc);
     const emb = await enc.embed('今日は晴れだ');
     const r = scoreRelevance(enc, emb, '今日は晴れだ', refs, 0);
     expect(r.onTopic).toBe(false);
-    expect(r.relevance).toBeLessThan(0.25);
+    expect(r.relevance).toBeLessThan(0.15); // OFF_TOPIC_HARD 未満でのみ false
   });
 
   it('補正2: 別エンコーダ（空間不一致）なら判定を放棄（安全側＝indeterminate）', async () => {

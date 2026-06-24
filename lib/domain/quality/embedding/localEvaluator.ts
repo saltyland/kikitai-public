@@ -36,10 +36,11 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
    * 各自由記述の関連性リスク（0〜1）を計算し、その平均を返す。
    * responseService が MechSignals.relevanceRisk に供給するためのメソッド。
    *
-   * ルール:
-   *   - likelyCopy   → 0.6 固定（relevance スコア不使用）
-   *   - !indeterminate && !likelyCopy → 1 - relevance
-   *   - indeterminate → 0（安全側＝減点しない）
+   * ルール（ゲート式・§13.2）:
+   *   - likelyCopy    → 1.0（grade.ts で REL_OFFTOPIC_RISK に変換される固定リスク信号）
+   *   - !onTopic（明確 off-topic: cos < OFF_TOPIC_HARD） → 1.0（同上）
+   *   - onTopic かつ非 copy → 0（中間帯も含め減点しない）
+   *   - indeterminate → 0（安全側）
    *   - 自由記述なし → 0
    */
   async computeRelRisk(items: EvaluationItem[]): Promise<number> {
@@ -57,10 +58,13 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
       const emb = await encoder.embed(text);
       const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
       if (r.likelyCopy) {
-        perItemRisks.push(0.6);
-      } else if (!r.indeterminate) {
-        perItemRisks.push(Math.max(0, 1 - r.relevance));
+        // 設問丸写し: 非ゼロ信号（grade.ts が REL_OFFTOPIC_RISK に固定）
+        perItemRisks.push(1.0);
+      } else if (!r.indeterminate && !r.onTopic) {
+        // 明確 off-topic (cos < OFF_TOPIC_HARD): 非ゼロ信号
+        perItemRisks.push(1.0);
       } else {
+        // on-topic・中間帯・indeterminate は全て 0（減点しない）
         perItemRisks.push(0);
       }
     }
