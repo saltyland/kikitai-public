@@ -118,10 +118,10 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
             <p className="text-sm font-bold tracking-widest text-brand-500">CONCEPT</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
               答えるほど、集まる。
               <br />
-              <span className="text-brand-600">“回答し合う”輪。</span>
+              <span className="inline-block text-brand-600">“回答し合う”輪。</span>
             </h2>
           </Reveal>
           <Reveal delay={240}>
