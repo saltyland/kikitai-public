@@ -375,8 +375,6 @@ export default function UnlistedSurveyEditor({
       target_conditions: {},
       min_trust_score: null,
       retention_months: null,
-      topic_ids: [],
-      topic_suggestion: null,
       questions: ordered.map((q, qi) => {
         const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
         const condition =

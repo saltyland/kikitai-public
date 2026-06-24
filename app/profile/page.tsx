@@ -5,12 +5,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ProfileService } from '@/lib/services/profileService';
 import { FollowService } from '@/lib/services/followService';
-import { TopicService } from '@/lib/services/topicService';
 import Header from '@/components/Header';
 import TrustBadge from '@/components/TrustBadge';
-import ProfileTabs from '@/components/ProfileTabs';
 import FollowingUsersTab from '@/components/FollowingUsersTab';
-import FollowingTopicsTab from '@/components/FollowingTopicsTab';
 import { PointsCard, LogoutButton, DeleteAccountSection } from '@/components/ProfileSummary';
 
 export default async function ProfilePage() {
@@ -19,10 +16,9 @@ export default async function ProfilePage() {
   if (!profile) redirect('/login');
 
   const service = new ProfileService(supabase);
-  const [points, followedUsers, followedTopics] = await Promise.all([
+  const [points, followedUsers] = await Promise.all([
     service.getPointsSummary(profile.id),
     new FollowService(supabase).getFollowedUserProfiles(profile.id),
-    new TopicService(supabase).getFollowedTopics(profile.id),
   ]);
 
   return (
@@ -58,11 +54,8 @@ export default async function ProfilePage() {
           </Link>
 
           <section>
-            <h2 className="mb-3 text-sm font-bold text-slate-800">その他</h2>
-            <ProfileTabs
-              followingUsersTab={<FollowingUsersTab profiles={followedUsers} />}
-              followingTopicsTab={<FollowingTopicsTab topics={followedTopics} />}
-            />
+            <h2 className="mb-3 text-sm font-bold text-slate-800">フォロー中ユーザー</h2>
+            <FollowingUsersTab profiles={followedUsers} />
 
             <div className="mt-6 space-y-4">
               <LogoutButton />

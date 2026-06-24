@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SurveyRepository } from '@/lib/repositories/surveyRepository';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { ResponseRepository } from '@/lib/repositories/responseRepository';
-import { TopicRepository } from '@/lib/repositories/topicRepository';
 import { FollowRepository } from '@/lib/repositories/followRepository';
 import type {
   Survey,
@@ -11,7 +10,6 @@ import type {
   SurveyWithQuestions,
   SurveyWithStats,
   QuestionInput,
-  Topic,
 } from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { SurveyStateMachine } from '@/lib/domain/surveyStateMachine';
@@ -27,14 +25,12 @@ export class SurveyService {
   private readonly surveyRepo: SurveyRepository;
   private readonly profileRepo: ProfileRepository;
   private readonly responseRepo: ResponseRepository;
-  private readonly topicRepo: TopicRepository;
   private readonly followRepo: FollowRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.profileRepo = new ProfileRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
-    this.topicRepo = new TopicRepository(supabase);
     this.followRepo = new FollowRepository(supabase);
   }
 
@@ -43,9 +39,6 @@ export class SurveyService {
     if (!input.title.trim()) throw new Error('タイトルは必須です');
     if (input.required_count < 1) throw new Error('必要回答数は1以上にしてください');
     if (input.questions.length === 0) throw new Error('設問を1つ以上追加してください');
-    if (input.topic_ids.length < 1 || input.topic_ids.length > 3) {
-      throw new Error('トピックは1〜3個選択してください');
-    }
     // インフォームドコンセント文は「あり/なし」を作成者が選べる（任意）。
     // 「なし」の場合は consent_text が null となり、回答画面では汎用の説明文を表示する。
     input.questions.forEach((q: QuestionInput, i: number) => {
@@ -134,12 +127,6 @@ export class SurveyService {
     return d.toISOString();
   }
 
-  /** 新規トピック提案があれば保存する（自由記述・任意） */
-  private async saveTopicSuggestion(surveyId: string, userId: string, input: SurveyInput) {
-    const text = input.topic_suggestion?.trim();
-    if (text) await this.topicRepo.createSuggestion(surveyId, userId, text);
-  }
-
   /**
    * 参照ベクトル群を生成して survey に保存する（設計書 §13.2 作成フェーズ）。
    *
@@ -184,8 +171,6 @@ export class SurveyService {
       ...this.toSurveyColumns(input),
     });
     await this.surveyRepo.replaceQuestions(survey.id, this.toQuestionRows(input.questions));
-    await this.surveyRepo.replaceSurveyTopics(survey.id, input.topic_ids);
-    await this.saveTopicSuggestion(survey.id, userId, input);
     await this.saveReferenceVectors(survey.id, this.toReferenceSources(input.questions));
     return survey;
   }
@@ -203,8 +188,6 @@ export class SurveyService {
 
     const survey = await this.surveyRepo.updateSurvey(surveyId, this.toSurveyColumns(input));
     await this.surveyRepo.replaceQuestions(surveyId, this.toQuestionRows(input.questions));
-    await this.surveyRepo.replaceSurveyTopics(surveyId, input.topic_ids);
-    await this.saveTopicSuggestion(surveyId, userId, input);
     await this.saveReferenceVectors(surveyId, this.toReferenceSources(input.questions));
     return survey;
   }
@@ -258,16 +241,6 @@ export class SurveyService {
     if (!existing) throw new Error('アンケートが見つかりません');
     if (existing.user_id !== userId) throw new Error('削除権限がありません');
     await this.surveyRepo.delete(surveyId);
-  }
-
-  /** トピック詳細ページ：そのトピックが付与された公開中アンケート（回答数つき）。 */
-  async listSurveysByTopic(topicId: string): Promise<SurveyWithStats[]> {
-    const surveys = await this.surveyRepo.findByTopicId(topicId);
-    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
-    return surveys.map((s) => ({
-      ...s,
-      response_count: counts.get(s.id) ?? 0,
-    }));
   }
 
   /** 他人のプロフィールページ：公開中アンケートのみ（回答数つき）。 */
@@ -363,33 +336,6 @@ export class SurveyService {
       (s) => s.user_id !== userId && s.visibility !== 'unlisted'
     );
     return (await this.decorateSurveys(userId, surveys)).slice(0, limit);
-  }
-
-  /**
-   * フォロー中トピックそれぞれの新着公開アンケート（トピックごとに最大 limitPerTopic 件）。
-   * /surveys のタイムラインでトピックごとに横スクロール行として表示する。
-   */
-  async listByFollowedTopics(
-    userId: string,
-    limitPerTopic = 10
-  ): Promise<{ topic: Topic; surveys: SurveyWithStats[] }[]> {
-    const topicIds = await this.followRepo.listFollowedTopicIds(userId);
-    if (topicIds.length === 0) return [];
-    const [topics, surveysByTopic] = await Promise.all([
-      this.topicRepo.findByIds(topicIds),
-      this.surveyRepo.findByTopicIds(topicIds),
-    ]);
-    const topicById = new Map(topics.map((t) => [t.id, t]));
-    const result: { topic: Topic; surveys: SurveyWithStats[] }[] = [];
-    for (const topicId of topicIds) {
-      const topic = topicById.get(topicId);
-      const raw = (surveysByTopic.get(topicId) ?? []).filter((s) => s.user_id !== userId);
-      if (!topic || raw.length === 0) continue;
-      const decorated = await this.decorateSurveys(userId, raw);
-      if (decorated.length === 0) continue;
-      result.push({ topic, surveys: decorated.slice(0, limitPerTopic) });
-    }
-    return result;
   }
 
   /** フォロー中ユーザーが新たに公開したアンケート（新着順、最大 limit 件）。 */

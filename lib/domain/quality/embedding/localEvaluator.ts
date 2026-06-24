@@ -73,10 +73,16 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
     );
     if (textItems.length === 0) return 0;
 
+    // 個別 embed() の直列呼び出しは WASM 推論のオーバーヘッドが件数分乗るため、
+    // まとめて embedBatch() で一括埋め込みする（結果のベクトルは個別呼び出しと同一＝精度に影響なし）。
+    const texts = textItems.map((item) => (item.answer?.text_answer ?? '').trim());
+    const embs = await encoder.embedBatch(texts);
+
     const perItemRisks: number[] = [];
-    for (const item of textItems) {
-      const text = (item.answer?.text_answer ?? '').trim();
-      const emb = await encoder.embed(text);
+    for (let i = 0; i < textItems.length; i++) {
+      const item = textItems[i];
+      const text = texts[i];
+      const emb = embs[i];
       const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
       if (r.likelyCopy) {
         perItemRisks.push(1.0);
@@ -104,12 +110,19 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
       return { score: 100, feedback: 'ローカル評価: 自由記述がないため関連性判定は対象外です。' };
     }
 
+    // テキストごとの埋め込みは1回だけ計算し、関連性軸・ML軸の両方で再利用する
+    // （まとめて embedBatch() で一括埋め込み。個別 embed() の直列呼び出しより速く、
+    //  ベクトル自体は同一なので精度に影響しない）。
+    const texts = textItems.map((item) => (item.answer?.text_answer ?? '').trim());
+    const embs = await encoder.embedBatch(texts);
+
     // ── 関連性軸（参照ベクトルがあるときのみ。補正1/補正2/補正3）──────────
     const relevanceScores: number[] = [];
     let copyFlags = 0;
-    for (const item of textItems) {
-      const text = (item.answer?.text_answer ?? '').trim();
-      const emb = await encoder.embed(text);
+    for (let i = 0; i < textItems.length; i++) {
+      const item = textItems[i];
+      const text = texts[i];
+      const emb = embs[i];
       const r = scoreRelevance(encoder, emb, text, this.references, item.question.order_index);
       if (r.likelyCopy) {
         // 丸写し → relRisk=0.6 相当のスコア（40）を採用。relevance は使わない。
@@ -128,9 +141,9 @@ export class LocalEmbeddingEvaluator implements IQualityEvaluator {
     // ── 古典ML分類器（未学習なら null＝減点しない。設計書 §4.2 B-2）────────
     const mlScores: number[] = [];
     if (this.classifier.isReady()) {
-      for (const item of textItems) {
-        const text = (item.answer?.text_answer ?? '').trim();
-        const emb = await encoder.embed(text);
+      for (let i = 0; i < textItems.length; i++) {
+        const text = texts[i];
+        const emb = embs[i];
         const feats = this.classifier.buildFeatures({
           embedding: emb,
           contentWordCount: extractContentWords(text).length,

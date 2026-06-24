@@ -16,5 +16,4 @@ export function isNotificationEnabled(
 /** /profile の通知設定タブでON/OFFを切り替え可能な通知種別とラベル */
 export const TOGGLEABLE_NOTIFICATION_TYPES: { type: NotificationType; label: string }[] = [
   { type: 'followed_user_survey_published', label: 'フォロー中のユーザーがアンケートを公開したとき' },
-  { type: 'followed_topic_digest', label: 'フォロー中のトピックに新着アンケートがあるとき（1日1回）' },
 ];

@@ -6,13 +6,14 @@ import SurveyCard from '@/components/SurveyCard';
 import ScrollArrowButton from '@/components/ScrollArrowButton';
 import type { SurveyWithStats } from '@/lib/types/database';
 
-/** /surveys のタイムラインやホームのダイジェストで使う横スクロール行（PCは矢印ナビ、モバイルはネイティブスクロール+snap） */
+/** /surveys のタイムラインやホームのダイジェストで使う行（PCは矢印ナビ付き横スクロール、モバイルはネイティブスクロール+snap。layout="grid"で3列×縦スクロール表示） */
 export default function HorizontalSurveyRow({
   title,
   description,
   surveys,
   emptyMessage,
   viewMoreHref,
+  layout = 'scroll',
 }: {
   title: string;
   description?: ReactNode;
@@ -20,6 +21,8 @@ export default function HorizontalSurveyRow({
   emptyMessage?: string;
   /** 指定時、見出し横に「もっと見る」リンクを表示する（ホームのダイジェスト行から/surveysへの誘導用） */
   viewMoreHref?: string;
+  /** "scroll"（既定）: 横スクロールのカード列。"grid": 3列で並べて縦スクロールで閲覧 */
+  layout?: 'scroll' | 'grid';
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -72,25 +75,33 @@ export default function HorizontalSurveyRow({
         )}
       </div>
       {description && <p className="mb-3 text-sm text-slate-400">{description}</p>}
-      <div className="group relative">
-        <ScrollArrowButton direction="left" disabled={!canScrollLeft} onClick={() => scrollByAmount('left')} />
-        <div
-          ref={scrollRef}
-          onScroll={updateArrows}
-          className="flex gap-4 overflow-x-auto scroll-px-4 snap-x snap-mandatory scrollbar-hide pb-2"
-        >
+      {layout === 'grid' ? (
+        <div className="grid grid-cols-3 gap-4">
           {surveys.map((s) => (
-            <div key={s.id} className="w-72 shrink-0 snap-start">
-              <SurveyCard survey={s} />
-            </div>
+            <SurveyCard key={s.id} survey={s} />
           ))}
         </div>
-        <ScrollArrowButton
-          direction="right"
-          disabled={!canScrollRight}
-          onClick={() => scrollByAmount('right')}
-        />
-      </div>
+      ) : (
+        <div className="group relative">
+          <ScrollArrowButton direction="left" disabled={!canScrollLeft} onClick={() => scrollByAmount('left')} />
+          <div
+            ref={scrollRef}
+            onScroll={updateArrows}
+            className="flex gap-4 overflow-x-auto scroll-px-4 snap-x snap-mandatory scrollbar-hide pb-2"
+          >
+            {surveys.map((s) => (
+              <div key={s.id} className="w-72 shrink-0 snap-start">
+                <SurveyCard survey={s} />
+              </div>
+            ))}
+          </div>
+          <ScrollArrowButton
+            direction="right"
+            disabled={!canScrollRight}
+            onClick={() => scrollByAmount('right')}
+          />
+        </div>
+      )}
     </section>
   );
 }

@@ -3,7 +3,7 @@ import { FollowRepository } from '@/lib/repositories/followRepository';
 import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import type { PublicProfile } from '@/lib/types/database';
 
-/** ユーザー間フォロー・トピックフォローのビジネスロジック */
+/** ユーザー間フォローのビジネスロジック */
 export class FollowService {
   private readonly repo: FollowRepository;
   private readonly profileRepo: ProfileRepository;

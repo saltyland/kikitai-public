@@ -4,18 +4,16 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   completeOnboardingAction,
-  saveTopicSelectionAction,
   type OnboardingActionState,
 } from '@/app/actions/onboarding';
 import { inputClass } from '@/lib/ui/styles';
 import { Spinner } from '@/components/ui/Spinner';
 import OnboardingIntro from '@/components/OnboardingIntro';
-import type { Topic } from '@/lib/types/database';
 
 const initial: OnboardingActionState = { error: null };
 
-/** 紹介の後のフォーム工程数（プロフィール→トピック→完了） */
-const FORM_STEPS = 3;
+/** 紹介の後のフォーム工程数（プロフィール→完了） */
+const FORM_STEPS = 2;
 
 const GENDERS = ['男性', '女性', 'ノンバイナリー', '回答しない'];
 const OCCUPATIONS = ['中学生', '高校生', '学部生', '大学院生（修士）', '大学院生（博士）', '研究者・教員', '社会人', 'その他'];
@@ -30,13 +28,12 @@ const GRADE_OPTIONS: Record<string, string[]> = {
 
 interface Props {
   nickname: string;
-  topics: Topic[];
 }
 
-export default function OnboardingWizard({ nickname, topics }: Props) {
+export default function OnboardingWizard({ nickname }: Props) {
   // 'intro'＝ゲームフリーク風のスクロール紹介、'form'＝プロフィール登録以降
   const [phase, setPhase] = useState<'intro' | 'form'>('intro');
-  // フォーム工程は 4(プロフィール)→5(トピック)→6(完了)
+  // フォーム工程は 4(プロフィール)→6(完了)
   const [step, setStep] = useState(4);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -55,33 +52,10 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
   const [privateFields, setPrivateFields] = useState<string[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // step5（トピック選択）
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
-  const [isTopicPending, startTopicTransition] = useTransition();
-  const [topicError, setTopicError] = useState<string | null>(null);
-
   const togglePrivate = (field: string) => {
     setPrivateFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
     );
-  };
-
-  const toggleTopic = (topicId: string) => {
-    setSelectedTopicIds((prev) =>
-      prev.includes(topicId) ? prev.filter((id) => id !== topicId) : [...prev, topicId]
-    );
-  };
-
-  const handleTopicSubmit = (topicIds: string[]) => {
-    setTopicError(null);
-    startTopicTransition(async () => {
-      const result = await saveTopicSelectionAction(topicIds);
-      if (result.error) {
-        setTopicError(result.error);
-      } else {
-        setStep(6);
-      }
-    });
   };
 
   const handleSubmitProfile = () => {
@@ -94,7 +68,7 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
       if (result.error) {
         setServerError(result.error);
       } else {
-        setStep(5);
+        setStep(6);
       }
     });
   };
@@ -123,8 +97,8 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
     );
   }
 
-  // フォーム工程の進捗（4→1, 5→2, 6→3 of 3）
-  const formIndex = step - 3;
+  // フォーム工程の進捗（4→1, 6→2 of 2）
+  const formIndex = step === 4 ? 1 : 2;
   const progress = Math.round((formIndex / FORM_STEPS) * 100);
 
   return (
@@ -150,7 +124,15 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
               <span className="text-xs text-slate-400">全7問</span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-800">あなたのことを教えてください</h2>
-            <p className="mt-1 text-xs text-slate-500">各項目は「非公開」にすることができます（非公開にしてもポイントは付与されます）。</p>
+            <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3 text-xs text-slate-600">
+              <p>
+                各項目の右側にある<span className="mx-1 inline-block rounded-full border border-slate-300 bg-white px-2 py-0.5 font-medium text-slate-500">公開</span>
+                ボタンを押すと<span className="font-bold text-slate-700">「非公開」</span>に切り替えられます（非公開にしてもポイントは変わらず付与されます）。
+              </p>
+              <p className="mt-1.5">
+                公開にしても、ニックネームに本名を使わない限り、メールアドレス（Gmailなど）から個人が特定されることはありません。
+              </p>
+            </div>
 
             <div className="mt-5 space-y-5">
               {/* Q1 ニックネーム */}
@@ -327,71 +309,6 @@ export default function OnboardingWizard({ nickname, topics }: Props) {
               >
                 {isPending && <Spinner className="h-4 w-4" />}
                 {isPending ? '送信中…' : '回答を送信する'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ---- STEP 5: トピック選択 ---- */}
-        {step === 5 && (
-          <div>
-            <p className="text-xs font-semibold text-brand-600">あと1ステップで完了です</p>
-            <h2 className="mt-1 text-xl font-extrabold text-slate-800">興味のあるトピックを選ぶ</h2>
-            <p className="mt-1 text-xs text-slate-500">
-              フォローしたトピックの新着アンケートをホームでお知らせします（0件のままでも進めます）。
-            </p>
-
-            <div className="mt-4 max-h-[55vh] space-y-4 overflow-y-auto pr-1">
-              {Object.entries(
-                topics.reduce<Record<string, Topic[]>>((acc, t) => {
-                  (acc[t.category] ??= []).push(t);
-                  return acc;
-                }, {})
-              ).map(([category, categoryTopics]) => (
-                <div key={category}>
-                  <p className="mb-2 text-xs font-bold text-slate-400">{category}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {categoryTopics.map((t) => {
-                      const selected = selectedTopicIds.includes(t.id);
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => toggleTopic(t.id)}
-                          className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                            selected
-                              ? 'border-brand-500 bg-brand-500 text-white'
-                              : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
-                          }`}
-                        >
-                          {t.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {topicError && (
-              <p role="alert" className="mt-4 text-sm text-red-600">{topicError}</p>
-            )}
-
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => handleTopicSubmit([])}
-                disabled={isTopicPending}
-                className="btn-3d btn-3d-secondary flex-1 py-2 text-sm"
-              >
-                スキップ
-              </button>
-              <button
-                onClick={() => handleTopicSubmit(selectedTopicIds)}
-                disabled={isTopicPending}
-                className="btn-3d btn-3d-primary flex-1 flex items-center justify-center gap-2 py-3 font-bold"
-              >
-                {isTopicPending && <Spinner className="h-4 w-4" />}
-                次へ →
               </button>
             </div>
           </div>

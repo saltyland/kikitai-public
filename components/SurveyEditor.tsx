@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PublicSurveyEditor from '@/components/PublicSurveyEditor';
 import UnlistedSurveyEditor from '@/components/UnlistedSurveyEditor';
-import type { SurveyWithQuestions, Topic } from '@/lib/types/database';
+import type { SurveyWithQuestions } from '@/lib/types/database';
 
 /**
  * アンケートエディタのエントリポイント。
  * - 新規作成時：公開モード選択モーダルを表示し、選択内容に応じてエディタを振り分ける。
  * - 編集時：既存アンケートの visibility に応じて自動的に正しいエディタを表示する。
  *
- * 通常公開  → PublicSurveyEditor（トピック・AI品質判定・ポイント計算・配信設定あり）
+ * 通常公開  → PublicSurveyEditor（AI品質判定・ポイント計算・配信設定あり）
  * リンク限定 → UnlistedSurveyEditor（シンプルなアンケート作成ツール）
  */
 
@@ -19,10 +19,8 @@ type VisibilityChoice = 'public' | 'unlisted' | null;
 
 export default function SurveyEditor({
   survey,
-  topics,
 }: {
   survey: SurveyWithQuestions | null;
-  topics: Topic[];
 }) {
   const router = useRouter();
 
@@ -36,7 +34,7 @@ export default function SurveyEditor({
   const [choice, setChoice] = useState<VisibilityChoice>(initialChoice);
 
   if (choice === 'public') {
-    return <PublicSurveyEditor survey={survey} topics={topics} />;
+    return <PublicSurveyEditor survey={survey} />;
   }
 
   if (choice === 'unlisted') {
@@ -57,7 +55,7 @@ export default function SurveyEditor({
           >
             <p className="font-bold text-brand-800">通常公開</p>
             <p className="mt-1 text-xs text-slate-500">
-              アンケート一覧に掲載されます。トピックを設定してポイントで回答を集めます。
+              アンケート一覧に掲載され、ポイントで回答を集めます。
               AI品質判定・低品質回答フィルタリングが有効になります。
             </p>
           </button>

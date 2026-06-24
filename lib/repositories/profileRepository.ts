@@ -19,7 +19,6 @@ export type ProfileEditable = Partial<
     | 'private_fields'
     | 'avatar_url'
     | 'sns_links'
-    | 'topics_selected_at'
   >
 >;
 

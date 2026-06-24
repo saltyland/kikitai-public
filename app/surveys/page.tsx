@@ -14,15 +14,13 @@ export default async function SurveyListPage() {
   if (!profile) redirect('/login');
 
   const service = new SurveyService(supabase);
-  const [byTopics, byFollowedUsers, recommended, newest] = await Promise.all([
-    service.listByFollowedTopics(profile.id),
+  const [byFollowedUsers, recommended, newest] = await Promise.all([
     service.listByFollowedUsers(profile.id),
     service.listAnswerableSurveys(profile.id),
     service.listNewest(profile.id),
   ]);
 
   const isEmpty =
-    byTopics.length === 0 &&
     byFollowedUsers.length === 0 &&
     recommended.length === 0 &&
     newest.length === 0;
@@ -50,19 +48,13 @@ export default async function SurveyListPage() {
           </EmptyState>
         ) : (
           <>
-            {byTopics.map(({ topic, surveys }) => (
-              <HorizontalSurveyRow
-                key={topic.id}
-                title={`「${topic.name}」の新着アンケート`}
-                surveys={surveys}
-              />
-            ))}
             <HorizontalSurveyRow
               title="フォロー中ユーザーの新着アンケート"
               surveys={byFollowedUsers}
+              layout="grid"
             />
-            <HorizontalSurveyRow title="あなたへのおすすめ" surveys={recommended} />
-            <HorizontalSurveyRow title="新着アンケート" surveys={newest} />
+            <HorizontalSurveyRow title="あなたへのおすすめ" surveys={recommended} layout="grid" />
+            <HorizontalSurveyRow title="新着アンケート" surveys={newest} layout="grid" />
           </>
         )}
       </main>

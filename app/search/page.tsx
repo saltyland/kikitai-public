@@ -20,7 +20,7 @@ export default async function SearchPage() {
           </div>
           <p className="text-sm font-medium text-slate-800">検索機能は準備中です</p>
           <p className="mt-2 text-xs text-slate-500">
-            アンケート・トピック・ユーザーを検索できる機能を準備しています。
+            アンケート・ユーザーを検索できる機能を準備しています。
           </p>
         </div>
       </main>

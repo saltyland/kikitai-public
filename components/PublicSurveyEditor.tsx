@@ -8,7 +8,6 @@ import QuestionTypePicker from '@/components/QuestionTypePicker';
 import SurveyPreview from '@/components/SurveyPreview';
 import BranchFlow from '@/components/BranchFlow';
 import QuestionTemplates from '@/components/QuestionTemplates';
-import TopicPicker from '@/components/TopicPicker';
 import { validateEditorQuestion, hasBlockingWarning, type QuestionWarning } from '@/lib/domain/validation';
 import type { QuestionSeed } from '@/lib/domain/questionTemplates';
 import SurveyGeneratorModal from '@/components/SurveyGeneratorModal';
@@ -24,13 +23,12 @@ import type {
   ScaleConfig,
   AttentionConfig,
   TargetConditions,
-  Topic,
   EvaluationRole,
 } from '@/lib/types/database';
 
 /**
  * 通常公開アンケート用のフルエディタ。
- * トピック・インフォームドコンセント・配信設定・AI品質判定・ポイント計算など
+ * インフォームドコンセント・配信設定・AI品質判定・ポイント計算など
  * 通常公開に必要な全機能を含む。
  */
 
@@ -162,8 +160,6 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
   targetConditions: TargetConditions;
   minTrustScore: number | null;
   retentionMonths: number | null;
-  topicIds: string[];
-  topicSuggestion: string;
 } {
   if (!survey) {
     const defaultDeadline = (() => {
@@ -183,8 +179,6 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
       targetConditions: {},
       minTrustScore: null,
       retentionMonths: null,
-      topicIds: [],
-      topicSuggestion: '',
     };
   }
   const sections = survey.sections.length ? survey.sections : [{ title: '', description: '' }];
@@ -222,17 +216,13 @@ function fromSurvey(survey: SurveyWithQuestions | null): {
     targetConditions: survey.target_conditions ?? {},
     minTrustScore: survey.min_trust_score,
     retentionMonths: null,
-    topicIds: survey.topic_ids,
-    topicSuggestion: '',
   };
 }
 
 export default function PublicSurveyEditor({
   survey,
-  topics,
 }: {
   survey: SurveyWithQuestions | null;
-  topics: Topic[];
 }) {
   const router = useRouter();
   const initial = fromSurvey(survey);
@@ -247,8 +237,6 @@ export default function PublicSurveyEditor({
   const [targetConditions, setTargetConditions] = useState<TargetConditions>(initial.targetConditions);
   const [minTrustScore, setMinTrustScore] = useState<number | null>(initial.minTrustScore);
   const [retentionMonths, setRetentionMonths] = useState<number | null>(initial.retentionMonths);
-  const [topicIds, setTopicIds] = useState<string[]>(initial.topicIds);
-  const [topicSuggestion, setTopicSuggestion] = useState(initial.topicSuggestion);
   const [showGeneratorModal, setShowGeneratorModal] = useState(false);
 
   const maxDeadline = useMemo(() => {
@@ -502,10 +490,6 @@ export default function PublicSurveyEditor({
       setFieldErrors(errors);
       return;
     }
-    if (topicIds.length < 1) {
-      setFieldErrors({ general: 'トピックを1〜3個選択してください' });
-      return;
-    }
     if (status === 'open') {
       setShowValidation(true);
       const ordered0 = [...questions].sort((a, b) => a.section_index - b.section_index);
@@ -537,8 +521,6 @@ export default function PublicSurveyEditor({
       target_conditions: targetConditions,
       min_trust_score: minTrustScore,
       retention_months: retentionMonths,
-      topic_ids: topicIds,
-      topic_suggestion: topicSuggestion.trim() || null,
       questions: ordered.map((q, qi) => {
         const srcOrder = q.condition ? orderByKey.get(q.condition.sourceKey) : undefined;
         const condition =
@@ -660,13 +642,6 @@ export default function PublicSurveyEditor({
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
-            <TopicPicker
-              topics={topics}
-              selectedIds={topicIds}
-              onChange={setTopicIds}
-              suggestion={topicSuggestion}
-              onSuggestionChange={setTopicSuggestion}
-            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">必要回答数</label>
