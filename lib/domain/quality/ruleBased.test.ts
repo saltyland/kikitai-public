@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { RuleBasedEvaluator } from './ruleBased';
 import { scoreToMultiplier } from './types';
 import type { EvaluationItem } from './types';
-import type { AnswerInput, QuestionType, QuestionWithOptions } from '@/lib/types/database';
+import type { AnswerInput, QuestionType, QuestionWithOptions, SignalMeta } from '@/lib/types/database';
 
 /** テスト用に設問＋選択肢を組み立てる */
 function question(
   id: string,
   type: QuestionType,
-  optionTexts: string[] = []
+  optionTexts: string[] = [],
+  signal_meta?: SignalMeta,
 ): QuestionWithOptions {
   return {
     id,
@@ -22,6 +23,7 @@ function question(
     order_index: 0,
     condition: null,
     options: optionTexts.map((t, i) => ({ id: `${id}-o${i}`, question_id: id, text: t, order_index: i })),
+    signal_meta,
   };
 }
 
@@ -100,6 +102,68 @@ describe('RuleBasedEvaluator', () => {
     ]);
     expect(res.score).toBeGreaterThanOrEqual(0);
     expect(res.score).toBeLessThanOrEqual(100);
+  });
+
+  describe('一貫性ペアの矛盾検出（consistency_anchor / consistency_check）', () => {
+    // anchor: 「毎日取れている」が肯定 → check: 「6時間未満」が矛盾
+    const anchorQ = question(
+      'anchor',
+      'single',
+      ['毎日取れている', 'ほぼ取れている', 'あまり取れていない'],
+      {
+        role: 'consistency_anchor',
+        pairKey: 'sleep',
+        positiveOptions: ['毎日取れている', 'ほぼ取れている'],
+      },
+    );
+    const checkQ = question(
+      'check',
+      'single',
+      ['8時間以上', '6〜8時間', '6時間未満'],
+      {
+        role: 'consistency_check',
+        pairKey: 'sleep',
+        contradictsWith: ['6時間未満'],
+      },
+    );
+
+    it('anchor が肯定 + check が矛盾選択肢 → -20点', async () => {
+      const res = await evaluator.evaluate([
+        item(anchorQ, { question_id: 'anchor', option_ids: ['anchor-o0'] }), // 毎日取れている
+        item(checkQ, { question_id: 'check', option_ids: ['check-o2'] }),    // 6時間未満
+      ]);
+      expect(res.score).toBe(80);
+    });
+
+    it('anchor が否定（非positiveOptions）→ 矛盾判定なし、減点されない', async () => {
+      const res = await evaluator.evaluate([
+        item(anchorQ, { question_id: 'anchor', option_ids: ['anchor-o2'] }), // あまり取れていない
+        item(checkQ, { question_id: 'check', option_ids: ['check-o2'] }),    // 6時間未満
+      ]);
+      expect(res.score).toBe(100);
+    });
+
+    it('anchor が肯定 + check が矛盾しない選択肢 → 減点されない', async () => {
+      const res = await evaluator.evaluate([
+        item(anchorQ, { question_id: 'anchor', option_ids: ['anchor-o0'] }), // 毎日取れている
+        item(checkQ, { question_id: 'check', option_ids: ['check-o0'] }),    // 8時間以上
+      ]);
+      expect(res.score).toBe(100);
+    });
+
+    it('pairKey が一致しないペアは照合されない', async () => {
+      const otherCheck = question(
+        'check2',
+        'single',
+        ['6時間未満'],
+        { role: 'consistency_check', pairKey: 'other', contradictsWith: ['6時間未満'] },
+      );
+      const res = await evaluator.evaluate([
+        item(anchorQ, { question_id: 'anchor', option_ids: ['anchor-o0'] }), // 毎日取れている
+        item(otherCheck, { question_id: 'check2', option_ids: ['check2-o0'] }),
+      ]);
+      expect(res.score).toBe(100);
+    });
   });
 });
 
