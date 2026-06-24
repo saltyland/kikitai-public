@@ -114,6 +114,104 @@ export function ScrollProgressBar() {
   );
 }
 
+/** SceneNav に渡す各シーンの定義 */
+export interface SceneItem {
+  id: string;
+  label: string;
+  /** 暗い背景のシーンか（インジケーターを明色反転する） */
+  dark?: boolean;
+}
+
+/**
+ * 右端に固定表示する「章インデックス」。GameFreak のトップのように、
+ * 今どのシーンを見ているかを示しつつクリックで各シーンへジャンプできる。
+ * マウント時に html へ kk-snap を付与してフルスクリーン・スナップを有効化する
+ * （低速設定では globals.css 側でスナップを無効化）。
+ */
+export function SceneNav({ scenes }: { scenes: SceneItem[] }) {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    document.documentElement.classList.add('kk-snap');
+
+    const els = scenes
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        // 画面中央に最も近い（交差率が最大の）シーンをアクティブにする
+        let best: { idx: number; ratio: number } | null = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const idx = scenes.findIndex((s) => s.id === entry.target.id);
+          if (idx < 0) continue;
+          if (!best || entry.intersectionRatio > best.ratio) {
+            best = { idx, ratio: entry.intersectionRatio };
+          }
+        }
+        if (best) setActive(best.idx);
+      },
+      { threshold: [0.25, 0.5, 0.75], rootMargin: '-20% 0px -20% 0px' }
+    );
+    els.forEach((el) => io.observe(el));
+
+    return () => {
+      io.disconnect();
+      document.documentElement.classList.remove('kk-snap');
+    };
+  }, [scenes]);
+
+  const onDark = scenes[active]?.dark;
+
+  // スナップ(proximity)はプログラム的な smooth スクロールを途中で打ち切るため、
+  // ジャンプ中だけ一時的にスナップを外し、到達後に戻す。
+  const jumpTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const root = document.documentElement;
+    root.classList.remove('kk-snap');
+    const top = el.getBoundingClientRect().top + window.scrollY - 56; // sticky header 分
+    window.scrollTo({ top, behavior: 'smooth' });
+    // スナップを早く戻すと smooth 中に最寄りへ引き戻されるため、
+    // スクロールが落ち着いてから（位置が安定したら）戻す。
+    let last = -1;
+    let still = 0;
+    const settle = () => {
+      const y = Math.round(window.scrollY);
+      if (y === last) {
+        if (++still >= 3) {
+          root.classList.add('kk-snap');
+          return;
+        }
+      } else {
+        still = 0;
+        last = y;
+      }
+      window.setTimeout(settle, 120);
+    };
+    window.setTimeout(settle, 200);
+  };
+
+  return (
+    <nav className={`kk-scenenav ${onDark ? 'is-on-dark' : ''}`} aria-label="セクション一覧">
+      {scenes.map((s, i) => (
+        <button
+          key={s.id}
+          type="button"
+          className={`kk-scenenav-item ${i === active ? 'is-active' : ''}`}
+          onClick={() => jumpTo(s.id)}
+          aria-label={s.label}
+          aria-current={i === active ? 'true' : undefined}
+        >
+          <span className="kk-scenenav-label">{s.label}</span>
+          <span className="kk-scenenav-dot" aria-hidden />
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 /**
  * 動くオーロラ背景。巨大なぼかしブロブが複数ゆっくり漂い、
  * “動画的”な奥行きと生命感を与える。装飾なので aria-hidden。

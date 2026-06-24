@@ -333,7 +333,188 @@ body {
   animation: kk-sheen 3.2s ease-in-out infinite;
 }
 
+/* ───────────────────────────────────────────────────────────
+ * フルスクリーン・シーン演出（GameFreak風の「1画面ずつ切り替わるが
+ * 連続している」体験）。スナップは proximity + smooth で“するする”と
+ * 章切替の両立を狙う。html.kk-snap は SceneNav が JS で付与する
+ * （非対応／低速設定では通常スクロールにフォールバック）。
+ * ─────────────────────────────────────────────────────────── */
+html.kk-snap {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 4rem;
+  /* scroll-behavior: smooth はスナップ(proximity)とぶつかり、プログラム的
+     スクロールを途中で打ち切る。SceneNav 側でスナップを一時解除して
+     smooth ジャンプするのでここでは付けない。 */
+}
+.kk-scene {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* 右端のシーンインジケーター（章インデックス） */
+.kk-scenenav {
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-items: flex-end;
+}
+.kk-scenenav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-brand-700);
+}
+.kk-scenenav-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px -6px rgba(13, 84, 79, 0.4);
+}
+.kk-scenenav-item:hover .kk-scenenav-label,
+.kk-scenenav-item.is-active .kk-scenenav-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+.kk-scenenav-dot {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  background: var(--color-brand-200);
+  box-shadow: inset 0 0 0 1px rgba(13, 84, 79, 0.15);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+  flex-shrink: 0;
+}
+.kk-scenenav-item:hover .kk-scenenav-dot {
+  transform: scale(1.25);
+  background: var(--color-brand-400);
+}
+.kk-scenenav-item.is-active .kk-scenenav-dot {
+  background: var(--color-brand-600);
+  transform: scale(1.35);
+  box-shadow: 0 0 0 4px rgba(38, 166, 154, 0.18);
+}
+/* 暗いシーン上ではインジケーターを明色に反転 */
+.kk-scenenav.is-on-dark .kk-scenenav-item { color: #fff; }
+.kk-scenenav.is-on-dark .kk-scenenav-dot { background: rgba(255,255,255,0.35); }
+.kk-scenenav.is-on-dark .kk-scenenav-item.is-active .kk-scenenav-dot {
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.2);
+}
+.kk-scenenav.is-on-dark .kk-scenenav-label {
+  background: rgba(15, 40, 38, 0.85);
+  color: #fff;
+}
+
+/* シーン間をなめらかに繋ぐ：明→暗／暗→明のグラデーション帯 */
+.kk-scene-fade-to-dark {
+  background: linear-gradient(to bottom, transparent, var(--color-brand-950));
+}
+.kk-scene-fade-from-dark {
+  background: linear-gradient(to bottom, var(--color-brand-950), transparent);
+}
+
+@media (max-width: 767px) {
+  .kk-scenenav { display: none; }
+}
+
+/* ───────────────────────────────────────────────────────────
+ * 固定ネットワーク背景（NetworkBackdrop）
+ * GameFreak のビジョンページのように、背景はビューポートに固定され
+ * コンテンツだけがスクロールする。アンケートで人と人がつながる輪を
+ * 抽象グラフで描き、IT的で美しい奥行きを全ページに敷く。
+ * ─────────────────────────────────────────────────────────── */
+.kk-netbg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* 本文を邪魔しない淡さ。下の veil と合わせて可読性を担保 */
+  opacity: 0.55;
+  /* 全体をごくゆっくり漂わせ“生きている”感じを出す（位置は固定のまま） */
+  animation: kk-netbg-drift 36s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 奥のティールのオーロラ発光 */
+.kk-netbg-glow {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 38% at 18% 22%, rgba(124, 216, 205, 0.30), transparent 70%),
+    radial-gradient(36% 34% at 82% 30%, rgba(69, 190, 178, 0.22), transparent 70%),
+    radial-gradient(44% 40% at 60% 88%, rgba(176, 234, 226, 0.28), transparent 72%);
+  filter: blur(30px);
+  animation: kk-netbg-glow-pan 40s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 本文可読性のための上ベール（中央〜下をうっすら白く起こす） */
+.kk-netbg-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+}
+
+/* hub ノードの拍動リング（“調査”が回答を集める波紋） */
+.kk-netbg-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kk-netbg-ring 4.5s ease-out infinite;
+  animation-delay: var(--kk-pulse-delay, 0s);
+}
+
+@keyframes kk-netbg-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.02); }
+  50% { transform: translate3d(-1.5%, 1.2%, 0) scale(1.06); }
+}
+@keyframes kk-netbg-glow-pan {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(2%, -1.5%, 0); }
+  66% { transform: translate3d(-1.8%, 1.6%, 0); }
+}
+@keyframes kk-netbg-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  70% { transform: scale(3.4); opacity: 0; }
+  100% { transform: scale(3.4); opacity: 0; }
+}
+
+@media (max-width: 767px) {
+  /* スマホでは控えめに（情報量を減らし、より静かに） */
+  .kk-netbg-svg { opacity: 0.4; animation: none; }
+  .kk-netbg-veil {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.45) 40%,
+      rgba(255, 255, 255, 0.62) 100%
+    );
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html.kk-snap { scroll-snap-type: none; }
   .kikitai-check-pop,
   .kikitai-slide-in,
   .kikitai-saving,
@@ -344,7 +525,10 @@ body {
   .kk-aurora-blob,
   .kk-scroll-cue,
   .kk-breathe,
-  .kk-sheen {
+  .kk-sheen,
+  .kk-netbg-svg,
+  .kk-netbg-glow,
+  .kk-netbg-ring {
     animation: none;
     transition: none;
   }

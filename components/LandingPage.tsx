@@ -1,6 +1,17 @@
 import Link from 'next/link';
 import Logo, { LogoMark } from '@/components/Logo';
-import { Reveal, ScrollProgressBar, AuroraBackground } from '@/components/ScrollReveal';
+import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
+
+/** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
+const SCENES = [
+  { id: 'top', label: 'キキタイ' },
+  { id: 'story', label: '課題' },
+  { id: 'how', label: '仕組み' },
+  { id: 'features', label: '機能' },
+  { id: 'intelligence', label: 'AI評価', dark: true },
+  { id: 'free', label: '無料' },
+  { id: 'cta', label: 'はじめる' },
+];
 
 /* 装飾用の小さなアイコン（絵文字は使わない方針のため、すべてSVG） */
 
@@ -183,6 +194,7 @@ export default function LandingPage() {
   return (
     <>
       <ScrollProgressBar />
+      <SceneNav scenes={SCENES} />
 
       {/* ヘッダー：左ロゴ／右ナビ＋ログイン・新規登録 */}
       <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
@@ -215,9 +227,9 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* ───────── ヒーロー ───────── */}
-        <section className="relative overflow-hidden">
+        <section id="top" className="kk-scene relative flex min-h-screen items-center overflow-hidden">
           <AuroraBackground />
-          <div className="relative mx-auto grid min-h-[88vh] max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
+          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
             <div>
               <Reveal>
                 <p className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-brand-700">
@@ -278,8 +290,8 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 01 課題（ストーリー導入） ───────── */}
-        <section id="story" className="relative scroll-mt-20 overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+        <section id="story" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
             <div>
               <SectionKicker no="01" label="The Problem" />
               <Reveal>
@@ -317,9 +329,9 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 02 解決＝回答し合う経済圏（3ステップ） ───────── */}
-        <section id="how" className="relative scroll-mt-20 overflow-hidden bg-white/40 py-24 sm:py-32">
+        <section id="how" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden bg-white/40 py-24 sm:py-32">
           <AuroraBackground className="opacity-60" />
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="02" label="The Loop" />
             <Reveal>
               <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
@@ -381,8 +393,8 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 03 機能（スタッガー出現） ───────── */}
-        <section id="features" className="relative scroll-mt-20 overflow-hidden py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <section id="features" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-20 sm:py-28">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="03" label="Everything you need" />
             <Reveal>
               <h2 className="text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
@@ -451,10 +463,17 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ───────── 04 キキタイ・インテリジェンス（最大の差別化要素） ───────── */}
-        <section className="relative overflow-hidden bg-slate-900 py-28 sm:py-36">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.35),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(56,189,248,0.25),transparent_45%)]" />
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        {/* ───────── キキタイ・インテリジェンス（最大の差別化要素・暗転クライマックス） ───────── */}
+        <section
+          id="intelligence"
+          className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-28 text-white sm:py-36"
+          style={{ background: 'linear-gradient(160deg, var(--color-brand-950) 0%, var(--color-brand-900) 55%, #0a3b38 100%)' }}
+        >
+          {/* 上端を直前の明るいシーンから滑らかに繋ぐ */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 kk-scene-fade-from-dark opacity-90" aria-hidden />
+          {/* ブランドティールのオーロラ光（slate/indigoではなく世界観に統一） */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(69,190,178,0.30),transparent_55%),radial-gradient(circle_at_85%_5%,rgba(124,216,205,0.20),transparent_48%),radial-gradient(circle_at_70%_95%,rgba(38,166,154,0.22),transparent_50%)]" />
+          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
             <Reveal className="mb-6 flex flex-col items-center gap-3 text-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/40 bg-brand-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-brand-300">
                 <IconBrain className="h-4 w-4" />
@@ -567,9 +586,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ───────── 04 非公開アンケート＝無料のGoogleフォーム代替 ───────── */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+        {/* ───────── 05 非公開アンケート＝無料のGoogleフォーム代替 ───────── */}
+        <section id="free" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
+          {/* 暗転シーンから明るいシーンへ滑らかに復帰（上端に余韻を残す） */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 kk-scene-fade-from-dark opacity-60" aria-hidden />
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
             <div>
               <SectionKicker no="04" label="Free & Beautiful" />
               <Reveal>
@@ -638,7 +659,8 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 最後のCTA ───────── */}
-        <section className="mx-auto max-w-6xl px-4 pb-28 pt-8 sm:px-6 sm:pb-32 border-b border-brand-100/70">
+        <section id="cta" className="kk-scene flex min-h-screen scroll-mt-16 items-center border-b border-brand-100/70">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
           <Reveal direction="scale">
             <div className="card-3d relative overflow-hidden p-10 text-center sm:p-16">
               <AuroraBackground className="opacity-70" />
@@ -659,6 +681,7 @@ export default function LandingPage() {
               </div>
             </div>
           </Reveal>
+          </div>
         </section>
       </main>
     </>
