@@ -232,13 +232,118 @@ body {
   .mt-8 { margin-top: 4pt !important; }
 }
 
+/* ───────────────────────────────────────────────────────────
+ * ゲームフリーク風 スクロール演出（ランディング／オンボーディング）
+ * スクロールに合わせて要素がフェード＋スライドインし、背景が
+ * ゆっくり動く“動画的”な縦スクロール体験をつくるユーティリティ群。
+ * ─────────────────────────────────────────────────────────── */
+
+/* スクロールで画面に入ったら is-visible が付く（IntersectionObserver） */
+.kk-reveal {
+  opacity: 0;
+  transform: translateY(48px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.kk-reveal.kk-from-left { transform: translateX(-56px); }
+.kk-reveal.kk-from-right { transform: translateX(56px); }
+.kk-reveal.kk-scale { transform: scale(0.88); }
+.kk-reveal.kk-blur { filter: blur(10px); }
+.kk-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* ふわふわ浮遊（装飾カード・チップ） */
+@keyframes kk-float {
+  0%, 100% { transform: translateY(0) rotate(var(--kk-rot, 0deg)); }
+  50% { transform: translateY(-16px) rotate(var(--kk-rot, 0deg)); }
+}
+.kk-float { animation: kk-float 6s ease-in-out infinite; }
+.kk-float-slow { animation: kk-float 9s ease-in-out infinite; }
+.kk-float-delay { animation-delay: -3s; }
+
+/* 動くオーロラ背景（巨大なぼかしブロブをゆっくりパン） */
+@keyframes kk-aurora-pan {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6%, -4%) scale(1.12); }
+  66% { transform: translate(-5%, 5%) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.kk-aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: kk-aurora-pan 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* スクロール誘導の下向き矢印 */
+@keyframes kk-scroll-cue {
+  0% { transform: translateY(0); opacity: 0; }
+  35% { opacity: 1; }
+  70% { transform: translateY(10px); opacity: 0; }
+  100% { opacity: 0; }
+}
+.kk-scroll-cue { animation: kk-scroll-cue 1.8s ease-in-out infinite; }
+
+/* 大きなセクション番号などのゆっくり明滅 */
+@keyframes kk-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+.kk-breathe { animation: kk-breathe 4s ease-in-out infinite; }
+
+/* 進捗：上部のスクロールプログレスバー（JSで --kk-progress を更新） */
+.kk-progress-bar {
+  transform-origin: 0 50%;
+  transform: scaleX(var(--kk-progress, 0));
+  transition: transform 0.1s linear;
+}
+
+/* グラデーションで流れるシーン（テキスト下線／チップのきらめき） */
+@keyframes kk-sheen {
+  0% { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+.kk-sheen {
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.75) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: kk-sheen 3.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kikitai-check-pop,
   .kikitai-slide-in,
   .kikitai-saving,
   .card-3d-hover,
-  .btn-3d {
+  .btn-3d,
+  .kk-float,
+  .kk-float-slow,
+  .kk-aurora-blob,
+  .kk-scroll-cue,
+  .kk-breathe,
+  .kk-sheen {
     animation: none;
+    transition: none;
+  }
+  /* リビールは動かさず即表示にする */
+  .kk-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
     transition: none;
   }
   /* スピナーは「処理中」を伝える機能的アニメのため、低速にして残す */

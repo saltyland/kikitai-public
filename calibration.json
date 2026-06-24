@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "createdAt": "2026-06-18T14:31:06+00:00",
+  "thresholds": {
+    "thetaHard": 0.7774,
+    "thetaL1c": 0.7226,
+    "thetaL1b": 0.5307,
+    "thetaSoft": 0.2292,
+    "mechSafeThreshold": 0.15,
+    "relOffTopicRisk": 0.5
+  },
+  "rescue": {
+    "highTrustThreshold": 80,
+    "highTrust": 0.08,
+    "shortAnswer": 0.04,
+    "pasteJustified": 0.02,
+    "max": 0.12
+  },
+  "stats": {
+    "nSamples": 350,
+    "fnr": 0.0,
+    "fpr": 1.0,
+    "accuracy": 0.16,
+    "rocAuc": 0.7018,
+    "cv_auc_mean": 0.6924373040752351,
+    "cv_auc_std": 0.0391713389018547
+  }
+}
