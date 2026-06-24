@@ -233,7 +233,7 @@ export default function LandingPage() {
                 </Reveal>
               </h1>
               <Reveal delay={520}>
-                <p className="mt-6 max-w-[46ch] text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                <p className="mt-6 max-w-[46ch] text-base leading-7 text-slate-700 [text-wrap:pretty] sm:text-lg sm:leading-8">
                   「アンケートの回答者が集まらない」を、お互いさまで解決。
                   他の人のアンケートに答えてポイントを貯め、そのポイントで
                   あなたの研究に回答者を集めましょう。
@@ -283,14 +283,14 @@ export default function LandingPage() {
             <div>
               <SectionKicker no="01" label="The Problem" />
               <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                   作ったのに、
                   <br />
-                  <span className="text-slate-400">だれも答えてくれない。</span>
+                  <span className="inline-block text-slate-400">だれも答えてくれない。</span>
                 </h2>
               </Reveal>
               <Reveal delay={120}>
-                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700">
+                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                   研究や授業課題でアンケートを作っても、回答者が集まらない。
                   かといって、誰かのアンケートに答えても自分には何のメリットもない——。
                   この“片道通行”が、データ集めをいつも難しくしていました。
@@ -322,14 +322,14 @@ export default function LandingPage() {
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
             <SectionKicker no="02" label="The Loop" />
             <Reveal>
-              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                 答えるほど、集まる。
                 <br />
-                <span className="text-brand-600">“回答し合う”経済圏。</span>
+                <span className="inline-block text-brand-600">“回答し合う”経済圏。</span>
               </h2>
             </Reveal>
             <Reveal delay={120}>
-              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700">
+              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                 回答するとポイントが貯まり、そのポイントで自分のアンケートに回答者を集められる。
                 一方通行だった調査が、ぐるぐる回る輪に変わります。
               </p>
@@ -385,12 +385,12 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionKicker no="03" label="Everything you need" />
             <Reveal>
-              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              <h2 className="text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
                 研究に必要な機能を、ぜんぶ。
               </h2>
             </Reveal>
             <Reveal delay={100}>
-              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700">
+              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                 作る・集める・分析するまで、キキタイひとつで完結します。
               </p>
             </Reveal>
@@ -460,14 +460,16 @@ export default function LandingPage() {
                 <IconBrain className="h-4 w-4" />
                 Kikitai Intelligence
               </span>
-              <h2 className="max-w-3xl text-4xl font-extrabold leading-snug text-white sm:text-5xl">
-                これまでにない、
+              <h2 className="max-w-3xl text-[1.75rem] font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-snug">
+                <span className="inline-block">これまでにない、</span>
                 <br />
-                <span className="bg-gradient-to-r from-brand-300 to-cyan-300 bg-clip-text text-transparent">独自AI評価インテリジェンス。</span>
+                <span className="inline-block bg-gradient-to-r from-brand-300 to-cyan-300 bg-clip-text text-transparent">
+                  独自AI評価インテリジェンス。
+                </span>
               </h2>
-              <p className="max-w-xl text-base leading-relaxed text-slate-300">
-                キキタイが自社開発した評価AIが、すべての回答を24時間自動でレビュー。
-                単なる「機能」のひとつではなく、サービス全体の信頼性を支える中核エンジンです。
+              <p className="max-w-xl text-sm leading-relaxed text-slate-300 [text-wrap:pretty] sm:text-base">
+                <span className="inline-block">キキタイが自社開発した評価AIが、すべての回答を24時間自動でレビュー。</span>
+                <span className="inline-block">単なる「機能」のひとつではなく、サービス全体の信頼性を支える中核エンジンです。</span>
               </p>
             </Reveal>
 
@@ -571,14 +573,14 @@ export default function LandingPage() {
             <div>
               <SectionKicker no="04" label="Free & Beautiful" />
               <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                   非公開なら、
                   <br />
-                  <span className="text-brand-600">ずっと無料のフォームツール。</span>
+                  <span className="inline-block text-brand-600">ずっと無料のフォームツール。</span>
                 </h2>
               </Reveal>
               <Reveal delay={120}>
-                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700">
+                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                   アンケートを「非公開」にすれば、ポイントは一切不要。発行されたリンクを
                   LINEやSlackで共有するだけで、Googleフォームと同じように誰でもすぐ回答を集められます。
                   しかも見た目はキキタイならではの、おしゃれで直感的なデザイン。
@@ -642,10 +644,10 @@ export default function LandingPage() {
               <AuroraBackground className="opacity-70" />
               <div className="relative">
                 <LogoMark className="kk-breathe mx-auto h-16 text-brand-500" />
-                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
                   あなたの研究にも、回答を。
                 </h2>
-                <p className="mx-auto mt-3 max-w-[42ch] text-base leading-7 text-slate-700">
+                <p className="mx-auto mt-3 max-w-[42ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                   登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
                 </p>
                 <div className="mt-8 flex justify-center">
