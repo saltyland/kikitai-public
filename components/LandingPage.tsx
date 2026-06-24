@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Logo, { LogoMark } from '@/components/Logo';
+import { Reveal, ScrollProgressBar, AuroraBackground } from '@/components/ScrollReveal';
 
 /* 装飾用の小さなアイコン（絵文字は使わない方針のため、すべてSVG） */
 
@@ -67,6 +68,21 @@ function IconArrowRight({ className }: { className?: string }) {
     </svg>
   );
 }
+function IconArrowDown({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M12 5v14M6 13l6 6 6-6" />
+    </svg>
+  );
+}
+function IconCoin({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v10M9.5 9.5h3.2a1.8 1.8 0 010 3.6H9.8M9.5 13.1h3.4a1.8 1.8 0 010 3.6H10" />
+    </svg>
+  );
+}
 
 /** ヒーロー右側：実際の回答画面を模したモックカード */
 function HeroMock() {
@@ -74,7 +90,7 @@ function HeroMock() {
     <div className="relative mx-auto w-full max-w-md">
       {/* 後ろに重なるカード */}
       <div className="absolute -left-4 top-6 h-full w-full rotate-[-4deg] rounded-3xl bg-brand-200/50" aria-hidden />
-      <div className="card-3d relative rotate-[2deg] p-6 sm:p-7">
+      <div className="card-3d kk-float relative rotate-[2deg] p-6 sm:p-7" style={{ ['--kk-rot' as string]: '2deg' }}>
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span className="font-bold text-brand-600">質問 2 / 5</span>
           <span>研究室のコーヒー文化調査</span>
@@ -107,10 +123,10 @@ function HeroMock() {
         </div>
       </div>
       {/* 浮かぶポイントチップ */}
-      <div className="card-3d absolute -right-3 -top-5 rotate-[6deg] px-4 py-2 text-sm font-extrabold text-brand-600 sm:-right-8">
+      <div className="card-3d kk-float kk-float-delay absolute -right-3 -top-5 px-4 py-2 text-sm font-extrabold text-brand-600 sm:-right-8" style={{ ['--kk-rot' as string]: '6deg' }}>
         +15pt 獲得
       </div>
-      <div className="card-3d absolute -bottom-5 -left-3 flex rotate-[-5deg] items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 sm:-left-8">
+      <div className="card-3d kk-float-slow absolute -bottom-5 -left-3 flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 sm:-left-8" style={{ ['--kk-rot' as string]: '-5deg' }}>
         <IconSparkle className="h-4 w-4 text-brand-500" />
         AI品質スコア 92点
       </div>
@@ -118,10 +134,22 @@ function HeroMock() {
   );
 }
 
+/** 大きな章番号ラベル（ゲームフリーク風のスクロール章立て） */
+function SectionKicker({ no, label }: { no: string; label: string }) {
+  return (
+    <Reveal direction="left" className="mb-4 flex items-center gap-3">
+      <span className="text-5xl font-black leading-none text-brand-200 sm:text-6xl">{no}</span>
+      <span className="text-xs font-bold uppercase tracking-[0.3em] text-brand-500">{label}</span>
+    </Reveal>
+  );
+}
+
 /** 未ログイン時のトップページ（ランディング） */
 export default function LandingPage() {
   return (
     <>
+      <ScrollProgressBar />
+
       {/* ヘッダー：左ロゴ／右ナビ＋ログイン・新規登録 */}
       <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -129,6 +157,9 @@ export default function LandingPage() {
             <Logo />
           </Link>
           <nav className="flex items-center gap-2 sm:gap-6">
+            <a href="#story" className="hidden text-sm font-medium text-slate-600 hover:text-brand-600 sm:inline">
+              キキタイとは
+            </a>
             <a href="#how" className="hidden text-sm font-medium text-slate-600 hover:text-brand-600 sm:inline">
               使い方
             </a>
@@ -149,157 +180,364 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* ヒーロー */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-2">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-brand-700">
-              <LogoMark className="h-4" />
-              学生・研究者のためのアンケート交換プラットフォーム
-            </p>
-            <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-              こたえて、
-              <br className="sm:hidden" />
-              あつめる。
-              <br />
-              <span className="text-brand-600">研究の輪。</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
-              「アンケートの回答者が集まらない」を、お互いさまで解決。
-              他の人のアンケートに答えてポイントを貯め、そのポイントで
-              あなたの研究に回答者を集めましょう。
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/register" className="btn-3d btn-3d-primary px-7 py-3 text-base">
-                無料ではじめる
-                <IconArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/login" className="btn-3d btn-3d-secondary px-7 py-3 text-base">
-                ログイン
-              </Link>
+        {/* ───────── ヒーロー ───────── */}
+        <section className="relative overflow-hidden">
+          <AuroraBackground />
+          <div className="relative mx-auto grid min-h-[88vh] max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
+            <div>
+              <Reveal>
+                <p className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-brand-700">
+                  <LogoMark className="h-4" />
+                  学生・研究者のためのアンケート交換プラットフォーム
+                </p>
+              </Reveal>
+              <h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
+                <Reveal direction="up" delay={80} className="overflow-hidden">こたえて、</Reveal>
+                <Reveal direction="up" delay={220} className="overflow-hidden">あつめる。</Reveal>
+                <Reveal direction="up" delay={360} className="overflow-hidden">
+                  <span className="text-brand-600">研究の輪。</span>
+                </Reveal>
+              </h1>
+              <Reveal delay={520}>
+                <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+                  「アンケートの回答者が集まらない」を、お互いさまで解決。
+                  他の人のアンケートに答えてポイントを貯め、そのポイントで
+                  あなたの研究に回答者を集めましょう。
+                </p>
+              </Reveal>
+              <Reveal delay={640}>
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Link href="/register" className="btn-3d btn-3d-primary px-7 py-3 text-base">
+                    無料ではじめる
+                    <IconArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/login" className="btn-3d btn-3d-secondary px-7 py-3 text-base">
+                    ログイン
+                  </Link>
+                </div>
+              </Reveal>
+              <Reveal delay={760}>
+                <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
+                  {['登録は無料', 'スマホで1問ずつサクサク回答', 'AIが回答の質をチェック'].map((t) => (
+                    <li key={t} className="flex items-center gap-1.5">
+                      <IconCheckCircle className="h-4 w-4 text-brand-500" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
             </div>
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-              {['登録は無料', 'スマホで1問ずつサクサク回答', 'AIが回答の質をチェック'].map((t) => (
-                <li key={t} className="flex items-center gap-1.5">
-                  <IconCheckCircle className="h-4 w-4 text-brand-500" />
-                  {t}
-                </li>
+            <Reveal direction="scale" delay={300}>
+              <HeroMock />
+            </Reveal>
+          </div>
+
+          {/* スクロール誘導 */}
+          <a
+            href="#story"
+            className="absolute inset-x-0 bottom-6 mx-auto flex w-fit flex-col items-center gap-1 text-xs font-bold tracking-widest text-brand-500"
+            aria-label="下へスクロール"
+          >
+            SCROLL
+            <IconArrowDown className="kk-scroll-cue h-5 w-5" />
+          </a>
+        </section>
+
+        {/* ───────── 01 課題（ストーリー導入） ───────── */}
+        <section id="story" className="relative scroll-mt-20 overflow-hidden py-24 sm:py-32">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+            <div>
+              <SectionKicker no="01" label="The Problem" />
+              <Reveal>
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                  作ったのに、
+                  <br />
+                  <span className="text-slate-400">だれも答えてくれない。</span>
+                </h2>
+              </Reveal>
+              <Reveal delay={120}>
+                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
+                  研究や授業課題でアンケートを作っても、回答者が集まらない。
+                  かといって、誰かのアンケートに答えても自分には何のメリットもない——。
+                  この“片道通行”が、データ集めをいつも難しくしていました。
+                </p>
+              </Reveal>
+            </div>
+            <Reveal direction="right" delay={120}>
+              <div className="relative mx-auto max-w-sm">
+                <div className="card-3d kk-float-slow p-6" style={{ ['--kk-rot' as string]: '-2deg' }}>
+                  <p className="text-sm font-bold text-slate-700">あなたのアンケート</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="h-2 w-3/4 rounded-full bg-slate-200" />
+                    <div className="h-2 w-full rounded-full bg-slate-200" />
+                    <div className="h-2 w-2/3 rounded-full bg-slate-200" />
+                  </div>
+                  <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                    <span className="text-xs text-slate-400">回答数</span>
+                    <span className="text-2xl font-extrabold text-slate-300">0</span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ───────── 02 解決＝回答し合う経済圏（3ステップ） ───────── */}
+        <section id="how" className="relative scroll-mt-20 overflow-hidden bg-white/40 py-24 sm:py-32">
+          <AuroraBackground className="opacity-60" />
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+            <SectionKicker no="02" label="The Loop" />
+            <Reveal>
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                答えるほど、集まる。
+                <br />
+                <span className="text-brand-600">“回答し合う”経済圏。</span>
+              </h2>
+            </Reveal>
+            <Reveal delay={120}>
+              <p className="mt-4 max-w-xl text-base text-slate-600">
+                回答するとポイントが貯まり、そのポイントで自分のアンケートに回答者を集められる。
+                一方通行だった調査が、ぐるぐる回る輪に変わります。
+              </p>
+            </Reveal>
+
+            <div className="mx-auto mt-14 max-w-2xl space-y-6">
+              {[
+                {
+                  icon: IconCoin,
+                  step: '1',
+                  title: 'アンケートに答える',
+                  body: '気になるアンケートに回答してポイントを獲得。1問ずつ進むスマホ最適化の回答画面で、すきま時間にサクサク答えられます。',
+                },
+                {
+                  icon: IconArrowRight,
+                  step: '2',
+                  title: 'ポイントで集める',
+                  body: '貯めたポイントを使って自分のアンケートを公開。回答し合うコミュニティだから、待っているだけでは集まらなかった回答が届きます。',
+                },
+                {
+                  icon: IconShield,
+                  step: '3',
+                  title: 'AIが質を守る',
+                  body: '提出された回答はAIが自動で品質評価。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータの質を担保します。',
+                },
+              ].map(({ icon: Icon, step, title, body }, i, arr) => (
+                <Reveal key={step} direction="left" delay={i * 120}>
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white shadow-lg shadow-brand-500/30">
+                        {step}
+                      </span>
+                      {i < arr.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-brand-200" aria-hidden />}
+                    </div>
+                    <div className="card-3d card-3d-hover flex-1 p-5">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
+                      </div>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+                    </div>
+                  </div>
+                </Reveal>
               ))}
-            </ul>
-          </div>
-          <HeroMock />
-        </section>
-
-        {/* 使い方：3ステップ */}
-        <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6">
-          <h2 className="text-center text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            はじめての人が、回答を集めるまで
-          </h2>
-          <p className="mt-3 text-center text-slate-600">
-            回答し合う経済圏だから、回答者が「いない」を「集まる」に変えられます。
-          </p>
-          <div className="mx-auto mt-10 max-w-2xl space-y-6">
-            {[
-              {
-                step: '1',
-                title: 'アンケートに答える',
-                body: '気になるアンケートに回答してポイントを獲得。1問ずつ進むスマホ最適化の回答画面で、すきま時間にサクサク答えられます。',
-              },
-              {
-                step: '2',
-                title: 'ポイントで集める',
-                body: '貯めたポイントを使って自分のアンケートを公開。回答し合うコミュニティだから、待っているだけでは集まらなかった回答が届きます。',
-              },
-              {
-                step: '3',
-                title: 'AIが質を守る',
-                body: '提出された回答はAIが自動で品質評価。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータの質を担保します。',
-              },
-            ].map(({ step, title, body }, i, arr) => (
-              <div key={step} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white">
-                    {step}
-                  </span>
-                  {i < arr.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-brand-200" aria-hidden />}
-                </div>
-                <div className="card-3d card-3d-hover flex-1 p-5">
-                  <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 機能 */}
-        <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6">
-          <h2 className="text-center text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            研究に必要な機能を、ぜんぶ
-          </h2>
-          <p className="mt-3 text-center text-slate-600">
-            作る・集める・分析するまで、キキタイひとつで完結します。
-          </p>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: IconEditor,
-                title: '本格的なフォームエディタ',
-                body: '単一・複数選択、スケール、グリッドなど多彩な設問タイプ。ドラッグ&ドロップ並べ替えと即時プレビューで直感的に作成できます。',
-              },
-              {
-                icon: IconBranch,
-                title: '分岐とセクション',
-                body: '回答内容に応じて設問を出し分ける表示条件や、ページ分割に対応。複雑な調査設計もそのまま再現できます。',
-              },
-              {
-                icon: IconStep,
-                title: '答えやすい回答体験',
-                body: '1問ずつ集中できるステッパー形式。進捗表示・途中保存・オフライン再送に対応し、回答の離脱を防ぎます。',
-              },
-              {
-                icon: IconChart,
-                title: 'リアルタイム集計',
-                body: '円グラフ・棒グラフ・クロス集計を自動生成。CSVダウンロードや統計量（平均・標準偏差など）の算出にも対応します。',
-              },
-              {
-                icon: IconSparkle,
-                title: 'AIによる品質評価',
-                body: '回答の丁寧さをAIが採点し、報酬に反映。「とりあえず埋めただけ」の回答からあなたのデータを守ります。',
-              },
-              {
-                icon: IconShield,
-                title: 'プライバシーに配慮',
-                body: 'プロフィール属性は項目ごとに公開・非公開を選択可能。非公開にするとポイントボーナスがもらえる設計です。',
-              },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="card-3d card-3d-hover p-6">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-4 font-extrabold text-slate-900">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 最後のCTA */}
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <div className="card-3d relative overflow-hidden p-10 text-center sm:p-14">
-            <LogoMark className="mx-auto h-14 text-brand-500" />
-            <h2 className="mt-5 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              あなたの研究にも、回答を。
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-slate-600">
-              登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
-            </p>
-            <div className="mt-7 flex justify-center">
-              <Link href="/register" className="btn-3d btn-3d-primary px-8 py-3 text-base">
-                無料ではじめる
-                <IconArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
+        </section>
+
+        {/* ───────── 03 機能（スタッガー出現） ───────── */}
+        <section id="features" className="relative scroll-mt-20 overflow-hidden py-24 sm:py-32">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <SectionKicker no="03" label="Everything you need" />
+            <Reveal>
+              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                研究に必要な機能を、ぜんぶ。
+              </h2>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="mt-4 max-w-xl text-base text-slate-600">
+                作る・集める・分析するまで、キキタイひとつで完結します。
+              </p>
+            </Reveal>
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  icon: IconEditor,
+                  title: '本格的なフォームエディタ',
+                  body: '単一・複数選択、スケール、グリッドなど多彩な設問タイプ。ドラッグ&ドロップ並べ替えと即時プレビューで直感的に作成できます。',
+                },
+                {
+                  icon: IconBranch,
+                  title: '分岐とセクション',
+                  body: '回答内容に応じて設問を出し分ける表示条件や、ページ分割に対応。複雑な調査設計もそのまま再現できます。',
+                },
+                {
+                  icon: IconStep,
+                  title: '答えやすい回答体験',
+                  body: '1問ずつ集中できるステッパー形式。進捗表示・途中保存・オフライン再送に対応し、回答の離脱を防ぎます。',
+                },
+                {
+                  icon: IconChart,
+                  title: 'リアルタイム集計',
+                  body: '円グラフ・棒グラフ・クロス集計を自動生成。CSVダウンロードや統計量（平均・標準偏差など）の算出にも対応します。',
+                },
+                {
+                  icon: IconSparkle,
+                  title: 'AIによる品質評価',
+                  body: '回答の丁寧さをAIが採点し、報酬に反映。「とりあえず埋めただけ」の回答からあなたのデータを守ります。',
+                },
+                {
+                  icon: IconShield,
+                  title: 'プライバシーに配慮',
+                  body: 'プロフィール属性は項目ごとに公開・非公開を選択可能。非公開にするとポイントボーナスがもらえる設計です。',
+                },
+              ].map(({ icon: Icon, title, body }, i) => (
+                <Reveal key={title} direction="up" delay={(i % 3) * 100 + Math.floor(i / 3) * 60}>
+                  <div className="card-3d card-3d-hover h-full p-6">
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <h3 className="mt-4 font-extrabold text-slate-900">{title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── 04 AI品質スポットライト ───────── */}
+        <section className="relative overflow-hidden bg-white/40 py-24 sm:py-32">
+          <AuroraBackground className="opacity-50" />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+            <div>
+              <SectionKicker no="04" label="Quality, guarded by AI" />
+              <Reveal>
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                  雑な回答は、ゼロ。
+                  <br />
+                  <span className="text-brand-600">丁寧な回答は、ボーナス。</span>
+                </h2>
+              </Reveal>
+              <Reveal delay={120}>
+                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
+                  提出された回答はAIが100点満点で自動採点。「とりあえず埋めただけ」の回答は
+                  報酬が下がり、設問に正面から答えた誠実な回答にはボーナスが付きます。
+                  だから集まるのは、研究に使えるデータだけ。
+                </p>
+              </Reveal>
+            </div>
+            <Reveal direction="right" delay={120}>
+              <div className="relative mx-auto max-w-sm">
+                <div className="card-3d p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700">AI品質スコア</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
+                      <IconSparkle className="h-3.5 w-3.5" /> 自動採点
+                    </span>
+                  </div>
+                  <div className="mt-5 flex items-end gap-2">
+                    <span className="text-6xl font-black leading-none text-brand-600">92</span>
+                    <span className="mb-2 text-lg font-bold text-slate-400">/ 100</span>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {[
+                      { label: '設問への適合', v: 'w-[92%]' },
+                      { label: '回答の具体性', v: 'w-[88%]' },
+                      { label: '誠実さ', v: 'w-[95%]' },
+                    ].map((b) => (
+                      <div key={b.label}>
+                        <div className="mb-1 flex justify-between text-xs text-slate-500">
+                          <span>{b.label}</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100">
+                          <div className={`h-full ${b.v} rounded-full bg-gradient-to-r from-brand-400 to-brand-600`} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
+                    <span className="text-xs font-bold text-amber-700">高品質ボーナス</span>
+                    <span className="text-lg font-extrabold text-amber-600">×1.5</span>
+                  </div>
+                </div>
+                <div className="card-3d kk-float absolute -right-4 -top-5 px-4 py-2 text-xs font-extrabold text-brand-600" style={{ ['--kk-rot' as string]: '5deg' }}>
+                  +30pt 確定
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ───────── 05 プライバシー逆インセンティブ ───────── */}
+        <section className="relative overflow-hidden py-24 sm:py-32">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+            <Reveal direction="left">
+              <div className="relative mx-auto max-w-sm">
+                <div className="card-3d p-6">
+                  <p className="text-sm font-bold text-slate-700">プロフィール属性</p>
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      { label: '所属・大学', pub: true },
+                      { label: '研究分野', pub: true },
+                      { label: '生年月日', pub: false },
+                    ].map((r) => (
+                      <div key={r.label} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                        <span className="text-sm text-slate-700">{r.label}</span>
+                        <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${r.pub ? 'bg-white text-slate-400 border border-slate-200' : 'bg-slate-700 text-white'}`}>
+                          {r.pub ? '公開' : '非公開'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
+                    <span className="text-xs font-bold text-brand-700">非公開ボーナス</span>
+                    <span className="text-lg font-extrabold text-brand-600">+pt</span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+            <div>
+              <SectionKicker no="05" label="Privacy first" />
+              <Reveal>
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                  隠すほど、得をする。
+                </h2>
+              </Reveal>
+              <Reveal delay={120}>
+                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
+                  プロフィール属性は項目ごとに公開・非公開を選べます。非公開にした項目は
+                  ターゲティングに使われない代わりに、ポイントボーナスがもらえる逆インセンティブ設計。
+                  プライバシーを守ることが、ちゃんと報われます。
+                </p>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── 最後のCTA ───────── */}
+        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+          <Reveal direction="scale">
+            <div className="card-3d relative overflow-hidden p-10 text-center sm:p-16">
+              <AuroraBackground className="opacity-70" />
+              <div className="relative">
+                <LogoMark className="kk-breathe mx-auto h-16 text-brand-500" />
+                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                  あなたの研究にも、回答を。
+                </h2>
+                <p className="mx-auto mt-3 max-w-xl text-slate-600">
+                  登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
+                </p>
+                <div className="mt-8 flex justify-center">
+                  <Link href="/register" className="btn-3d btn-3d-primary px-8 py-3.5 text-base">
+                    無料ではじめる
+                    <IconArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </section>
       </main>
     </>

@@ -1,0 +1,4056 @@
+{
+  "version": "1.0-casual",
+  "source": "scripts_input_labels_remapped.csv (実データ再標本化)",
+  "seed": 20260623,
+  "mix": {
+    "genuine_high": 0.45,
+    "genuine_mid": 0.45,
+    "low_effort": 0.1
+  },
+  "survey": {
+    "questions": [
+      {
+        "order": 0,
+        "type": "paragraph",
+        "text": "サプリや健康食品は摂りますか？"
+      },
+      {
+        "order": 1,
+        "type": "paragraph",
+        "text": "朝の準備にかかる時間と、短縮の工夫はありますか？"
+      },
+      {
+        "order": 2,
+        "type": "paragraph",
+        "text": "人を褒めるのは得意ですか？"
+      },
+      {
+        "order": 3,
+        "type": "paragraph",
+        "text": "効率を上げるために使っているツールはありますか？"
+      },
+      {
+        "order": 4,
+        "type": "paragraph",
+        "text": "旅行も趣味に入りますか？"
+      },
+      {
+        "order": 5,
+        "type": "paragraph",
+        "text": "オンラインとオフライン、どちらが快適ですか？"
+      },
+      {
+        "order": 6,
+        "type": "paragraph",
+        "text": "作業を効率化するために工夫していることはありますか？"
+      },
+      {
+        "order": 7,
+        "type": "paragraph",
+        "text": "あなたにとって「成功」とは何ですか？"
+      }
+    ]
+  },
+  "personas": [
+    {
+      "id": "c001",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c002",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c003",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c004",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c005",
+      "archetype": "casual_genuine",
+      "labels": [
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c006",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c007",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c008",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c009",
+      "archetype": "casual_genuine",
+      "labels": [
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c010",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c011",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c012",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c013",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c014",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c015",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c016",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c017",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c018",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c019",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい？"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c020",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c021",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c022",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c023",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c024",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c025",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c026",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c027",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c028",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c029",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい？"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c030",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c031",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c032",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c033",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c034",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "なし"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c035",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c036",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c037",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c038",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c039",
+      "archetype": "casual_mixed",
+      "labels": [
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c040",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c041",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "low_effort",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "なし"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c042",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "ありません"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c043",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c044",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "low_effort",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c045",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c046",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c047",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c048",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c049",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c050",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c051",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分くらい"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c052",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c053",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分くらい？"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c054",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c055",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c056",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c057",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c058",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c059",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c060",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "ありません"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c061",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c062",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c063",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c064",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "なし"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c065",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c066",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c067",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c068",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "なし"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c069",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c070",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "ありません"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c071",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい？"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c072",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "なし"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c073",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c074",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "ありません"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c075",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c076",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c077",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c078",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c079",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c080",
+      "archetype": "casual_genuine",
+      "labels": [
+        "low_effort",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c081",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c082",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "low_effort",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c083",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c084",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい？"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c085",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c086",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "30分くらい"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c087",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c088",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c089",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c090",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c091",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c092",
+      "archetype": "casual_genuine",
+      "labels": [
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c093",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c094",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c095",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c096",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c097",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "結果を残す"
+        }
+      }
+    },
+    {
+      "id": "c098",
+      "archetype": "casual_mixed",
+      "labels": [
+        "genuine_mid",
+        "genuine_high",
+        "low_effort",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "low_effort"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意です"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る。しばしば楽しんで行っていることだから"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiに聞く"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    },
+    {
+      "id": "c099",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_high",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_mid"
+      ],
+      "answers": {
+        "0": {
+          "text": "腸がよくなるものをとります"
+        },
+        "1": {
+          "text": "15分\n上裸の時間がしばらくある"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "生成ai"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "努力をして結果を出すことです"
+        }
+      }
+    },
+    {
+      "id": "c100",
+      "archetype": "casual_genuine",
+      "labels": [
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_mid",
+        "genuine_mid",
+        "genuine_high",
+        "genuine_high",
+        "genuine_high"
+      ],
+      "answers": {
+        "0": {
+          "text": "とらない"
+        },
+        "1": {
+          "text": "30分"
+        },
+        "2": {
+          "text": "得意。人の悪い面は口に出さない"
+        },
+        "3": {
+          "text": "Claude"
+        },
+        "4": {
+          "text": "入る"
+        },
+        "5": {
+          "text": "オフライン"
+        },
+        "6": {
+          "text": "aiをふんだんに用いる"
+        },
+        "7": {
+          "text": "満足いく生活を送ること"
+        }
+      }
+    }
+  ]
+}
