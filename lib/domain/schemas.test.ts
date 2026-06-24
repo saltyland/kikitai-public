@@ -28,9 +28,6 @@ const validSurvey: SurveyInput = {
   retention_months: null,
   visibility: 'public',
   share_link_no_reward: false,
-  // PR4 で追加されたトピック関連項目
-  topic_ids: ['123e4567-e89b-12d3-a456-426614174000'],
-  topic_suggestion: null,
 };
 
 describe('surveyInputSchema', () => {
