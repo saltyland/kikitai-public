@@ -28,14 +28,9 @@ export default function MySurveysSummaryCard({ surveys }: { surveys: SurveyWithS
           公開中のアンケート {openSurveys.length}件
         </p>
         <div className="flex items-center gap-2">
-          <Link href="/surveys/new" className="btn-3d btn-3d-primary px-3 py-1.5 text-xs">
-            ＋ 新規作成
+          <Link href="/manage" className="btn-3d btn-3d-primary px-3 py-1.5 text-xs">
+            作成・管理
           </Link>
-          {openSurveys.length > 4 && (
-            <Link href="/manage" className="text-sm font-medium text-brand-600 hover:underline">
-              すべて見る
-            </Link>
-          )}
         </div>
       </div>
       <p className="mb-3 text-sm text-slate-500">
