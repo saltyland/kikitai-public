@@ -4,14 +4,6 @@ import { Reveal, ScrollProgressBar, AuroraBackground } from '@/components/Scroll
 
 /* 装飾用の小さなアイコン（絵文字は使わない方針のため、すべてSVG） */
 
-function IconEditor({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="3" y="4" width="18" height="16" rx="3" />
-      <path d="M7 9h7M7 13h10M7 17h6" />
-    </svg>
-  );
-}
 function IconBranch({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
@@ -80,6 +72,48 @@ function IconCoin({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v10M9.5 9.5h3.2a1.8 1.8 0 010 3.6H9.8M9.5 13.1h3.4a1.8 1.8 0 010 3.6H10" />
+    </svg>
+  );
+}
+function IconLink({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M9 15l6-6" />
+      <path d="M11 6.5l1-1a3.5 3.5 0 015 5l-1 1" />
+      <path d="M13 17.5l-1 1a3.5 3.5 0 01-5-5l1-1" />
+    </svg>
+  );
+}
+function IconTable({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <path d="M3 10h18M9 4v16" />
+    </svg>
+  );
+}
+function IconWand({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M4 20L15 9" />
+      <path d="M14 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" />
+      <path d="M18 13l.7 1.4 1.4.7-1.4.7-.7 1.4-.7-1.4-1.4-.7 1.4-.7.7-1.4z" />
+    </svg>
+  );
+}
+function IconBan({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M6.5 6.5l11 11" />
+    </svg>
+  );
+}
+function IconBrain({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M9 4.5a2.5 2.5 0 00-2.5 2.5v.2A2.8 2.8 0 004 9.8v.4a2.8 2.8 0 001 2.1 2.6 2.6 0 00-.4 1.4 2.8 2.8 0 002.8 2.8h.1V19a2.5 2.5 0 005 0V7a2.5 2.5 0 00-2.5-2.5z" />
+      <path d="M15 4.5A2.5 2.5 0 0117.5 7v.2a2.8 2.8 0 012.5 2.6v.4a2.8 2.8 0 01-1 2.1 2.6 2.6 0 01.4 1.4 2.8 2.8 0 01-2.8 2.8h-.1V19a2.5 2.5 0 01-5 0V7" />
     </svg>
   );
 }
@@ -218,7 +252,7 @@ export default function LandingPage() {
               </Reveal>
               <Reveal delay={760}>
                 <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-                  {['登録は無料', 'スマホで1問ずつサクサク回答', 'AIが回答の質をチェック'].map((t) => (
+                  {['登録は無料', '非公開ならGoogleフォーム感覚でずっと無料', 'AIが質問を自動作成', '独自AI評価で悪質回答を自動ブロック'].map((t) => (
                     <li key={t} className="flex items-center gap-1.5">
                       <IconCheckCircle className="h-4 w-4 text-brand-500" />
                       {t}
@@ -363,9 +397,22 @@ export default function LandingPage() {
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 {
-                  icon: IconEditor,
-                  title: '本格的なフォームエディタ',
-                  body: '単一・複数選択、スケール、グリッドなど多彩な設問タイプ。ドラッグ&ドロップ並べ替えと即時プレビューで直感的に作成できます。',
+                  icon: IconLink,
+                  title: '非公開なら、ずっと無料',
+                  body: '非公開アンケートはポイント不要・無期限無料。発行したリンクを共有するだけで、Googleフォームと同じ感覚で誰でもすぐに使えます。',
+                  badge: '完全無料',
+                },
+                {
+                  icon: IconTable,
+                  title: 'Excelで結果をすぐ確認',
+                  body: '回答結果はワンクリックでExcel（xlsx）形式にダウンロード。Googleフォームより直感的で見やすい、おしゃれな集計画面もそのまま使えます。',
+                  badge: 'Excel出力',
+                },
+                {
+                  icon: IconWand,
+                  title: 'AIがアンケートを自動作成',
+                  body: 'テーマと調査目的を入力するだけで、AIが設問を自動生成。さらに悪質な回答を自動検知してブロックする、キキタイ独自の防御機能つき。',
+                  badge: 'AI作成',
                 },
                 {
                   icon: IconBranch,
@@ -382,22 +429,19 @@ export default function LandingPage() {
                   title: 'リアルタイム集計',
                   body: '円グラフ・棒グラフ・クロス集計を自動生成。CSVダウンロードや統計量（平均・標準偏差など）の算出にも対応します。',
                 },
-                {
-                  icon: IconSparkle,
-                  title: 'AIによる品質評価',
-                  body: '回答の丁寧さをAIが採点し、報酬に反映。「とりあえず埋めただけ」の回答からあなたのデータを守ります。',
-                },
-                {
-                  icon: IconShield,
-                  title: 'プライバシーに配慮',
-                  body: 'プロフィール属性は項目ごとに公開・非公開を選択可能。非公開にするとポイントボーナスがもらえる設計です。',
-                },
-              ].map(({ icon: Icon, title, body }, i) => (
+              ].map(({ icon: Icon, title, body, badge }, i) => (
                 <Reveal key={title} direction="up" delay={(i % 3) * 100 + Math.floor(i / 3) * 60}>
                   <div className="card-3d card-3d-hover h-full p-6">
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-                      <Icon className="h-6 w-6" />
-                    </span>
+                    <div className="flex items-start justify-between">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
+                        <Icon className="h-6 w-6" />
+                      </span>
+                      {badge && (
+                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="mt-4 font-extrabold text-slate-900">{title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
                   </div>
@@ -414,6 +458,12 @@ export default function LandingPage() {
             <div>
               <SectionKicker no="04" label="Quality, guarded by AI" />
               <Reveal>
+                <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">
+                  <IconBrain className="h-3.5 w-3.5" />
+                  キキタイ独自開発・前例のない評価システム
+                </span>
+              </Reveal>
+              <Reveal delay={60}>
                 <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
                   雑な回答は、ゼロ。
                   <br />
@@ -422,10 +472,25 @@ export default function LandingPage() {
               </Reveal>
               <Reveal delay={120}>
                 <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
-                  提出された回答はAIが100点満点で自動採点。「とりあえず埋めただけ」の回答は
-                  報酬が下がり、設問に正面から答えた誠実な回答にはボーナスが付きます。
-                  だから集まるのは、研究に使えるデータだけ。
+                  提出された回答はAIが100点満点で自動採点。「とりあえず埋めただけ」の回答や
+                  悪質な回答は自動で検知され報酬が下がり、設問に正面から答えた誠実な回答には
+                  ボーナスが付きます。他のアンケートサービスにはない、キキタイだけの仕組みです。
                 </p>
+              </Reveal>
+              <Reveal delay={180}>
+                <ul className="mt-5 space-y-2 text-sm text-slate-600">
+                  {[
+                    { icon: IconBan, text: '悪質・テキトーな回答をAIが自動検知してブロック' },
+                    { icon: IconBrain, text: 'キキタイだけの独自評価アルゴリズムを採用' },
+                  ].map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-center gap-2">
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
               </Reveal>
             </div>
             <Reveal direction="right" delay={120}>
