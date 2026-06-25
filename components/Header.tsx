@@ -67,7 +67,7 @@ export default async function Header({
         </div>
 
         {/* 中央: 検索バー（PC のみ） */}
-        <div className="hidden flex-1 justify-center px-2 sm:flex">
+        <div data-tour="search" className="hidden flex-1 justify-center px-2 sm:flex">
           <HeaderSearchBar />
         </div>
 
@@ -77,19 +77,30 @@ export default async function Header({
             <IconNavLink key={item.href} href={item.href} label={item.label} icon={item.icon!} />
           ))}
           {/* ポイント残高 */}
-          <div className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-brand-700">
+          <div
+            data-tour="points"
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-brand-700"
+          >
             <Coins className="h-4 w-4 text-brand-500" aria-hidden />
             <span>{points.toLocaleString()}</span>
             <span className="text-xs font-normal text-slate-400">pt</span>
           </div>
-          <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <ProfileNavMenu nickname={nickname} avatarUrl={avatarUrl} />
+          <span data-tour="notifications">
+            <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+          </span>
+          <span data-tour="profile">
+            <ProfileNavMenu nickname={nickname} avatarUrl={avatarUrl} />
+          </span>
         </nav>
 
         {/* モバイル: ベル＋ハンバーガー */}
         <div className="ml-auto flex items-center gap-1 sm:hidden">
-          <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-          <HeaderMobileMenu nickname={nickname} avatarUrl={avatarUrl} />
+          <span data-tour="notifications">
+            <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+          </span>
+          <span data-tour="profile">
+            <HeaderMobileMenu nickname={nickname} avatarUrl={avatarUrl} />
+          </span>
         </div>
       </div>
     </header>

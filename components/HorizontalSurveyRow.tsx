@@ -76,7 +76,7 @@ export default function HorizontalSurveyRow({
       </div>
       {description && <p className="mb-3 text-sm text-slate-400">{description}</p>}
       {layout === 'grid' ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {surveys.map((s) => (
             <SurveyCard key={s.id} survey={s} />
           ))}
