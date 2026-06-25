@@ -161,9 +161,9 @@ export default function HomeTour() {
       }
       timer = setTimeout(attempt, 150);
     };
-    // 直前ステップのスポットライトを一旦消してから（非同期で）計測開始
+    // 直前ステップのスポットライト（rect）はあえて消さずに保持し、計測でき次第
+    // 新しい位置へ更新する。こうすると一旦中央に表示してから対象へ動く挙動を防げる。
     timer = setTimeout(() => {
-      setRect(null);
       attempt();
     }, 0);
     return () => clearTimeout(timer);
@@ -207,10 +207,6 @@ export default function HomeTour() {
       Math.max(12, rect.left + rect.width / 2 - CARD_W / 2),
       vw - CARD_W - 12
     );
-  } else {
-    // 対象が測れないときは中央に出す
-    cardTop = vh / 2 - 90;
-    cardLeft = vw / 2 - CARD_W / 2;
   }
 
   return (
@@ -241,7 +237,8 @@ export default function HomeTour() {
       {/* 対象が測れない場合は全面を暗転だけ */}
       {!rect && <div className="pointer-events-none absolute inset-0 bg-slate-900/70" />}
 
-      {/* 解説カード */}
+      {/* 解説カード（対象の位置が取れてから表示する。中央表示はしない） */}
+      {rect && (
       <div
         className="absolute w-[var(--w)] rounded-2xl border border-brand-100 bg-white p-4 shadow-2xl"
         style={
@@ -300,6 +297,7 @@ export default function HomeTour() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
