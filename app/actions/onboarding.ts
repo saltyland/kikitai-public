@@ -11,7 +11,10 @@ export interface OnboardingActionState {
   success?: boolean;
 }
 
-/** プロフィール登録アンケートを完了し、20pt × 1.5倍 = 30pt を付与する */
+/** 属性記入（プロフィール完成）で付与するポイント。1回限り。 */
+const PROFILE_COMPLETE_BONUS = 30;
+
+/** 属性を全員必須で記入してもらい、プロフィール完成ボーナス 30pt を付与する（1回限り） */
 export async function completeOnboardingAction(
   _prev: OnboardingActionState,
   formData: FormData
@@ -40,6 +43,13 @@ export async function completeOnboardingAction(
     return a >= 0 && a <= 120 ? a : null;
   })();
 
+  // 属性は全員必須（生年月日・性別・職業）。未入力なら保存しない。
+  const gender = str('gender');
+  const occupation = str('occupation');
+  if (!birthday || !gender || !occupation) {
+    return { error: '生年月日・性別・職業は必須です' };
+  }
+
   const privateFields = formData
     .getAll('private_fields')
     .map((v) => String(v)) as PrivateField[];
@@ -53,17 +63,21 @@ export async function completeOnboardingAction(
       field: str('field'),
       age,
       birthday,
-      gender: str('gender'),
-      occupation: str('occupation'),
+      gender,
+      occupation,
       grade: str('grade'),
       major: str('major'),
       private_fields: privateFields,
     });
 
-    // オンボーディングプロフィールアンケート完了ボーナス: 20pt × 1.5倍 = 30pt
+    // プロフィール完成ボーナス +30pt（1回限り。既に付与済みなら再付与しない）。
+    // 公開/非公開の設定とは無関係に、属性を記入したこと自体に付与する。
     const pointLotRepo = new PointLotRepository(supabase);
-    await pointLotRepo.grant(user.id, 30, 'survey_answer', 180);
-    await pointLotRepo.syncBalance(user.id);
+    const lots = await pointLotRepo.listActive(user.id);
+    if (!lots.some((l) => l.reason === 'profile_complete')) {
+      await pointLotRepo.grant(user.id, PROFILE_COMPLETE_BONUS, 'profile_complete', 180);
+      await pointLotRepo.syncBalance(user.id);
+    }
   } catch (e) {
     return { error: e instanceof Error ? e.message : '保存に失敗しました' };
   }

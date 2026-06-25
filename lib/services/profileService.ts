@@ -13,10 +13,7 @@ import type {
 } from '@/lib/types/database';
 import { PRIVATE_FIELDS } from '@/lib/types/database';
 
-/** ポイント関連の定数（DESIGN_SPEC §3） */
-const POINT_EXPIRY_DAYS = 180;
-const PRIVACY_BONUS_PER_FIELD = 10;
-const PRIVACY_BONUS_CAP = 50;
+/** ポイント関連の定数 */
 const EXPIRY_WARNING_DAYS = 14;
 
 /**
@@ -79,7 +76,11 @@ export class ProfileService {
     return this.profileRepo.findById(userId);
   }
 
-  /** プロフィール属性を更新する。非公開設定の変更に応じて充実ボーナスを再計算する。 */
+  /**
+   * プロフィール属性を更新する。
+   * private_fields は「自分のプロフィールに表示するかどうか」だけの設定で、
+   * ポイントやマッチングには影響しない（非公開ボーナスは廃止）。
+   */
   async updateProfile(
     userId: string,
     data: {
@@ -103,9 +104,7 @@ export class ProfileService {
     }
     // 非公開対象として認められた属性だけに正規化する
     const privateFields = data.private_fields.filter((f) => PRIVATE_FIELDS.includes(f));
-    const profile = await this.profileRepo.update(userId, { ...data, private_fields: privateFields });
-    await this.recomputePrivacyBonus(userId, privateFields.length);
-    return (await this.profileRepo.findById(userId)) ?? profile;
+    return this.profileRepo.update(userId, { ...data, private_fields: privateFields });
   }
 
   /**
@@ -133,27 +132,6 @@ export class ProfileService {
     const { data } = this.supabase.storage.from('avatars').getPublicUrl(path);
     // 同名パスを上書きするため、CDNキャッシュ対策にバージョンを付ける
     return `${data.publicUrl}?v=${Date.now()}`;
-  }
-
-  /**
-   * 非公開属性数に応じたプロフィール充実ボーナス（+10pt/項目, 上限50pt）を再計算する。
-   * 'privacy_bonus' の束を一度すべて消して付け直すことで冪等に保つ。
-   */
-  private async recomputePrivacyBonus(userId: string, privateCount: number): Promise<void> {
-    await this.pointLotRepo.deleteByReason(userId, 'privacy_bonus');
-    const bonus = Math.min(PRIVACY_BONUS_CAP, privateCount * PRIVACY_BONUS_PER_FIELD);
-    if (bonus > 0) {
-      await this.pointLotRepo.grant(userId, bonus, 'privacy_bonus', POINT_EXPIRY_DAYS);
-    }
-    await this.syncPointsBalance(userId);
-  }
-
-  /**
-   * profiles.points を point_lots（期限内）の合計に同期する。
-   * 集計と更新をDB側の1文（RPC）で行うため、並行付与時の lost update が起きない。
-   */
-  private async syncPointsBalance(userId: string): Promise<void> {
-    await this.pointLotRepo.syncBalance(userId);
   }
 
   /** 保有ポイントの内訳（有効な束の一覧。プロフィールの履歴表示用） */

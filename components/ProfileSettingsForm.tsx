@@ -17,7 +17,7 @@ const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
 
 const initial: ProfileActionState = { error: null };
 
-/** 属性入力＋「非公開にする」チェックの1行 */
+/** 属性入力＋「プロフィールに表示しない（非公開）」チェックの1行 */
 function AttrRow({
   name,
   label,
@@ -43,7 +43,7 @@ function AttrRow({
             defaultChecked={defaultPrivate}
             className="accent-brand-500"
           />
-          非公開にする（+10pt）
+          プロフィールに表示しない
         </label>
       </div>
       <input id={name} name={name} type={type} defaultValue={defaultValue} className={inputClass} />
@@ -131,8 +131,9 @@ export default function ProfileSettingsForm({
         </div>
 
         <div className="rounded-lg bg-brand-50/70 px-3 py-2 text-xs text-slate-600">
-          属性を<strong className="text-brand-700">非公開</strong>にすると、その項目はマッチングに使われなくなりますが、
-          プロフィール充実ボーナス（1項目あたり +10pt・上限50pt）がもらえます。
+          「プロフィールに表示しない」をオンにした属性は、
+          <strong className="text-brand-700">あなたのプロフィールページに表示されなくなる</strong>だけです。
+          アンケートの作成者には、回答時に回答内容とあわせて属性が渡ります（ニックネーム等の個人情報は渡りません）。
         </div>
 
         <AttrRow name="affiliation" label="所属機関" defaultValue={profile.affiliation ?? ''} defaultPrivate={isPrivate('affiliation')} />

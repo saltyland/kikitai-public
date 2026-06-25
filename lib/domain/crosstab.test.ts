@@ -36,9 +36,8 @@ function resp(responseId: string, answers: Answer[]): UserResponse {
   return {
     responseId,
     userId: null,
-    nickname: 'ゲスト',
-    avatarUrl: null,
     createdAt: '2026-01-01T00:00:00Z',
+    attributes: null,
     answers,
   };
 }
