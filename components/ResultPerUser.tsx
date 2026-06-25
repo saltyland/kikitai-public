@@ -1,4 +1,9 @@
-import type { Answer, UserResponse, SurveyWithQuestions } from '@/lib/types/database';
+import type {
+  Answer,
+  RespondentAttributes,
+  UserResponse,
+  SurveyWithQuestions,
+} from '@/lib/types/database';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 
 function renderAnswer(answers: Answer[], survey: SurveyWithQuestions, questionId: string): string {
@@ -6,6 +11,40 @@ function renderAnswer(answers: Answer[], survey: SurveyWithQuestions, questionId
   if (!q) return '';
   const forQ = answers.filter((a) => a.question_id === questionId);
   return QuestionTypeRegistry.get(q.type).renderAnswerText(forQ, q);
+}
+
+/** 回答者の属性をチップで表示（公開/非公開設定に依らず常に開示） */
+function AttributeChips({ attributes }: { attributes: RespondentAttributes | null }) {
+  if (!attributes) {
+    return <span className="text-xs text-slate-400">属性情報なし（未ログインの回答）</span>;
+  }
+  const items: { label: string; value: string | number | null }[] = [
+    { label: '年齢', value: attributes.age },
+    { label: '性別', value: attributes.gender },
+    { label: '職業', value: attributes.occupation },
+    { label: '学年', value: attributes.grade },
+    { label: '専攻', value: attributes.major },
+    { label: '所属', value: attributes.affiliation },
+    { label: '分野', value: attributes.field },
+  ].filter((i) => i.value != null && i.value !== '');
+
+  if (items.length === 0) {
+    return <span className="text-xs text-slate-400">属性が登録されていません</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((i) => (
+        <span
+          key={i.label}
+          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs text-slate-600 ring-1 ring-brand-100"
+        >
+          <span className="text-slate-400">{i.label}</span>
+          <span className="font-medium text-slate-700">{i.value}</span>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -29,8 +68,8 @@ export default function ResultPerUser({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-        ユーザー別回答モード（Proプラン）— 回答者ごとの個別回答を確認できます。
+      <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
+        回答者ごとの個別回答と属性を確認できます。ニックネームなどの個人情報は表示されません。
       </div>
 
       {userResponses.map((ur, idx) => (
@@ -38,18 +77,22 @@ export default function ResultPerUser({
           key={ur.responseId}
           className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden"
         >
-          {/* ヘッダー：匿名番号・回答日時 */}
-          <div className="flex items-center gap-3 bg-slate-50 border-b border-slate-200 px-5 py-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-500">
-              {idx + 1}
+          {/* ヘッダー：匿名番号・回答日時・属性 */}
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-500">
+                {idx + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-700">回答者 #{idx + 1}</p>
+                <p className="text-xs text-slate-400">
+                  {new Date(ur.createdAt).toLocaleString('ja-JP')}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-700">回答者 #{idx + 1}</p>
-              <p className="text-xs text-slate-400">
-                {new Date(ur.createdAt).toLocaleString('ja-JP')}
-              </p>
+            <div className="mt-2.5">
+              <AttributeChips attributes={ur.attributes} />
             </div>
-            <span className="text-xs text-slate-400">{ur.userId ? 'ログイン済み' : 'ゲスト'}</span>
           </div>
 
           {/* 回答一覧 */}

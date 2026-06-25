@@ -5,10 +5,10 @@ import { ResponseRepository } from '@/lib/repositories/responseRepository';
 import type {
   AnswerInput,
   QuestionAggregate,
+  RespondentAttributes,
   SurveyWithQuestions,
   UserResponse,
 } from '@/lib/types/database';
-import { ProfileRepository } from '@/lib/repositories/profileRepository';
 import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
@@ -64,12 +64,10 @@ export interface SubmitOptions {
 export class ResponseService {
   private readonly surveyRepo: SurveyRepository;
   private readonly responseRepo: ResponseRepository;
-  private readonly profileRepo: ProfileRepository;
 
   constructor(private readonly supabase: SupabaseClient) {
     this.surveyRepo = new SurveyRepository(supabase);
     this.responseRepo = new ResponseRepository(supabase);
-    this.profileRepo = new ProfileRepository(supabase);
   }
 
   /** 期限切れ（deadlineが過去）かどうか */
@@ -409,8 +407,29 @@ export class ResponseService {
     const sessions = await this.responseRepo.findSessionsBySurvey(surveyId);
     const answers = await this.responseRepo.findAnswersBySurvey(surveyId);
 
-    const userIds = [...new Set(sessions.map((s) => s.user_id).filter((id): id is string => id !== null))];
-    const profiles = await this.profileRepo.findByIds(userIds);
+    // 結果閲覧者には「回答内容＋属性」だけを渡す（nickname/avatar 等の個人情報は渡さない）。
+    // 属性はプロフィールの公開/非公開設定に依らず常に開示するため、所有者専用の
+    // SECURITY DEFINER 関数で素の属性を取得する。
+    const attributesByUser = new Map<string, RespondentAttributes>();
+    const { data: attrRows, error: attrError } = await this.supabase.rpc(
+      'survey_respondent_attributes',
+      { p_survey_id: surveyId }
+    );
+    if (attrError) {
+      console.error('[getPerUserResults] survey_respondent_attributes', attrError.message);
+    } else {
+      for (const row of (attrRows ?? []) as Array<{ user_id: string } & RespondentAttributes>) {
+        attributesByUser.set(row.user_id, {
+          age: row.age,
+          gender: row.gender,
+          occupation: row.occupation,
+          grade: row.grade,
+          major: row.major,
+          affiliation: row.affiliation,
+          field: row.field,
+        });
+      }
+    }
 
     const byResponse = new Map<string, typeof answers>();
     for (const a of answers) {
@@ -419,17 +438,13 @@ export class ResponseService {
       byResponse.set(a.response_id, list);
     }
 
-    const userResponses: UserResponse[] = sessions.map((s) => {
-      const profile = s.user_id ? profiles.get(s.user_id) : undefined;
-      return {
-        responseId: s.id,
-        userId: s.user_id,
-        nickname: profile?.nickname ?? 'ゲスト',
-        avatarUrl: profile?.avatar_url ?? null,
-        createdAt: s.created_at,
-        answers: byResponse.get(s.id) ?? [],
-      };
-    });
+    const userResponses: UserResponse[] = sessions.map((s) => ({
+      responseId: s.id,
+      userId: s.user_id,
+      createdAt: s.created_at,
+      attributes: s.user_id ? attributesByUser.get(s.user_id) ?? null : null,
+      answers: byResponse.get(s.id) ?? [],
+    }));
 
     return { survey, userResponses };
   }

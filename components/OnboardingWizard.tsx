@@ -125,10 +125,11 @@ export default function OnboardingWizard({ nickname }: Props) {
             <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3 text-xs text-slate-600">
               <p>
                 各項目の右側にある<span className="mx-1 inline-block rounded-full border border-slate-300 bg-white px-2 py-0.5 font-medium text-slate-500">公開</span>
-                ボタンを押すと<span className="font-bold text-slate-700">「非公開」</span>に切り替えられます（非公開にしてもポイントは変わらず付与されます）。
+                ボタンを押すと<span className="font-bold text-slate-700">「非公開」</span>に切り替えられます。
+                これは<span className="font-bold text-slate-700">あなたのプロフィールページに表示するかどうか</span>だけの設定で、ポイントには影響しません。
               </p>
               <p className="mt-1.5">
-                公開にしても、ニックネームに本名を使わない限り、メールアドレス（Gmailなど）から個人が特定されることはありません。
+                属性は、あなたが回答したアンケートの作成者に「回答内容＋属性」として渡ります（ニックネーム等の個人情報は渡りません）。記入すると<span className="font-bold text-amber-600">+30pt</span>がもらえます。
               </p>
             </div>
 
@@ -319,14 +320,9 @@ export default function OnboardingWizard({ nickname }: Props) {
             <h2 className="text-xl font-extrabold text-slate-800">ポイント獲得！</h2>
 
             <div className="mt-5 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6">
-              <p className="text-sm text-slate-500">このアンケートの獲得ポイント</p>
-              <div className="mt-2 flex items-baseline justify-center gap-2">
-                <span className="text-lg text-slate-400 line-through">20pt</span>
-                <span className="text-slate-500">×</span>
-                <span className="rounded-full bg-amber-200 px-3 py-0.5 text-sm font-bold text-amber-700">1.5倍</span>
-              </div>
+              <p className="text-sm text-slate-500">プロフィール記入ボーナス</p>
               <p className="mt-2 text-4xl font-extrabold text-amber-600">+ 30 pt</p>
-              <p className="mt-1 text-sm text-slate-500">高品質回答として確定しました！</p>
+              <p className="mt-1 text-sm text-slate-500">属性の登録ありがとうございます！</p>
             </div>
 
             <p className="mt-5 text-sm text-slate-600">

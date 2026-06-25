@@ -3,7 +3,7 @@ import type { PointLot, PointsSummary } from '@/lib/types/database';
 /** ポイント付与理由コード → 日本語ラベル（新理由はここに足すだけでよい） */
 const REASON_LABELS: Record<string, string> = {
   signup: '新規登録ボーナス',
-  privacy_bonus: 'プロフィール充実ボーナス',
+  profile_complete: 'プロフィール記入ボーナス',
   answer_reward: 'アンケート回答報酬',
   author_refund: '高品質回答の還元（設問者）',
 };
