@@ -132,8 +132,6 @@ export function SceneNav({ scenes }: { scenes: SceneItem[] }) {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    document.documentElement.classList.add('kk-snap');
-
     const els = scenes
       .map((s) => document.getElementById(s.id))
       .filter((el): el is HTMLElement => el !== null);
@@ -158,39 +156,16 @@ export function SceneNav({ scenes }: { scenes: SceneItem[] }) {
 
     return () => {
       io.disconnect();
-      document.documentElement.classList.remove('kk-snap');
     };
   }, [scenes]);
 
   const onDark = scenes[active]?.dark;
 
-  // スナップ(proximity)はプログラム的な smooth スクロールを途中で打ち切るため、
-  // ジャンプ中だけ一時的にスナップを外し、到達後に戻す。
   const jumpTo = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const root = document.documentElement;
-    root.classList.remove('kk-snap');
     const top = el.getBoundingClientRect().top + window.scrollY - 56; // sticky header 分
     window.scrollTo({ top, behavior: 'smooth' });
-    // スナップを早く戻すと smooth 中に最寄りへ引き戻されるため、
-    // スクロールが落ち着いてから（位置が安定したら）戻す。
-    let last = -1;
-    let still = 0;
-    const settle = () => {
-      const y = Math.round(window.scrollY);
-      if (y === last) {
-        if (++still >= 3) {
-          root.classList.add('kk-snap');
-          return;
-        }
-      } else {
-        still = 0;
-        last = y;
-      }
-      window.setTimeout(settle, 120);
-    };
-    window.setTimeout(settle, 200);
   };
 
   return (
