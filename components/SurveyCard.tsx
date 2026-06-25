@@ -103,8 +103,8 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
       <article className="card-3d card-3d-hover flex h-full flex-1 flex-col overflow-hidden p-0">
         {/* タイトル・説明 */}
         <div className="px-5 pt-5">
-          <h3 className="line-clamp-2 text-base font-bold text-slate-800">{survey.title}</h3>
-          <p className="mt-1 min-h-[2.5rem] line-clamp-2 text-sm text-slate-500">{survey.description}</p>
+          <h3 className="line-clamp-2 select-none text-base font-bold text-slate-800">{survey.title}</h3>
+          <p className="mt-1 min-h-[2.5rem] line-clamp-2 select-none text-sm text-slate-500">{survey.description}</p>
         </div>
 
         {/* 設問プレビュー（下が見切れて「もっとある」感を出す） */}
