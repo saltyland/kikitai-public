@@ -333,24 +333,6 @@ body {
   animation: kk-sheen 3.2s ease-in-out infinite;
 }
 
-/* ───────────────────────────────────────────────────────────
- * フルスクリーン・シーン演出（GameFreak風の「1画面ずつ切り替わるが
- * 連続している」体験）。スナップは proximity + smooth で“するする”と
- * 章切替の両立を狙う。html.kk-snap は SceneNav が JS で付与する
- * （非対応／低速設定では通常スクロールにフォールバック）。
- * ─────────────────────────────────────────────────────────── */
-html.kk-snap {
-  scroll-snap-type: y proximity;
-  scroll-padding-top: 4rem;
-  /* scroll-behavior: smooth はスナップ(proximity)とぶつかり、プログラム的
-     スクロールを途中で打ち切る。SceneNav 側でスナップを一時解除して
-     smooth ジャンプするのでここでは付けない。 */
-}
-.kk-scene {
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
-}
-
 /* 右端のシーンインジケーター（章インデックス） */
 .kk-scenenav {
   position: fixed;
@@ -514,7 +496,6 @@ html.kk-snap {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.kk-snap { scroll-snap-type: none; }
   .kikitai-check-pop,
   .kikitai-slide-in,
   .kikitai-saving,
