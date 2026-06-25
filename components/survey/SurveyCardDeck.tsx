@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from 'framer-motion';
 import SurveyCard, { type SurveyCardData } from './SurveyCard';
 
 export type SwipeAction = 'answer' | 'skip' | 'later';
@@ -73,7 +79,7 @@ function SwipeableCard({
       drag={isTop}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={1}
-      onDragEnd={(_, info) => {
+      onDragEnd={(_: unknown, info: PanInfo) => {
         if (info.offset.x > SWIPE_THRESHOLD) {
           onSwipe('answer');
         } else if (info.offset.x < -SWIPE_THRESHOLD) {
