@@ -79,9 +79,7 @@ export default function OnboardingWizard({ nickname }: Props) {
     !!form.birthday &&
     !!form.gender &&
     !!form.occupation &&
-    (!gradeOptions || !!form.grade) &&
-    !!form.affiliation.trim() &&
-    !!form.field.trim();
+    (!gradeOptions || !!form.grade);
 
   // 紹介（ストーリーテリング）パート：読み終えたらプロフィール登録へ
   if (phase === 'intro') {
@@ -257,7 +255,6 @@ export default function OnboardingWizard({ nickname }: Props) {
               <QuestionBlock
                 number={gradeOptions ? 6 : 5}
                 label="所属機関・大学名"
-                required
                 fieldKey="affiliation"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
@@ -275,7 +272,6 @@ export default function OnboardingWizard({ nickname }: Props) {
               <QuestionBlock
                 number={gradeOptions ? 7 : 6}
                 label="研究分野・専攻"
-                required
                 fieldKey="field"
                 privateFields={privateFields}
                 onTogglePrivate={togglePrivate}
