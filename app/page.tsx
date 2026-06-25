@@ -6,6 +6,7 @@ import MySurveysSummaryCard from '@/components/MySurveysSummaryCard';
 import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
 import FaqAccordion from '@/components/FaqAccordion';
 import { SurveyService } from '@/lib/services/surveyService';
+import HomeTour from '@/components/HomeTour';
 
 export default async function HomePage({
   searchParams,
@@ -62,7 +63,9 @@ export default async function HomePage({
             アンケートを作成・管理する
           </h2>
         </div>
-        <MySurveysSummaryCard surveys={mySurveys} />
+        <div data-tour="my-surveys">
+          <MySurveysSummaryCard surveys={mySurveys} />
+        </div>
 
         {/* アンケート回答セクション */}
         <div className="mt-6 border-t border-slate-200 pt-6">
@@ -73,11 +76,13 @@ export default async function HomePage({
           </div>
         </div>
 
-        <HorizontalSurveyRow
-          title="あなたへのおすすめ"
-          surveys={recommended.slice(0, 8)}
-          viewMoreHref="/surveys"
-        />
+        <div data-tour="answer">
+          <HorizontalSurveyRow
+            title="あなたへのおすすめ"
+            surveys={recommended.slice(0, 8)}
+            viewMoreHref="/surveys"
+          />
+        </div>
         <HorizontalSurveyRow
           title="フォロー中ユーザーの新着アンケート"
           surveys={byFollowedUsers.slice(0, 8)}
@@ -91,6 +96,7 @@ export default async function HomePage({
 
         <FaqAccordion />
       </main>
+      <HomeTour />
     </>
   );
 }
