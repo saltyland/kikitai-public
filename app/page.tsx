@@ -6,6 +6,7 @@ import MySurveysSummaryCard from '@/components/MySurveysSummaryCard';
 import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
 import FaqAccordion from '@/components/FaqAccordion';
 import { SurveyService } from '@/lib/services/surveyService';
+import HomeTour from '@/components/HomeTour';
 
 export default async function HomePage({
   searchParams,
@@ -40,11 +41,17 @@ export default async function HomePage({
         )}
 
         {/* ヒーローコピー（DESIGN_SPEC 準拠） */}
-        <section className="mb-8 text-center sm:text-left">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">
-            こたえて、あつめる。研究の輪。
+        <section className="relative mb-8 overflow-hidden rounded-3xl border border-brand-100/70 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 px-6 py-8 text-center shadow-[0_8px_30px_-12px_rgba(38,166,154,0.35)] sm:px-8 sm:py-10 sm:text-left">
+          {/* 背景の装飾ブロブ（やわらかい奥行き） */}
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-300/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-brand-200/40 blur-3xl" />
+          <h1 className="relative text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <span className="bg-gradient-to-r from-brand-700 via-brand-500 to-brand-400 bg-clip-text text-transparent">
+              こたえて、あつめる。
+            </span>
+            <span className="text-slate-800">研究の輪。</span>
           </h1>
-          <p className="mt-2 text-sm text-slate-600 sm:text-base">
+          <p className="relative mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
             アンケートに答えてポイントを貯め、自分の研究に回答者を集めよう。<br className="hidden sm:inline" />
             みんなで回答し合う、アンケート交換サービス。
           </p>
@@ -56,7 +63,9 @@ export default async function HomePage({
             アンケートを作成・管理する
           </h2>
         </div>
-        <MySurveysSummaryCard surveys={mySurveys} />
+        <div data-tour="my-surveys">
+          <MySurveysSummaryCard surveys={mySurveys} />
+        </div>
 
         {/* アンケート回答セクション */}
         <div className="mt-6 border-t border-slate-200 pt-6">
@@ -67,11 +76,13 @@ export default async function HomePage({
           </div>
         </div>
 
-        <HorizontalSurveyRow
-          title="あなたへのおすすめ"
-          surveys={recommended.slice(0, 8)}
-          viewMoreHref="/surveys"
-        />
+        <div data-tour="answer">
+          <HorizontalSurveyRow
+            title="あなたへのおすすめ"
+            surveys={recommended.slice(0, 8)}
+            viewMoreHref="/surveys"
+          />
+        </div>
         <HorizontalSurveyRow
           title="フォロー中ユーザーの新着アンケート"
           surveys={byFollowedUsers.slice(0, 8)}
@@ -85,6 +96,7 @@ export default async function HomePage({
 
         <FaqAccordion />
       </main>
+      <HomeTour />
     </>
   );
 }

@@ -1,6 +1,17 @@
 import Link from 'next/link';
 import Logo, { LogoMark } from '@/components/Logo';
-import { Reveal, ScrollProgressBar, AuroraBackground } from '@/components/ScrollReveal';
+import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
+
+/** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
+const SCENES = [
+  { id: 'top', label: 'キキタイ' },
+  { id: 'story', label: '課題' },
+  { id: 'how', label: '仕組み' },
+  { id: 'features', label: '機能' },
+  { id: 'intelligence', label: 'AI評価', dark: true },
+  { id: 'free', label: '無料' },
+  { id: 'cta', label: 'はじめる' },
+];
 
 /* 装飾用の小さなアイコン（絵文字は使わない方針のため、すべてSVG） */
 
@@ -183,6 +194,7 @@ export default function LandingPage() {
   return (
     <>
       <ScrollProgressBar />
+      <SceneNav scenes={SCENES} />
 
       {/* ヘッダー：左ロゴ／右ナビ＋ログイン・新規登録 */}
       <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
@@ -191,13 +203,13 @@ export default function LandingPage() {
             <Logo />
           </Link>
           <nav className="flex items-center gap-2 sm:gap-6">
-            <a href="#story" className="hidden text-sm font-medium text-slate-600 hover:text-brand-600 sm:inline">
+            <a href="#story" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
               キキタイとは
             </a>
-            <a href="#how" className="hidden text-sm font-medium text-slate-600 hover:text-brand-600 sm:inline">
+            <a href="#how" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
               使い方
             </a>
-            <a href="#features" className="hidden text-sm font-medium text-slate-600 hover:text-brand-600 sm:inline">
+            <a href="#features" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
               機能
             </a>
             <Link
@@ -215,9 +227,9 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* ───────── ヒーロー ───────── */}
-        <section className="relative overflow-hidden">
+        <section id="top" className="kk-scene relative flex min-h-screen items-center overflow-hidden">
           <AuroraBackground />
-          <div className="relative mx-auto grid min-h-[88vh] max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
+          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
             <div>
               <Reveal>
                 <p className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-brand-700">
@@ -233,7 +245,7 @@ export default function LandingPage() {
                 </Reveal>
               </h1>
               <Reveal delay={520}>
-                <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+                <p className="mt-6 max-w-[46ch] text-base leading-7 text-slate-700 [text-wrap:pretty] sm:text-lg sm:leading-8">
                   「アンケートの回答者が集まらない」を、お互いさまで解決。
                   他の人のアンケートに答えてポイントを貯め、そのポイントで
                   あなたの研究に回答者を集めましょう。
@@ -278,19 +290,19 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 01 課題（ストーリー導入） ───────── */}
-        <section id="story" className="relative scroll-mt-20 overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+        <section id="story" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
             <div>
               <SectionKicker no="01" label="The Problem" />
               <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                   作ったのに、
                   <br />
-                  <span className="text-slate-400">だれも答えてくれない。</span>
+                  <span className="inline-block text-slate-400">だれも答えてくれない。</span>
                 </h2>
               </Reveal>
               <Reveal delay={120}>
-                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
+                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                   研究や授業課題でアンケートを作っても、回答者が集まらない。
                   かといって、誰かのアンケートに答えても自分には何のメリットもない——。
                   この“片道通行”が、データ集めをいつも難しくしていました。
@@ -317,19 +329,19 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 02 解決＝回答し合う経済圏（3ステップ） ───────── */}
-        <section id="how" className="relative scroll-mt-20 overflow-hidden bg-white/40 py-24 sm:py-32">
+        <section id="how" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden bg-white/40 py-24 sm:py-32">
           <AuroraBackground className="opacity-60" />
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="02" label="The Loop" />
             <Reveal>
-              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                 答えるほど、集まる。
                 <br />
-                <span className="text-brand-600">“回答し合う”経済圏。</span>
+                <span className="inline-block text-brand-600">“回答し合う”経済圏。</span>
               </h2>
             </Reveal>
             <Reveal delay={120}>
-              <p className="mt-4 max-w-xl text-base text-slate-600">
+              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                 回答するとポイントが貯まり、そのポイントで自分のアンケートに回答者を集められる。
                 一方通行だった調査が、ぐるぐる回る輪に変わります。
               </p>
@@ -381,16 +393,16 @@ export default function LandingPage() {
         </section>
 
         {/* ───────── 03 機能（スタッガー出現） ───────── */}
-        <section id="features" className="relative scroll-mt-20 overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <section id="features" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-20 sm:py-28">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="03" label="Everything you need" />
             <Reveal>
-              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              <h2 className="text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
                 研究に必要な機能を、ぜんぶ。
               </h2>
             </Reveal>
             <Reveal delay={100}>
-              <p className="mt-4 max-w-xl text-base text-slate-600">
+              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                 作る・集める・分析するまで、キキタイひとつで完結します。
               </p>
             </Reveal>
@@ -433,11 +445,11 @@ export default function LandingPage() {
                 <Reveal key={title} direction="up" delay={(i % 3) * 100 + Math.floor(i / 3) * 60}>
                   <div className="card-3d card-3d-hover h-full p-6">
                     <div className="flex items-start justify-between">
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-brand-600 ring-1 ring-slate-100">
                         <Icon className="h-6 w-6" />
                       </span>
                       {badge && (
-                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-brand-100">
                           {badge}
                         </span>
                       )}
@@ -451,41 +463,161 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ───────── 04 AI品質スポットライト ───────── */}
-        <section className="relative overflow-hidden bg-white/40 py-24 sm:py-32">
-          <AuroraBackground className="opacity-50" />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <SectionKicker no="04" label="Quality, guarded by AI" />
-              <Reveal>
-                <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">
-                  <IconBrain className="h-3.5 w-3.5" />
-                  キキタイ独自開発・前例のない評価システム
+        {/* ───────── キキタイ・インテリジェンス（最大の差別化要素・暗転クライマックス） ───────── */}
+        <section
+          id="intelligence"
+          className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-28 text-white sm:py-36"
+          style={{ background: 'linear-gradient(160deg, var(--color-brand-950) 0%, var(--color-brand-900) 55%, #0a3b38 100%)' }}
+        >
+          {/* 上端を直前の明るいシーンから滑らかに繋ぐ */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 kk-scene-fade-from-dark opacity-90" aria-hidden />
+          {/* ブランドティールのオーロラ光（slate/indigoではなく世界観に統一） */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(69,190,178,0.30),transparent_55%),radial-gradient(circle_at_85%_5%,rgba(124,216,205,0.20),transparent_48%),radial-gradient(circle_at_70%_95%,rgba(38,166,154,0.22),transparent_50%)]" />
+          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <Reveal className="mb-6 flex flex-col items-center gap-3 text-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/40 bg-brand-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-brand-300">
+                <IconBrain className="h-4 w-4" />
+                Kikitai Intelligence
+              </span>
+              <h2 className="max-w-3xl text-[1.75rem] font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-snug">
+                <span className="inline-block">これまでにない、</span>
+                <br />
+                <span className="inline-block bg-gradient-to-r from-brand-300 to-cyan-300 bg-clip-text text-transparent">
+                  独自AI評価インテリジェンス。
                 </span>
+              </h2>
+              <p className="max-w-xl text-sm leading-relaxed text-slate-300 [text-wrap:pretty] sm:text-base">
+                <span className="inline-block">キキタイが自社開発した評価AIが、すべての回答を24時間自動でレビュー。</span>
+                <span className="inline-block">単なる「機能」のひとつではなく、サービス全体の信頼性を支える中核エンジンです。</span>
+              </p>
+            </Reveal>
+
+            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                { value: '100点', label: '満点で自動採点' },
+                { value: '0円', label: '回答者への追加負担なし' },
+                { value: '業界初', label: '独自開発の評価モデル' },
+              ].map((s) => (
+                <Reveal key={s.label} direction="up" delay={80}>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-5 text-center backdrop-blur">
+                    <p className="text-3xl font-black text-white">{s.value}</p>
+                    <p className="mt-1 text-xs text-slate-400">{s.label}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
+            <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">
+              <Reveal direction="left">
+                <ul className="space-y-5">
+                  {[
+                    {
+                      icon: IconSparkle,
+                      title: '回答の質を100点満点で自動採点',
+                      body: '設問への適合度・具体性・誠実さをAIが多角的に評価。雑な回答は報酬が下がり、丁寧な回答にはボーナスが付きます。',
+                    },
+                    {
+                      icon: IconBan,
+                      title: '悪質・不正な回答をリアルタイム検知',
+                      body: 'コピペや無関係な入力、ボットのような連続回答などをAIが自動で見抜き、ブロック。研究データを汚すノイズを未然に防ぎます。',
+                    },
+                    {
+                      icon: IconBrain,
+                      title: '他社にはないキキタイ独自モデル',
+                      body: '既存のアンケートサービスには存在しない、キキタイが独自に設計・開発した評価アルゴリズム。回答の経済圏そのものを守るために生まれました。',
+                    },
+                  ].map(({ icon: Icon, title, body }) => (
+                    <li key={title} className="flex gap-4">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-300">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <h3 className="font-extrabold text-white">{title}</h3>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-300">{body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </Reveal>
-              <Reveal delay={60}>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
-                  雑な回答は、ゼロ。
+              <Reveal direction="right" delay={120}>
+                <div className="relative mx-auto max-w-sm">
+                  <div className="card-3d p-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-700">AI品質スコア</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
+                        <IconSparkle className="h-3.5 w-3.5" /> 自動採点
+                      </span>
+                    </div>
+                    <div className="mt-5 flex items-end gap-2">
+                      <span className="text-6xl font-black leading-none text-brand-600">92</span>
+                      <span className="mb-2 text-lg font-bold text-slate-400">/ 100</span>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {[
+                        { label: '設問への適合', v: 'w-[92%]' },
+                        { label: '回答の具体性', v: 'w-[88%]' },
+                        { label: '誠実さ', v: 'w-[95%]' },
+                      ].map((b) => (
+                        <div key={b.label}>
+                          <div className="mb-1 flex justify-between text-xs text-slate-500">
+                            <span>{b.label}</span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100">
+                            <div className={`h-full ${b.v} rounded-full bg-gradient-to-r from-brand-400 to-brand-600`} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-5 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
+                      <span className="text-xs font-bold text-amber-700">高品質ボーナス</span>
+                      <span className="text-lg font-extrabold text-amber-600">×1.5</span>
+                    </div>
+                  </div>
+                  <div className="card-3d kk-float absolute -right-4 -top-5 px-4 py-2 text-xs font-extrabold text-brand-600" style={{ ['--kk-rot' as string]: '5deg' }}>
+                    +30pt 確定
+                  </div>
+                  <div className="card-3d kk-float-slow absolute -bottom-5 -left-3 flex items-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 sm:-left-8" style={{ ['--kk-rot' as string]: '-4deg' }}>
+                    <IconBan className="h-3.5 w-3.5" />
+                    不正回答を自動ブロック
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── 05 非公開アンケート＝無料のGoogleフォーム代替 ───────── */}
+        <section id="free" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
+          {/* 暗転シーンから明るいシーンへ滑らかに復帰（上端に余韻を残す） */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 kk-scene-fade-from-dark opacity-60" aria-hidden />
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+            <div>
+              <SectionKicker no="04" label="Free & Beautiful" />
+              <Reveal>
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+                  非公開なら、
                   <br />
-                  <span className="text-brand-600">丁寧な回答は、ボーナス。</span>
+                  <span className="inline-block text-brand-600">ずっと無料のフォームツール。</span>
                 </h2>
               </Reveal>
               <Reveal delay={120}>
-                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
-                  提出された回答はAIが100点満点で自動採点。「とりあえず埋めただけ」の回答や
-                  悪質な回答は自動で検知され報酬が下がり、設問に正面から答えた誠実な回答には
-                  ボーナスが付きます。他のアンケートサービスにはない、キキタイだけの仕組みです。
+                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
+                  アンケートを「非公開」にすれば、ポイントは一切不要。発行されたリンクを
+                  LINEやSlackで共有するだけで、Googleフォームと同じように誰でもすぐ回答を集められます。
+                  しかも見た目はキキタイならではの、おしゃれで直感的なデザイン。
                 </p>
               </Reveal>
-              <Reveal delay={180}>
-                <ul className="mt-5 space-y-2 text-sm text-slate-600">
+              <Reveal delay={200}>
+                <ul className="mt-6 space-y-3 text-sm text-slate-600">
                   {[
-                    { icon: IconBan, text: '悪質・テキトーな回答をAIが自動検知してブロック' },
-                    { icon: IconBrain, text: 'キキタイだけの独自評価アルゴリズムを採用' },
+                    { icon: IconCoin, text: 'ポイント不要・回数制限なしでずっと無料' },
+                    { icon: IconLink, text: 'URLを発行してリンク共有するだけで回答を収集' },
+                    { icon: IconTable, text: '集まった結果はExcel（xlsx）で即ダウンロード' },
+                    { icon: IconSparkle, text: 'Googleフォームより見やすく、おしゃれな入力・集計画面' },
                   ].map(({ icon: Icon, text }) => (
-                    <li key={text} className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
-                        <Icon className="h-3.5 w-3.5" />
+                    <li key={text} className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                        <Icon className="h-4 w-4" />
                       </span>
                       {text}
                     </li>
@@ -497,101 +629,47 @@ export default function LandingPage() {
               <div className="relative mx-auto max-w-sm">
                 <div className="card-3d p-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700">AI品質スコア</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
-                      <IconSparkle className="h-3.5 w-3.5" /> 自動採点
-                    </span>
+                    <span className="text-sm font-bold text-slate-700">非公開アンケート</span>
+                    <span className="rounded-full bg-slate-700 px-3 py-0.5 text-xs font-bold text-white">非公開</span>
                   </div>
-                  <div className="mt-5 flex items-end gap-2">
-                    <span className="text-6xl font-black leading-none text-brand-600">92</span>
-                    <span className="mb-2 text-lg font-bold text-slate-400">/ 100</span>
+                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <IconLink className="h-4 w-4 shrink-0 text-slate-400" />
+                    <span className="truncate text-xs text-slate-500">kikitai.app/s/3f9a2c...</span>
+                    <span className="ml-auto shrink-0 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-700">コピー</span>
                   </div>
-                  <div className="mt-4 space-y-3">
-                    {[
-                      { label: '設問への適合', v: 'w-[92%]' },
-                      { label: '回答の具体性', v: 'w-[88%]' },
-                      { label: '誠実さ', v: 'w-[95%]' },
-                    ].map((b) => (
-                      <div key={b.label}>
-                        <div className="mb-1 flex justify-between text-xs text-slate-500">
-                          <span>{b.label}</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100">
-                          <div className={`h-full ${b.v} rounded-full bg-gradient-to-r from-brand-400 to-brand-600`} />
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mt-5 space-y-2.5">
+                    <div className="h-2 w-3/4 rounded-full bg-brand-200" />
+                    <div className="h-2 w-full rounded-full bg-brand-100" />
+                    <div className="h-2 w-2/3 rounded-full bg-brand-100" />
                   </div>
-                  <div className="mt-5 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
-                    <span className="text-xs font-bold text-amber-700">高品質ボーナス</span>
-                    <span className="text-lg font-extrabold text-amber-600">×1.5</span>
+                  <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
+                    <span className="text-xs font-bold text-brand-700">必要なポイント</span>
+                    <span className="text-lg font-extrabold text-brand-600">0pt</span>
                   </div>
                 </div>
                 <div className="card-3d kk-float absolute -right-4 -top-5 px-4 py-2 text-xs font-extrabold text-brand-600" style={{ ['--kk-rot' as string]: '5deg' }}>
-                  +30pt 確定
+                  <span className="inline-flex items-center gap-1">
+                    <IconTable className="h-3.5 w-3.5" />
+                    Excelで出力
+                  </span>
                 </div>
               </div>
             </Reveal>
-          </div>
-        </section>
-
-        {/* ───────── 05 プライバシー逆インセンティブ ───────── */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-            <Reveal direction="left">
-              <div className="relative mx-auto max-w-sm">
-                <div className="card-3d p-6">
-                  <p className="text-sm font-bold text-slate-700">プロフィール属性</p>
-                  <div className="mt-4 space-y-2.5">
-                    {[
-                      { label: '所属・大学', pub: true },
-                      { label: '研究分野', pub: true },
-                      { label: '生年月日', pub: false },
-                    ].map((r) => (
-                      <div key={r.label} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
-                        <span className="text-sm text-slate-700">{r.label}</span>
-                        <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${r.pub ? 'bg-white text-slate-400 border border-slate-200' : 'bg-slate-700 text-white'}`}>
-                          {r.pub ? '公開' : '非公開'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
-                    <span className="text-xs font-bold text-brand-700">非公開ボーナス</span>
-                    <span className="text-lg font-extrabold text-brand-600">+pt</span>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-            <div>
-              <SectionKicker no="05" label="Privacy first" />
-              <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
-                  隠すほど、得をする。
-                </h2>
-              </Reveal>
-              <Reveal delay={120}>
-                <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
-                  プロフィール属性は項目ごとに公開・非公開を選べます。非公開にした項目は
-                  ターゲティングに使われない代わりに、ポイントボーナスがもらえる逆インセンティブ設計。
-                  プライバシーを守ることが、ちゃんと報われます。
-                </p>
-              </Reveal>
-            </div>
           </div>
         </section>
 
         {/* ───────── 最後のCTA ───────── */}
-        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        <section id="cta" className="kk-scene flex min-h-screen scroll-mt-16 items-center border-b border-brand-100/70">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
           <Reveal direction="scale">
             <div className="card-3d relative overflow-hidden p-10 text-center sm:p-16">
               <AuroraBackground className="opacity-70" />
               <div className="relative">
                 <LogoMark className="kk-breathe mx-auto h-16 text-brand-500" />
-                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
                   あなたの研究にも、回答を。
                 </h2>
-                <p className="mx-auto mt-3 max-w-xl text-slate-600">
+                <p className="mx-auto mt-3 max-w-[42ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
                   登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
                 </p>
                 <div className="mt-8 flex justify-center">
@@ -603,6 +681,7 @@ export default function LandingPage() {
               </div>
             </div>
           </Reveal>
+          </div>
         </section>
       </main>
     </>
