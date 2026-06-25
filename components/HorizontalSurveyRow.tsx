@@ -65,8 +65,8 @@ export default function HorizontalSurveyRow({
   }
 
   return (
-    <section className="mb-6 rounded-2xl bg-brand-50/30 px-4 py-4">
-      <div className="mb-1 flex items-baseline justify-between gap-2">
+    <section className="mb-10 rounded-2xl bg-brand-50/30 px-4 py-5">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-800">{title}</h2>
         {viewMoreHref && (
           <Link href={viewMoreHref} className="text-sm font-medium text-brand-600 hover:underline">
@@ -76,7 +76,7 @@ export default function HorizontalSurveyRow({
       </div>
       {description && <p className="mb-3 text-sm text-slate-400">{description}</p>}
       {layout === 'grid' ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-20 sm:grid-cols-2 lg:grid-cols-3">
           {surveys.map((s) => (
             <SurveyCard key={s.id} survey={s} />
           ))}
