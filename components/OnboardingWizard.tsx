@@ -340,7 +340,7 @@ export default function OnboardingWizard({ nickname }: Props) {
             </p>
 
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/?tour=1')}
               className="btn-3d btn-3d-primary mt-8 w-full py-3 text-base font-bold"
             >
               ホームへ進む →
