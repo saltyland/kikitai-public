@@ -309,6 +309,10 @@ body {
 }
 .kk-breathe { animation: kk-breathe 4s ease-in-out infinite; }
 
+/* 遊び心：ホバーでぴょこんと跳ねる（さりげない手触り） */
+.kk-boop { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.kk-boop:hover { transform: translateY(-4px) rotate(-3deg) scale(1.06); }
+
 /* 進捗：上部のスクロールプログレスバー（JSで --kk-progress を更新） */
 .kk-progress-bar {
   transform-origin: 0 50%;
@@ -507,6 +511,7 @@ body {
   .kk-scroll-cue,
   .kk-breathe,
   .kk-sheen,
+  .kk-boop,
   .kk-netbg-svg,
   .kk-netbg-glow,
   .kk-netbg-ring {
@@ -524,4 +529,29 @@ body {
   .kikitai-spin {
     animation-duration: 1.4s;
   }
+  /* ストーリーセクションはピン留めせず、通常スクロールの素朴な並びにする */
+  .kk-story {
+    min-height: auto !important;
+  }
+  .kk-story-step {
+    position: static !important;
+    opacity: 1 !important;
+    margin-bottom: 4rem;
+  }
+}
+
+/* ───────── スクロールストーリー（GSAP ScrollTrigger） ───────── */
+.kk-story-step {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.kk-story-step.is-active {
+  opacity: 1;
+  transform: translateY(0);
 }
