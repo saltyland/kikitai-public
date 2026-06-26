@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
+import PointRevealCard from '@/components/gamification/PointRevealCard';
 
 /**
  * アンケート回答後の結果画面。
@@ -16,13 +17,17 @@ export default async function AnsweredPage({
   searchParams: Promise<{
     score?: string;
     pts?: string;
+    base?: string;
+    mult?: string;
     feedback?: string;
     closed?: string;
   }>;
 }) {
-  const { score, pts, feedback, closed } = await searchParams;
+  const { score, pts, base, mult, feedback, closed } = await searchParams;
   const qScore = score ? Number(score) : null;
   const earnedPts = pts ? Number(pts) : null;
+  const basePts = base ? Number(base) : null;
+  const multiplier = mult ? Number(mult) : null;
 
   const supabase = await createSupabaseServerClient();
   const profile = await new AuthService(supabase).getCurrentProfile();
@@ -68,30 +73,15 @@ export default async function AnsweredPage({
             </section>
           )}
 
-          {/* 獲得ポイント */}
+          {/* 獲得ポイント演出（平均ポイント → ×倍率 → 最終ポイント → アドバイス・絵文字） */}
           {earnedPts !== null && (
-            <section className="card-3d rounded-2xl bg-white p-6">
-              <h2 className="text-sm font-semibold text-slate-500">獲得ポイント</h2>
-              {earnedPts > 0 ? (
-                <p className="mt-2 text-3xl font-bold text-brand-600">
-                  +{earnedPts}
-                  <span className="ml-1 text-base font-semibold text-slate-400">pt</span>
-                </p>
-              ) : (
-                <p className="mt-2 text-sm text-slate-500">
-                  今回はポイントがもらえませんでした。<br />
-                  次はもう少しくわしく答えてみよう。
-                </p>
-              )}
-            </section>
-          )}
-
-          {/* AIからのアドバイス */}
-          {feedback && (
-            <section className="card-3d rounded-2xl bg-brand-50 p-6 text-left">
-              <h2 className="text-sm font-semibold text-brand-700">AIからのアドバイス</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{feedback}</p>
-            </section>
+            <PointRevealCard
+              baseCost={basePts ?? earnedPts}
+              multiplier={multiplier ?? (earnedPts > 0 ? 1 : 0)}
+              earnedPoints={earnedPts}
+              feedback={feedback ?? null}
+              evaluation={ev}
+            />
           )}
 
           {closed && (

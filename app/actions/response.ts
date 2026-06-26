@@ -56,6 +56,8 @@ export async function submitResponseAction(
   const params = new URLSearchParams({
     score: String(result.score),
     pts: String(result.earnedPoints),
+    base: String(result.baseCost),
+    mult: String(result.multiplier),
   });
   if (result.feedback) params.set('feedback', result.feedback);
   if (result.surveyClosed) params.set('closed', '1');
@@ -109,6 +111,8 @@ export async function submitSharedLinkResponseAction(
   const params = new URLSearchParams({
     score: String(result.score),
     pts: String(result.earnedPoints),
+    base: String(result.baseCost),
+    mult: String(result.multiplier),
   });
   if (result.feedback) params.set('feedback', result.feedback);
   if (result.surveyClosed) params.set('closed', '1');

@@ -20,6 +20,8 @@ export interface ISurveyRepository {
   findByUserIds(userIds: string[]): Promise<Survey[]>;
   countResponses(surveyId: string): Promise<number>;
   countResponsesBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
+  /** 複数アンケートの「作成者が消費したポイント」合計を1クエリでまとめて取得する */
+  sumConsumedPointsBySurveyIds(surveyIds: string[]): Promise<Map<string, number>>;
   /** 複数アンケートの設問プレビュー（先頭数問）を1クエリでまとめて取得する */
   findPreviewQuestionsBySurveyIds(
     surveyIds: string[],
@@ -137,6 +139,20 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
       counts.set(row.survey_id, (counts.get(row.survey_id) ?? 0) + 1);
     }
     return counts;
+  }
+
+  async sumConsumedPointsBySurveyIds(surveyIds: string[]): Promise<Map<string, number>> {
+    const sums = new Map<string, number>();
+    if (surveyIds.length === 0) return sums;
+    const { data, error } = await this.supabase
+      .from('responses')
+      .select('survey_id, consumed_points')
+      .in('survey_id', surveyIds);
+    if (error) throwDbError(error, 'surveys');
+    for (const row of (data ?? []) as { survey_id: string; consumed_points: number | null }[]) {
+      sums.set(row.survey_id, (sums.get(row.survey_id) ?? 0) + (row.consumed_points ?? 0));
+    }
+    return sums;
   }
 
   async findPreviewQuestionsBySurveyIds(
