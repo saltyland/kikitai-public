@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /** 認証不要でアクセスできるパス（/api/cron は CRON_SECRET で独自認可する） */
-const PUBLIC_PATHS = ['/login', '/register', '/auth', '/api/cron', '/s', '/users', '/terms', '/privacy', '/operator'];
+const PUBLIC_PATHS = ['/login', '/register', '/auth', '/api/cron', '/s', '/users', '/terms', '/privacy', '/operator', '/intelligence'];
 
 /** 完全一致のみ公開（トップはランディングページとして未ログインでも表示） */
 const PUBLIC_EXACT_PATHS = ['/'];
@@ -36,16 +36,19 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     }
   );
 
+  // ここではリダイレクト判定用の軽量チェックのみ行う（ネットワーク往復のある
+  // getUser() ではなく、ローカルでJWTを検証する getSession() を使い高速化する）。
+  // 実際の認可・本人確認は各Server Action/Server Component側で getUser() を呼んで担保する。
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const path = request.nextUrl.pathname;
   const isPublic =
     PUBLIC_EXACT_PATHS.includes(path) ||
     PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + '/'));
 
-  if (!user && !isPublic) {
+  if (!session && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

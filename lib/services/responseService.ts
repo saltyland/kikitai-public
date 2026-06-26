@@ -32,8 +32,12 @@ export interface SubmitResult {
   score: number;
   /** 日本語フィードバック */
   feedback: string;
-  /** 今回付与されたポイント */
+  /** 今回付与されたポイント（= baseCost × multiplier の四捨五入） */
   earnedPoints: number;
+  /** 平均品質（×1.0）時にもらえる基礎ポイント（演出の起点に使う） */
+  baseCost: number;
+  /** 品質スコアから決まったポイント付与倍率（0 / 0.3 / 0.5 / 0.8 / 1.0 / 1.5 等） */
+  multiplier: number;
   /** この回答で必要回答数に到達し、アンケートが自動で締め切られたか */
   surveyClosed: boolean;
   /**
@@ -154,6 +158,8 @@ export class ResponseService {
         score: 0,
         feedback: 'ポイント付与なし（作成者の設定により）',
         earnedPoints: 0,
+        baseCost: 0,
+        multiplier: 0,
         surveyClosed: outcome.closed,
         rejected: false,
       };
@@ -335,6 +341,8 @@ export class ResponseService {
         score: result.score,
         feedback: result.feedback,
         earnedPoints: 0,
+        baseCost: 0,
+        multiplier: 0,
         surveyClosed: false,
         rejected: true,
       };
@@ -367,6 +375,8 @@ export class ResponseService {
       score: result.score,
       feedback: result.feedback,
       earnedPoints,
+      baseCost,
+      multiplier,
       surveyClosed: outcome.closed,
       rejected: false,
     };

@@ -154,14 +154,14 @@ export default function HeroCycle() {
               <path d="M1 1L9 5L1 9z" fill="var(--color-brand-500)" />
             </marker>
           </defs>
-          {/* 下地の点線リング */}
-          <circle cx="100" cy="100" r="78" fill="none" stroke="var(--color-brand-200)" strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" />
+          {/* 下地の点線リング（チップの軌道に合わせた半径） */}
+          <circle cx="100" cy="100" r="64" fill="none" stroke="var(--color-brand-200)" strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" />
           {/* 流れを示す回転アーク（4本、各ステージ間をつなぐ） */}
           <g transform={`rotate(${angle} 100 100)`}>
             {[0, 90, 180, 270].map((base) => (
               <g key={base} transform={`rotate(${base} 100 100)`}>
                 <path
-                  d="M100 22 A78 78 0 0 1 155.15 44.85"
+                  d="M100 36 A64 64 0 0 1 145.25 54.75"
                   fill="none"
                   stroke="url(#kk-cycle-flow)"
                   strokeWidth="3"
@@ -174,45 +174,48 @@ export default function HeroCycle() {
           </g>
         </svg>
 
-        {/* 回転する軌道：上下左右にステージのチップを配置 */}
-        <div
-          className="absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2"
-          style={{ transform: `translate(-50%, -50%) rotate(${angle}deg)` }}
-        >
-          {STAGES.map((s, i) => {
-            const pos = [
-              { left: '50%', top: '0%' }, // 上
-              { left: '100%', top: '50%' }, // 右
-              { left: '50%', top: '100%' }, // 下
-              { left: '0%', top: '50%' }, // 左
-            ][i];
-            return (
-              <div
-                key={s.label}
-                className="absolute"
-                style={{ left: pos.left, top: pos.top, transform: 'translate(-50%, -50%)' }}
-              >
-                {/* チップ本体はリング回転を打ち消して常に水平に保つ */}
-                <div
-                  className="card-3d flex w-32 items-center gap-2 px-3 py-2"
-                  style={{ transform: `rotate(${-angle}deg)` }}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                    <s.Icon className="h-4 w-4" />
-                  </span>
-                  <span className="leading-tight">
-                    <span className="block text-xs font-extrabold text-slate-800">{s.label}</span>
-                    <span className="block text-[10px] text-slate-400">{s.sub}</span>
-                  </span>
-                </div>
+        {/* 軌道上のステージチップ：中心からの距離(半径)と角度を直接計算して配置する
+           （親要素を回転させて子を打ち消す方式は、ネストした transform の基準点がずれて
+           4枚が正しい円周上に乗らない不具合があったため、三角関数で直接座標を出す方式に変更）。 */}
+        {STAGES.map((s, i) => {
+          const baseDeg = [270, 0, 90, 180][i]; // 上・右・下・左
+          const theta = ((baseDeg + angle) * Math.PI) / 180;
+          const radius = 32; // 中心からの距離（%）
+          const left = 50 + radius * Math.cos(theta);
+          const top = 50 + radius * Math.sin(theta);
+          return (
+            <div
+              key={s.label}
+              className="absolute"
+              style={{ left: `${left}%`, top: `${top}%`, transform: 'translate(-50%, -50%)' }}
+            >
+              <div className="card-3d flex w-28 items-center gap-2 px-2.5 py-2 sm:w-32 sm:px-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 sm:h-8 sm:w-8">
+                  <s.Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </span>
+                <span className="leading-tight">
+                  <span className="block text-[11px] font-extrabold text-slate-800 sm:text-xs">{s.label}</span>
+                  <span className="block text-[9px] text-slate-400 sm:text-[10px]">{s.sub}</span>
+                </span>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
 
-        {/* 中央：回答中のアンケートカード（循環の起点） */}
+        {/* 中央：回答中のアンケートカード（束ねたカードの一番上にいる、循環の起点） */}
         <div className="absolute left-1/2 top-1/2 w-[58%] -translate-x-1/2 -translate-y-1/2">
-          <div className="card-3d p-3.5">
+          {/* 背後に重ねた2枚のカード（「いくつものアンケートが束ねられている」感を出す） */}
+          <div
+            className="card-3d absolute inset-x-3 top-3 -z-20 h-full opacity-50"
+            style={{ transform: 'rotate(-6deg)' }}
+            aria-hidden
+          />
+          <div
+            className="card-3d absolute inset-x-1.5 top-1.5 -z-10 h-full opacity-75"
+            style={{ transform: 'rotate(3deg)' }}
+            aria-hidden
+          />
+          <div className="card-3d relative p-3.5">
             <div className="flex items-center justify-between text-[10px] text-slate-400">
               <span className="font-bold text-brand-600">質問 2 / 5</span>
               <span>コーヒー文化調査</span>

@@ -346,6 +346,8 @@ export interface SurveyWithStats extends Survey {
   avg_reward_points?: number;
   /** 全問回答した場合の最高獲得ポイント（高品質×1.5時） */
   max_reward_points?: number;
+  /** このアンケートで作成者が消費したポイントの合計（回答ごとの実消費額の総和） */
+  consumed_points?: number;
 }
 
 /** 編集フォームから受け取る設問の入力データ */

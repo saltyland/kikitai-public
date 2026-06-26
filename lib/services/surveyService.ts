@@ -258,10 +258,15 @@ export class SurveyService {
   /** ホーム画面：自分が作成したアンケート一覧（回答数つき）。回答数は1クエリで一括取得する。 */
   async listMySurveys(userId: string): Promise<SurveyWithStats[]> {
     const surveys = await this.surveyRepo.findByOwner(userId);
-    const counts = await this.surveyRepo.countResponsesBySurveyIds(surveys.map((s) => s.id));
+    const ids = surveys.map((s) => s.id);
+    const [counts, consumed] = await Promise.all([
+      this.surveyRepo.countResponsesBySurveyIds(ids),
+      this.surveyRepo.sumConsumedPointsBySurveyIds(ids),
+    ]);
     return surveys.map((s) => ({
       ...s,
       response_count: counts.get(s.id) ?? 0,
+      consumed_points: consumed.get(s.id) ?? 0,
     }));
   }
 
