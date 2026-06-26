@@ -230,8 +230,8 @@ export interface PointsSummary {
 
 /**
  * 属性マッチング配信の条件。null/全項目未設定＝全員に配信。
- * 回答者が該当属性を非公開（private_fields）にしている場合は「不明」となり、
- * 条件を満たさない扱いになる（逆インセンティブ設計）。
+ * 属性は全員必須で登録されるため、回答者の素の属性で判定する
+ * （公開/非公開はプロフィール表示の設定のみで、マッチングには影響しない）。
  */
 export interface TargetConditions {
   ageMin?: number | null;
@@ -409,13 +409,28 @@ export interface AnswerInput {
   grid_answers?: GridRowAnswer[];
 }
 
-/** ユーザー別回答（Proプラン結果ページ用） */
+/**
+ * 回答者の属性（結果ページの個別回答で開示）。
+ * プロフィールの公開/非公開設定に依らず、結果閲覧者には常に渡される。
+ * nickname/avatar/sns 等の個人を特定しうる情報は含めない。
+ */
+export interface RespondentAttributes {
+  age: number | null;
+  gender: string | null;
+  occupation: string | null;
+  grade: string | null;
+  major: string | null;
+  affiliation: string | null;
+  field: string | null;
+}
+
+/** ユーザー別回答（結果ページ・ユーザー別／クロス集計用） */
 export interface UserResponse {
   responseId: string;
   userId: string | null;
-  nickname: string;
-  avatarUrl: string | null;
   createdAt: string;
+  /** 回答者の属性（ゲスト＝未ログインの回答は null） */
+  attributes: RespondentAttributes | null;
   /** response_id に紐づく全回答行 */
   answers: Answer[];
 }
