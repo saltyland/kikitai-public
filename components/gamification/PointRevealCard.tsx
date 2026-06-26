@@ -24,10 +24,13 @@ export interface PointRevealCardProps {
 /** 段階：0=平均ポイント表示 → 1=倍率 → 2=最終ポイント → 3=アドバイス/絵文字 */
 type Stage = 0 | 1 | 2 | 3;
 
-/** 倍率の表示（×1.0 のように小数1桁で揃える） */
+/** 倍率の表示。倍率は連続値なので有効数字2桁で表示する（例: ×1.5 / ×0.83 / ×1.2） */
 function formatMultiplier(m: number): string {
-  return `×${m.toFixed(1)}`;
+  return `×${m.toPrecision(2)}`;
 }
+
+/** 各段階の登場アニメ（絵文字と同じ pop。scale 0→1 のスプリング） */
+const POP_TRANSITION = { type: 'spring', stiffness: 400, damping: 12 } as const;
 
 /**
  * アンケート回答後の獲得ポイント演出。
@@ -57,15 +60,15 @@ export default function PointRevealCard({
   // ステージ進行のタイマー
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setStage(1), 1100)); // 倍率を出す
-    timers.push(setTimeout(() => setStage(2), 2000)); // 最終ポイントへ
-    timers.push(setTimeout(() => setStage(3), 3100)); // アドバイス・絵文字
+    timers.push(setTimeout(() => setStage(1), 750)); // 倍率を出す
+    timers.push(setTimeout(() => setStage(2), 1400)); // 最終ポイントへ
+    timers.push(setTimeout(() => setStage(3), 2200)); // アドバイス・絵文字
     return () => timers.forEach(clearTimeout);
   }, []);
 
   // 平均ポイントのカウントアップ（マウント直後）
   useEffect(() => {
-    const controls = animate(baseCount, baseCost, { duration: 0.7, ease: 'easeOut' });
+    const controls = animate(baseCount, baseCost, { duration: 0.5, ease: 'easeOut' });
     const unsub = baseRounded.on('change', (v) => setBaseDisplay(v));
     return () => {
       controls.stop();
@@ -77,7 +80,7 @@ export default function PointRevealCard({
   useEffect(() => {
     if (stage < 2) return;
     finalCount.set(baseCost);
-    const controls = animate(finalCount, earnedPoints, { duration: 0.9, ease: 'easeOut' });
+    const controls = animate(finalCount, earnedPoints, { duration: 0.6, ease: 'easeOut' });
     const unsub = finalRounded.on('change', (v) => setFinalDisplay(v));
     return () => {
       controls.stop();
@@ -109,13 +112,12 @@ export default function PointRevealCard({
       <div className="mt-4 flex flex-col items-center gap-2">
         {/* 平均ポイント */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, scale: 0 }}
           animate={{
             opacity: stage >= 2 ? 0.5 : 1,
-            y: 0,
             scale: stage >= 2 ? 0.9 : 1,
           }}
-          transition={{ duration: 0.4 }}
+          transition={POP_TRANSITION}
           className="flex flex-col items-center"
         >
           <span className="text-xs font-medium text-slate-400">平均ポイント</span>
@@ -130,9 +132,9 @@ export default function PointRevealCard({
           {stage >= 1 && (
             <motion.div
               key="mult"
-              initial={{ opacity: 0, scale: 0.4, rotate: -12 }}
+              initial={{ opacity: 0, scale: 0, rotate: -12 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 14 }}
+              transition={POP_TRANSITION}
               className={`rounded-full px-3 py-0.5 text-lg font-extrabold ${
                 multiplier >= 1.5
                   ? 'bg-amber-100 text-amber-700'
@@ -151,9 +153,9 @@ export default function PointRevealCard({
           {stage >= 2 && (
             <motion.div
               key="final"
-              initial={{ opacity: 0, y: 14, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 360, damping: 18 }}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={POP_TRANSITION}
               className="mt-1 flex flex-col items-center"
             >
               <div className="h-px w-16 bg-slate-200" />
@@ -174,7 +176,7 @@ export default function PointRevealCard({
                     <Coins className="h-5 w-5 text-amber-600" aria-hidden />
                   </motion.span>
                   <span className="text-4xl font-extrabold text-brand-600 tabular-nums">
-                    +{finalDisplay}
+                    {finalDisplay}
                     <span className="ml-1 text-base font-semibold text-slate-400">pt</span>
                   </span>
                 </div>
