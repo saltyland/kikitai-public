@@ -46,7 +46,7 @@ export default async function AnswerSurveyPage({
             {survey.description && (
               <p className="mb-6 text-sm text-slate-600">{survey.description}</p>
             )}
-            <AnswerForm survey={survey} />
+            <AnswerForm survey={survey} userId={profile.id} />
           </>
         )}
       </main>

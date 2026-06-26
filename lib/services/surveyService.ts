@@ -345,4 +345,79 @@ export class SurveyService {
     const surveys = await this.surveyRepo.findByUserIds(followedIds);
     return (await this.decorateSurveys(userId, surveys)).slice(0, limit);
   }
+
+  /**
+   * キーワード検索：公開中アンケートを検索ワードとの関連度の高い順に返す。
+   *
+   * 待機時間を抑えるため、外部API・埋め込みベクトルは一切使わず、
+   * 既存の一覧取得（findOpenSurveys + decorateSurveys）と同じDBクエリ数だけで
+   * 取得し、関連度スコアはメモリ上で計算する（実質的な追加レイテンシなし）。
+   *
+   * スコアリング：タイトル一致を最重視し、説明文・設問文/選択肢を順に加点する。
+   * 全語を含むものを優先し、語の出現回数・前方一致でも加点して並べ替える。
+   */
+  async searchSurveys(userId: string, rawQuery: string, limit = 30): Promise<SurveyWithStats[]> {
+    const terms = SurveyService.tokenizeQuery(rawQuery);
+    if (terms.length === 0) return [];
+
+    const surveys = (await this.surveyRepo.findOpenSurveys()).filter(
+      (s) => s.user_id !== userId && s.visibility !== 'unlisted'
+    );
+    const decorated = await this.decorateSurveys(userId, surveys);
+
+    return decorated
+      .map((s) => ({ s, score: SurveyService.relevanceScore(s, terms) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((x) => x.s);
+  }
+
+  /** 検索ワードを正規化し、空白区切りの語に分解する（小文字化・重複除去）。 */
+  private static tokenizeQuery(rawQuery: string): string[] {
+    const normalized = (rawQuery ?? '').trim().toLowerCase();
+    if (!normalized) return [];
+    return Array.from(new Set(normalized.split(/\s+/).filter((t) => t.length > 0)));
+  }
+
+  /**
+   * 1アンケートの検索語との関連度スコア。フィールド別に重み付けし、
+   * 語の出現回数で加点する。全語を含む場合はボーナスを与える。0＝無関係。
+   */
+  private static relevanceScore(s: SurveyWithStats, terms: string[]): number {
+    const title = (s.title ?? '').toLowerCase();
+    const description = (s.description ?? '').toLowerCase();
+    // 設問文・選択肢テキストもまとめて検索対象にする（内容での発見性）。
+    const body = (s.preview ?? [])
+      .map((q) => `${q.text ?? ''} ${(q.options ?? []).join(' ')}`)
+      .join(' ')
+      .toLowerCase();
+
+    const count = (text: string, term: string) => {
+      if (!text || !term) return 0;
+      let n = 0;
+      let i = text.indexOf(term);
+      while (i !== -1) {
+        n++;
+        i = text.indexOf(term, i + term.length);
+      }
+      return n;
+    };
+
+    let score = 0;
+    let matchedTerms = 0;
+    for (const term of terms) {
+      const inTitle = count(title, term);
+      const inDesc = count(description, term);
+      const inBody = count(body, term);
+      if (inTitle + inDesc + inBody > 0) matchedTerms++;
+      score += inTitle * 10 + inDesc * 4 + inBody * 2;
+      // タイトルが検索語で始まる場合は強くブースト（最も自然な一致）。
+      if (title.startsWith(term)) score += 8;
+    }
+    if (matchedTerms === 0) return 0;
+    // すべての語を含むアンケートを優先する。
+    if (matchedTerms === terms.length) score += 15;
+    return score;
+  }
 }
