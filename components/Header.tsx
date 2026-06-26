@@ -47,7 +47,10 @@ export default async function Header({
   // /search・/notifications・/profile はそれぞれ専用UIで置き換えるためフィルタ
   const navLinks = NAV_ITEMS.filter(
     (item) =>
-      item.href !== '/notifications' && item.href !== '/profile' && item.href !== '/search'
+      item.href !== '/notifications' &&
+      item.href !== '/profile' &&
+      item.href !== '/search' &&
+      item.href !== '/points'
   );
 
   return (
@@ -77,14 +80,15 @@ export default async function Header({
             <IconNavLink key={item.href} href={item.href} label={item.label} icon={item.icon!} />
           ))}
           {/* ポイント残高 */}
-          <div
+          <Link
+            href="/points"
             data-tour="points"
-            className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-brand-700"
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50"
           >
             <Coins className="h-4 w-4 text-brand-500" aria-hidden />
             <span>{points.toLocaleString()}</span>
             <span className="text-xs font-normal text-slate-400">pt</span>
-          </div>
+          </Link>
           <span data-tour="notifications">
             <NotificationBell notifications={notifications} unreadCount={unreadCount} />
           </span>

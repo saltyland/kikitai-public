@@ -599,7 +599,7 @@ export default function AnswerForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <OfflineBanner online={online} queued={queued} pending={pending} onRetry={retryPending} />
 
       {/* 進捗インジケーター */}
@@ -672,7 +672,7 @@ export default function AnswerForm({
           key={current.id}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="kikitai-slide-in relative rounded-xl bg-white border border-slate-200 p-5 shadow-sm space-y-3"
+          className="kikitai-slide-in relative rounded-xl bg-white border border-slate-200 p-6 shadow-sm space-y-5"
         >
           {/* ✓ マイクロフィードバック */}
           {showCheck && (
@@ -804,13 +804,13 @@ function QuestionInputView({
   if (q.type === 'single' || q.type === 'multiple' || q.type === 'attention') {
     const multiple = q.type === 'multiple';
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         {q.options.map((o) => {
           const checked = multiple ? state.optionIds.includes(o.id) : state.optionIds[0] === o.id;
           return (
             <label
               key={o.id}
-              className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm cursor-pointer transition ${
+              className={`flex w-full items-center gap-3 rounded-lg border px-4 py-4 text-sm cursor-pointer transition ${
                 checked
                   ? 'border-brand-500 bg-brand-50 text-brand-900'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50/40'
