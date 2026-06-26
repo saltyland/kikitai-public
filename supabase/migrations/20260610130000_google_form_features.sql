@@ -13,10 +13,13 @@ alter table questions add column if not exists description text;
 alter table questions add column if not exists config jsonb;
 alter table questions add column if not exists section_index integer not null default 0;
 
--- 設問タイプのチェック制約を拡張（dropdown / paragraph / date / grid を許可）
+-- 設問タイプのチェック制約を拡張（dropdown / paragraph / date / grid / attention を許可）。
+-- attention は後続マイグレーション（quality_rewards）で追加される型だが、
+-- sync は全マイグレーションを毎回リプレイするため、ここで一時的に絞ると
+-- 既存データ（attention型の行）に違反して失敗する。最終形を先取りして書く。
 alter table questions drop constraint if exists questions_type_check;
 alter table questions add constraint questions_type_check
-  check (type in ('single', 'multiple', 'dropdown', 'text', 'paragraph', 'date', 'scale', 'grid'));
+  check (type in ('single', 'multiple', 'dropdown', 'text', 'paragraph', 'date', 'scale', 'grid', 'attention'));
 
 -- アンケート：セクション（ページ）メタ情報。配列の各要素が1ページ分の {title, description}。
 -- 空配列は「セクションなし（単一ページ）」を表す。

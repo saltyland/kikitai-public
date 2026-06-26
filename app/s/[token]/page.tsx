@@ -149,7 +149,7 @@ export default async function SharedSurveyPage({
 
           {/* ログイン済みは shareToken、未ログインは guestToken を渡す */}
           {user ? (
-            <AnswerForm survey={survey} shareToken={token} />
+            <AnswerForm survey={survey} shareToken={token} userId={user.id} />
           ) : (
             <AnswerForm survey={survey} guestToken={token} />
           )}

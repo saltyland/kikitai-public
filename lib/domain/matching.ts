@@ -6,11 +6,11 @@ import type { Profile, TargetConditions } from '@/lib/types/database';
  * アンケートの target_conditions と回答者プロフィールを突き合わせ、
  * 条件を満たす場合のみ一覧に配信する。
  *
- * 逆インセンティブ設計：回答者が該当属性を非公開（private_fields）にしている
- * 場合、その属性は「不明」としてマッチング対象外＝条件を満たさない扱いになる
- * （非公開のボーナスと引き換えにターゲティング配信を受けられない）。
+ * 属性は全員必須で登録されるため、回答者の素の属性で判定する。
+ * プロフィールの公開/非公開設定（private_fields）はプロフィール表示だけの
+ * 設定で、マッチングには影響しない。
  */
-type MatchableProfile = Pick<Profile, 'age' | 'gender' | 'occupation' | 'private_fields'>;
+type MatchableProfile = Pick<Profile, 'age' | 'gender' | 'occupation'>;
 
 /** 条件が実質未設定（全員に配信）か */
 export function isUnrestricted(conditions: TargetConditions | null | undefined): boolean {
@@ -30,20 +30,18 @@ export function matches(
 ): boolean {
   if (isUnrestricted(conditions)) return true;
   const c = conditions as TargetConditions;
-  const isPrivate = (field: 'age' | 'gender' | 'occupation') =>
-    (profile.private_fields ?? []).includes(field);
 
   if (c.ageMin != null || c.ageMax != null) {
-    if (isPrivate('age') || profile.age == null) return false;
+    if (profile.age == null) return false;
     if (c.ageMin != null && profile.age < c.ageMin) return false;
     if (c.ageMax != null && profile.age > c.ageMax) return false;
   }
   if (c.genders?.length) {
-    if (isPrivate('gender') || !profile.gender) return false;
+    if (!profile.gender) return false;
     if (!c.genders.includes(profile.gender)) return false;
   }
   if (c.occupations?.length) {
-    if (isPrivate('occupation') || !profile.occupation) return false;
+    if (!profile.occupation) return false;
     if (!c.occupations.includes(profile.occupation)) return false;
   }
   return true;

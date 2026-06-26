@@ -47,11 +47,13 @@ const SECONDS_PER_TYPE: Record<string, number> = {
   date: 10,
 };
 
-function draftKey(surveyId: string) {
-  return `kikitai-draft-${surveyId}`;
+// 下書き・送信待ちキューはアカウント単位で分離する（同一端末で別アカウントに
+// ログインした際に前のアカウントの回答が引き継がれてしまう事故を防ぐため）。
+function draftKey(surveyId: string, ownerKey: string) {
+  return `kikitai-draft-${ownerKey}-${surveyId}`;
 }
-function pendingKey(surveyId: string) {
-  return `kikitai-pending-${surveyId}`;
+function pendingKey(surveyId: string, ownerKey: string) {
+  return `kikitai-pending-${ownerKey}-${surveyId}`;
 }
 
 /** 確認画面表示用：1設問の回答を人が読める文字列にする */
@@ -73,13 +75,18 @@ export default function AnswerForm({
   survey,
   guestToken,
   shareToken,
+  userId,
 }: {
   survey: SurveyWithQuestions;
   /** 共有リンク（ゲスト回答）のトークン。指定時はゲスト用アクションで送信する。 */
   guestToken?: string;
   /** 共有リンク（ログイン済み回答）のトークン。指定時は共有リンク用アクションで送信する。 */
   shareToken?: string;
+  /** ログイン中ユーザーのID。下書き/送信待ちキューをアカウント単位で分離するために使う。 */
+  userId?: string;
 }) {
+  // 下書き保存のスコープキー：ログイン済みはユーザーID、未ログイン（ゲスト）はトークン単位にする
+  const ownerKey = userId ?? `guest-${guestToken ?? 'anon'}`;
   const [consented, setConsented] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<AnswerState>(() => {
@@ -109,7 +116,7 @@ export default function AnswerForm({
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(draftKey(survey.id));
+      const raw = localStorage.getItem(draftKey(survey.id, ownerKey));
       if (raw) {
         const data = JSON.parse(raw) as { answers?: AnswerState; step?: number };
         if (data.answers) {
@@ -125,31 +132,31 @@ export default function AnswerForm({
           setRestored(true);
         }
       }
-      if (localStorage.getItem(pendingKey(survey.id))) setQueued(true);
+      if (localStorage.getItem(pendingKey(survey.id, ownerKey))) setQueued(true);
     } catch {
       /* 壊れた下書きは無視 */
     }
     setLoaded(true);
-  }, [survey.id]);
+  }, [survey.id, ownerKey]);
 
   // ---- 途中保存：回答・進捗の変化を自動保存（保存時に保存インジケーターを点滅） ----
   useEffect(() => {
     if (!loaded) return;
     try {
       // 同意状態は意図的に保存しない（毎セッション明示同意を取るため）
-      localStorage.setItem(draftKey(survey.id), JSON.stringify({ answers, step }));
+      localStorage.setItem(draftKey(survey.id, ownerKey), JSON.stringify({ answers, step }));
       setSaving(true);
       const t = setTimeout(() => setSaving(false), 800);
       return () => clearTimeout(t);
     } catch {
       /* 保存失敗は無視 */
     }
-  }, [answers, step, loaded, survey.id]);
+  }, [answers, step, loaded, survey.id, ownerKey]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const clearDraft = () => {
     try {
-      localStorage.removeItem(draftKey(survey.id));
+      localStorage.removeItem(draftKey(survey.id, ownerKey));
     } catch {
       /* 無視 */
     }
@@ -279,7 +286,7 @@ export default function AnswerForm({
   // ---- 送信（オフライン時はキューに保存して再送） ----
   const queuePayload = (payload: AnswerInput[]) => {
     try {
-      localStorage.setItem(pendingKey(survey.id), JSON.stringify(payload));
+      localStorage.setItem(pendingKey(survey.id, ownerKey), JSON.stringify(payload));
     } catch {
       /* 無視 */
     }
@@ -328,7 +335,7 @@ export default function AnswerForm({
       // 成功（通常はサーバー側 redirect で遷移）
       clearDraft();
       try {
-        localStorage.removeItem(pendingKey(survey.id));
+        localStorage.removeItem(pendingKey(survey.id, ownerKey));
       } catch {
         /* 無視 */
       }
@@ -376,7 +383,7 @@ export default function AnswerForm({
   const retryPending = async () => {
     let raw: string | null = null;
     try {
-      raw = localStorage.getItem(pendingKey(survey.id));
+      raw = localStorage.getItem(pendingKey(survey.id, ownerKey));
     } catch {
       /* 無視 */
     }
