@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -33,9 +33,22 @@ function DeckCardBody({ survey }: { survey: SurveyWithStats }) {
   const preview = (survey.preview ?? []).slice(0, 3);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px]">
-      {/* ヘッダー帯（やわらかいブランドグラデで奥行きを出す） */}
-      <div className="relative bg-gradient-to-br from-brand-50 via-white to-brand-100/50 px-6 pt-6 pb-4">
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] bg-gradient-to-b from-white to-brand-50/30">
+      {/* ポイントバナー（カードらしい「頭」として最優先で見せる） */}
+      <div className="relative flex items-center justify-between bg-gradient-to-r from-brand-600 to-emerald-400 px-6 py-3.5">
+        <span className="text-[11px] font-bold tracking-wide text-emerald-50">獲得ポイント</span>
+        {survey.avg_reward_points != null ? (
+          <span className="flex items-baseline gap-1 text-white drop-shadow-sm">
+            <span className="text-3xl font-extrabold leading-none">+{survey.avg_reward_points}</span>
+            <span className="text-sm font-bold">pt</span>
+          </span>
+        ) : (
+          <span className="text-sm font-bold text-emerald-50">-</span>
+        )}
+      </div>
+
+      {/* ヘッダー：投稿者・タイトル */}
+      <div className="relative bg-gradient-to-br from-brand-50 via-white to-brand-100/50 px-6 pt-5 pb-4">
         <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-brand-200/40 blur-2xl" />
         <div className="relative flex items-center gap-3">
           <Avatar name={author} src={survey.author_avatar_url} />
@@ -46,11 +59,6 @@ function DeckCardBody({ survey }: { survey: SurveyWithStats }) {
               {survey.deadline && ` ・期限 ${survey.deadline}`}
             </p>
           </div>
-          {survey.avg_reward_points != null && (
-            <span className="ml-auto shrink-0 rounded-full bg-amber-400/90 px-3 py-1 text-xs font-bold text-white shadow-sm">
-              +{survey.avg_reward_points}pt
-            </span>
-          )}
         </div>
         <h3 className="relative mt-4 line-clamp-2 select-none text-lg font-bold leading-snug text-slate-900">
           {survey.title}
@@ -101,10 +109,12 @@ function TopCard({
   survey,
   onAction,
   exitAction,
+  showHint,
 }: {
   survey: SurveyWithStats;
   onAction: (action: Action) => void;
   exitAction: Action;
+  showHint: boolean;
 }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-220, 220], [-12, 12]);
@@ -116,9 +126,17 @@ function TopCard({
       className="absolute inset-0 cursor-grab active:cursor-grabbing"
       style={{ x, rotate, zIndex: 30 }}
       initial={false}
-      animate={{ scale: 1, y: 0 }}
+      animate={
+        showHint
+          ? { scale: 1, y: 0, x: [0, -26, 18, 0] }
+          : { scale: 1, y: 0 }
+      }
       exit={exitVariants[exitAction]}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      transition={
+        showHint
+          ? { x: { duration: 1.1, ease: 'easeInOut', delay: 0.5 }, default: { type: 'spring', stiffness: 300, damping: 30 } }
+          : { type: 'spring', stiffness: 300, damping: 30 }
+      }
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
@@ -127,7 +145,7 @@ function TopCard({
         else if (info.offset.x < -SWIPE_THRESHOLD) onAction('skip');
       }}
     >
-      <div className="h-full w-full rounded-[28px] bg-white ring-1 ring-slate-900/5 shadow-[0_30px_60px_-18px_rgba(15,23,42,0.35)]">
+      <div className="h-full w-full rounded-[28px] bg-white ring-1 ring-brand-900/[0.06] shadow-[0_24px_48px_-20px_rgba(13,148,136,0.28)]">
         <DeckCardBody survey={survey} />
       </div>
       {/* スワイプ中のラベル */}
@@ -152,7 +170,7 @@ function StackCard({ depth }: { depth: number }) {
   return (
     <div
       aria-hidden
-      className="absolute inset-0 rounded-[28px] bg-white ring-1 ring-slate-900/5 shadow-[0_20px_40px_-20px_rgba(15,23,42,0.3)]"
+      className="absolute inset-0 rounded-[28px] bg-white ring-1 ring-brand-900/[0.05] shadow-[0_16px_32px_-18px_rgba(13,148,136,0.22)]"
       style={{
         transform: `translateY(${depth * 14}px) scale(${1 - depth * 0.045})`,
         zIndex: 30 - depth,
@@ -166,6 +184,12 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [exiting, setExiting] = useState<Action | null>(null);
+  const [showHint, setShowHint] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 1800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const total = surveys.length;
   const current = surveys[index];
@@ -239,6 +263,28 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
 
       {/* カードの束 */}
       <div className="relative h-[460px] w-full max-w-sm">
+        {/* スワイプ方向のヒント矢印 */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute -left-3 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-100"
+          animate={showHint ? { opacity: [0.3, 1, 0.3], x: [0, -4, 0] } : { opacity: 0 }}
+          transition={{ duration: 1.4, repeat: showHint ? Infinity : 0, ease: 'easeInOut' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </motion.div>
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute -right-3 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-brand-500 shadow-sm ring-1 ring-brand-100"
+          animate={showHint ? { opacity: [0.3, 1, 0.3], x: [0, 4, 0] } : { opacity: 0 }}
+          transition={{ duration: 1.4, repeat: showHint ? Infinity : 0, ease: 'easeInOut' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </motion.div>
+
         {Array.from({ length: behind }).map((_, i) => (
           <StackCard key={`stack-${index}-${i}`} depth={i + 1} />
         ))}
@@ -248,6 +294,7 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
             survey={current}
             exitAction={exiting ?? 'skip'}
             onAction={handleAction}
+            showHint={showHint && index === 0}
           />
         </AnimatePresence>
       </div>
@@ -260,8 +307,9 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
           className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-slate-400 shadow-[0_10px_25px_-8px_rgba(15,23,42,0.4)] ring-1 ring-slate-100 transition hover:scale-110 hover:text-slate-600"
           aria-label="スキップ"
         >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6L6 18" />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 3.5-7.1" />
+            <path d="M3 4v5h5" />
           </svg>
         </button>
         <button
@@ -275,8 +323,10 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
           </svg>
         </button>
       </div>
-      <p className="text-[11px] text-slate-400">
-        ← スキップ ・ 回答する → ／ ドラッグでも操作できます
+      <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
+        <span className="text-slate-500">← 左にスワイプでスキップ</span>
+        <span aria-hidden className="text-slate-300">/</span>
+        <span className="text-brand-600">右にスワイプで回答する →</span>
       </p>
     </div>
   );

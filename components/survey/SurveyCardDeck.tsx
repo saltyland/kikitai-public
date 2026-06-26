@@ -8,6 +8,7 @@ import {
   useTransform,
   type PanInfo,
 } from 'framer-motion';
+import { RotateCcw, Star, Check } from 'lucide-react';
 import SurveyCard, { type SurveyCardData } from './SurveyCard';
 
 export type SwipeAction = 'answer' | 'skip' | 'later';
@@ -155,10 +156,10 @@ export default function SurveyCardDeck({
         <button
           type="button"
           onClick={() => handleSwipe(visible[0], 'skip')}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-red-500 shadow-md ring-1 ring-slate-100 transition hover:scale-105"
-          aria-label="スキップ"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-400 shadow-md ring-1 ring-slate-100 transition hover:scale-105"
+          aria-label="スキップ（やり直し）"
         >
-          ✕
+          <RotateCcw className="h-6 w-6" strokeWidth={2.5} />
         </button>
         <button
           type="button"
@@ -166,7 +167,7 @@ export default function SurveyCardDeck({
           className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-amber-500 shadow-md ring-1 ring-slate-100 transition hover:scale-105"
           aria-label="後で回答"
         >
-          ★
+          <Star className="h-5 w-5" fill="currentColor" strokeWidth={0} />
         </button>
         <button
           type="button"
@@ -174,7 +175,7 @@ export default function SurveyCardDeck({
           className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition hover:scale-105"
           aria-label="回答する"
         >
-          ✓
+          <Check className="h-6 w-6" strokeWidth={3} />
         </button>
       </div>
     </div>
