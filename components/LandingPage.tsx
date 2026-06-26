@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import Logo, { LogoMark } from '@/components/Logo';
 import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
+import HeroBackground from '@/components/landing/HeroBackground';
+import LoopShowcase from '@/components/landing/LoopShowcase';
 
 /** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
 const SCENES = [
@@ -45,14 +47,6 @@ function IconSparkle({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
       <path d="M19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16z" />
-    </svg>
-  );
-}
-function IconShield({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" />
-      <path d="M9 12l2 2 4-4.5" />
     </svg>
   );
 }
@@ -229,6 +223,7 @@ export default function LandingPage() {
         {/* ───────── ヒーロー ───────── */}
         <section id="top" className="kk-scene relative flex min-h-screen items-center overflow-hidden">
           <AuroraBackground />
+          <HeroBackground />
           <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
             <div>
               <Reveal>
@@ -347,47 +342,8 @@ export default function LandingPage() {
               </p>
             </Reveal>
 
-            <div className="mx-auto mt-14 max-w-2xl space-y-6">
-              {[
-                {
-                  icon: IconCoin,
-                  step: '1',
-                  title: 'アンケートに答える',
-                  body: '気になるアンケートに回答してポイントを獲得。1問ずつ進むスマホ最適化の回答画面で、すきま時間にサクサク答えられます。',
-                },
-                {
-                  icon: IconArrowRight,
-                  step: '2',
-                  title: 'ポイントで集める',
-                  body: '貯めたポイントを使って自分のアンケートを公開。回答し合うコミュニティだから、待っているだけでは集まらなかった回答が届きます。',
-                },
-                {
-                  icon: IconShield,
-                  step: '3',
-                  title: 'AIが質を守る',
-                  body: '提出された回答はAIが自動で品質評価。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータの質を担保します。',
-                },
-              ].map(({ icon: Icon, step, title, body }, i, arr) => (
-                <Reveal key={step} direction="left" delay={i * 120}>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white shadow-lg shadow-brand-500/30">
-                        {step}
-                      </span>
-                      {i < arr.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-brand-200" aria-hidden />}
-                    </div>
-                    <div className="card-3d card-3d-hover flex-1 p-5">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
-                      </div>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
+            <div className="mt-14">
+              <LoopShowcase />
             </div>
           </div>
         </section>
@@ -480,26 +436,27 @@ export default function LandingPage() {
                 Kikitai Intelligence
               </span>
               <h2 className="max-w-3xl text-[1.75rem] font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-snug">
-                <span className="inline-block">これまでにない、</span>
+                <span className="inline-block">がんばった回答が、</span>
                 <br />
                 <span className="inline-block bg-gradient-to-r from-brand-300 to-cyan-300 bg-clip-text text-transparent">
-                  独自AI評価インテリジェンス。
+                  ちゃんと報われる。
                 </span>
               </h2>
               <p className="max-w-xl text-sm leading-relaxed text-slate-300 [text-wrap:pretty] sm:text-base">
-                <span className="inline-block">キキタイが自社開発した評価AIが、すべての回答を24時間自動でレビュー。</span>
-                <span className="inline-block">単なる「機能」のひとつではなく、サービス全体の信頼性を支える中核エンジンです。</span>
+                <span className="inline-block">キキタイの評価AIが、届いた回答ひとつひとつにそっと目を通します。</span>
+                <span className="inline-block">丁寧な声にはきちんとボーナスを、雑な“水増し”にはストップを。</span>
+                <span className="inline-block">だから集まるのは、研究にそのまま使える、きれいなデータだけ。</span>
               </p>
             </Reveal>
 
             <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
               {[
-                { value: '100点', label: '満点で自動採点' },
-                { value: '0円', label: '回答者への追加負担なし' },
-                { value: '業界初', label: '独自開発の評価モデル' },
+                { value: '24h', label: 'いつでも自動でレビュー' },
+                { value: '0円', label: '回答する人への追加負担なし' },
+                { value: '×1.5', label: '丁寧な回答にはボーナス' },
               ].map((s) => (
                 <Reveal key={s.label} direction="up" delay={80}>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-5 text-center backdrop-blur">
+                  <div className="kk-boop rounded-2xl border border-white/10 bg-white/5 px-5 py-5 text-center backdrop-blur">
                     <p className="text-3xl font-black text-white">{s.value}</p>
                     <p className="mt-1 text-xs text-slate-400">{s.label}</p>
                   </div>
@@ -513,18 +470,18 @@ export default function LandingPage() {
                   {[
                     {
                       icon: IconSparkle,
-                      title: '回答の質を100点満点で自動採点',
-                      body: '設問への適合度・具体性・誠実さをAIが多角的に評価。雑な回答は報酬が下がり、丁寧な回答にはボーナスが付きます。',
+                      title: '回答の「丁寧さ」を100点満点で採点',
+                      body: '設問への適合度・具体性・誠実さをAIが見て、丁寧な回答にはボーナスを。がんばりがそのままポイントになります。',
                     },
                     {
                       icon: IconBan,
-                      title: '悪質・不正な回答をリアルタイム検知',
-                      body: 'コピペや無関係な入力、ボットのような連続回答などをAIが自動で見抜き、ブロック。研究データを汚すノイズを未然に防ぎます。',
+                      title: '雑な“水増し”回答はそっとブロック',
+                      body: 'コピペや無関係な入力、ボットのような連続回答をAIが見つけて止めます。研究データを汚すノイズを未然に防ぎます。',
                     },
                     {
                       icon: IconBrain,
-                      title: '他社にはないキキタイ独自モデル',
-                      body: '既存のアンケートサービスには存在しない、キキタイが独自に設計・開発した評価アルゴリズム。回答の経済圏そのものを守るために生まれました。',
+                      title: '「回答し合う輪」を守るための仕組み',
+                      body: 'お互いの時間を交換するキキタイだからこそ、回答の質はみんなの財産。それを守るために専用の評価AIを育てています。',
                     },
                   ].map(({ icon: Icon, title, body }) => (
                     <li key={title} className="flex gap-4">
@@ -665,7 +622,9 @@ export default function LandingPage() {
             <div className="card-3d relative overflow-hidden p-10 text-center sm:p-16">
               <AuroraBackground className="opacity-70" />
               <div className="relative">
-                <LogoMark className="kk-breathe mx-auto h-16 text-brand-500" />
+                <div className="mx-auto w-fit">
+                  <LogoMark className="kk-breathe relative h-16 text-brand-500" />
+                </div>
                 <h2 className="mt-5 text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
                   あなたの研究にも、回答を。
                 </h2>

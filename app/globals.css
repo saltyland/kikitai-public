@@ -312,6 +312,10 @@ body {
 }
 .kk-breathe { animation: kk-breathe 4s ease-in-out infinite; }
 
+/* 遊び心：ホバーでぴょこんと跳ねる（さりげない手触り） */
+.kk-boop { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.kk-boop:hover { transform: translateY(-4px) rotate(-3deg) scale(1.06); }
+
 /* 進捗：上部のスクロールプログレスバー（JSで --kk-progress を更新） */
 .kk-progress-bar {
   transform-origin: 0 50%;
@@ -510,6 +514,7 @@ body {
   .kk-scroll-cue,
   .kk-breathe,
   .kk-sheen,
+  .kk-boop,
   .kk-netbg-svg,
   .kk-netbg-glow,
   .kk-netbg-ring {
@@ -527,4 +532,126 @@ body {
   .kikitai-spin {
     animation-duration: 1.4s;
   }
+  /* ストーリーセクションはピン留めせず、通常スクロールの素朴な並びにする */
+  .kk-story {
+    min-height: auto !important;
+  }
+  .kk-story-step {
+    position: static !important;
+    opacity: 1 !important;
+    margin-bottom: 4rem;
+  }
+}
+
+/* ───────── スクロールストーリー（GSAP ScrollTrigger） ───────── */
+.kk-story-step {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.kk-story-step.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ───────── ループ・ショーケース（擬似「画面操作」アニメ＋人物イラスト） ─────────
+ * 端末モックの中で、回答→ポイント→作成 の3フェーズを自動でループ再生する。
+ * 各画面はフェーズ切替時に key で再マウントされ、入場アニメが毎回再生される。 */
+
+/* 画面そのものの入場（フェードイン＋わずかに下から） */
+@keyframes kk-demo-screen {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: none; }
+}
+.kk-demo-screen { animation: kk-demo-screen 0.45s ease-out both; }
+
+/* 擬似カーソル：画面外から対象へ寄り、タップ（縮小）する */
+@keyframes kk-demo-cursor {
+  0% { opacity: 0; transform: translate(46px, 78px) scale(1); }
+  16% { opacity: 1; }
+  52% { transform: translate(0, 0) scale(1); }
+  60% { transform: translate(0, 0) scale(0.78); }
+  70% { transform: translate(0, 0) scale(1); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+.kk-demo-cursor { animation: kk-demo-cursor 2s cubic-bezier(0.5, 0, 0.2, 1) both; }
+
+/* 対象の選択肢：タップの瞬間に「未選択→選択済み」へ切り替わる */
+@keyframes kk-demo-pick {
+  0%, 56% {
+    border-color: var(--color-slate-200);
+    background: #fff;
+    color: var(--color-slate-600);
+  }
+  60% { transform: scale(0.97); }
+  68%, 100% {
+    border-color: var(--color-brand-500);
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+}
+.kk-demo-pick { animation: kk-demo-pick 2s ease-out both; }
+.kk-demo-pick-dot { animation: kk-demo-pick-dot 2s ease-out both; }
+@keyframes kk-demo-pick-dot {
+  0%, 60% { opacity: 0; transform: scale(0.4); }
+  72%, 100% { opacity: 1; transform: scale(1); }
+}
+
+/* 進捗バー：タップ後に伸びる */
+@keyframes kk-demo-bar {
+  0%, 62% { width: 25%; }
+  100% { width: 50%; }
+}
+.kk-demo-bar { animation: kk-demo-bar 2s ease-out both; }
+
+/* 「+15pt」チップがふわっと浮かんで消える */
+@keyframes kk-demo-pt {
+  0%, 64% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  74% { opacity: 1; transform: translateY(-4px) scale(1); }
+  100% { opacity: 0; transform: translateY(-38px) scale(1); }
+}
+.kk-demo-pt { animation: kk-demo-pt 2.2s ease-out both; }
+
+/* 作成画面：要素を順番にフェードインさせる（delay はインラインで付与） */
+.kk-demo-rise { animation: kk-demo-screen 0.5s ease-out both; }
+
+/* 左ステップリスト：アクティブ行の強調 */
+.kk-loop-step {
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  opacity: 0.55;
+}
+.kk-loop-step.is-active { opacity: 1; transform: translateX(4px); }
+.kk-loop-num {
+  transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+.kk-loop-step.is-active .kk-loop-num {
+  background: var(--color-brand-500);
+  color: #fff;
+  box-shadow: 0 8px 18px -6px rgba(38, 166, 154, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-demo-screen,
+  .kk-demo-cursor,
+  .kk-demo-pick,
+  .kk-demo-pick-dot,
+  .kk-demo-bar,
+  .kk-demo-pt,
+  .kk-demo-rise {
+    animation: none;
+  }
+  /* 動かさず「操作後の状態」で静止表示する */
+  .kk-demo-cursor { opacity: 1; }
+  .kk-demo-pick {
+    border-color: var(--color-brand-500);
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+  .kk-demo-bar { width: 50%; }
+  .kk-loop-step { opacity: 1; }
 }
