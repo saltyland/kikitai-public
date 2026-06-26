@@ -102,6 +102,14 @@ function pushWithCli() {
   console.log('✔ DBスキーマを反映しました（db push）。');
 }
 
+/** PostgRESTのスキーマキャッシュをリロードする。
+ *  Management APIでマイグレーションを直接実行した場合、PostgRESTが古いスキーマを
+ *  キャッシュしたままになり「column does not exist」が出続けることがあるため必須。 */
+async function reloadSchemaCache() {
+  await runSqlViaApi("NOTIFY pgrst, 'reload schema';");
+  console.log('✔ PostgREST のスキーマキャッシュをリロードしました。');
+}
+
 /** Management API のクエリエンドポイントでSQLを実行する（DBパスワード不要） */
 async function runSqlViaApi(sql) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
@@ -141,6 +149,7 @@ async function pushWithApi() {
     console.log('OK');
   }
   console.log('✔ DBスキーマを反映しました（Management API）。');
+  await reloadSchemaCache();
 }
 
 async function pushDatabase() {

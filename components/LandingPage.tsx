@@ -11,7 +11,7 @@ const SCENES = [
   { id: 'story', label: '課題' },
   { id: 'how', label: '仕組み' },
   { id: 'features', label: '機能' },
-  { id: 'intelligence', label: 'AI評価', dark: true },
+  { id: 'intelligence', label: 'AI評価' },
   { id: 'free', label: '無料' },
   { id: 'cta', label: 'はじめる' },
 ];
@@ -157,6 +157,9 @@ export default function LandingPage() {
             <a href="#features" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
               機能
             </a>
+            <Link href="/intelligence" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
+              インテリジェンス
+            </Link>
             <Link
               href="/login"
               className="px-2 py-1.5 text-sm font-bold text-slate-600 hover:text-brand-600"
@@ -368,50 +371,39 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-          {/* 下端を次の暗転シーンへ少しずつ橙転させ、急な切り替わりを和らげる */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 kk-scene-fade-to-dark opacity-60" aria-hidden />
         </section>
 
         {/* ───────── キキタイ・インテリジェンス（最大の差別化要素） ───────── */}
-        <section
-          id="intelligence"
-          className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-28 text-white sm:py-36"
-          style={{ background: 'linear-gradient(160deg, var(--color-brand-900) 0%, var(--color-brand-900) 55%, #0a3b38 100%)' }}
-        >
-          {/* 上端を直前の明るいシーンから滑らかに繋ぐ */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-56 kk-scene-fade-from-dark opacity-70" aria-hidden />
-          {/* ブランドティールのオーロラ光（slate/indigoではなく世界観に統一） */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(69,190,178,0.30),transparent_55%),radial-gradient(circle_at_85%_5%,rgba(124,216,205,0.20),transparent_48%),radial-gradient(circle_at_70%_95%,rgba(38,166,154,0.22),transparent_50%)]" />
+        <section id="intelligence" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
           <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
-            <Reveal className="mb-6 flex flex-col items-center gap-3 text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/40 bg-brand-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-brand-300">
-                <IconBrain className="h-4 w-4" />
-                Kikitai Intelligence
-              </span>
-              <h2 className="max-w-3xl text-[1.75rem] font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-snug">
-                <span className="inline-block">がんばった回答が、</span>
+            <SectionKicker no="04" label="Kikitai Intelligence" />
+            <Reveal className="mb-2 flex flex-col gap-3">
+              <h2 className="max-w-3xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+                がんばった回答が、
                 <br />
-                <span className="inline-block bg-gradient-to-r from-brand-300 to-cyan-300 bg-clip-text text-transparent">
-                  ちゃんと報われる。
-                </span>
+                <span className="inline-block text-brand-600">ちゃんと報われる。</span>
               </h2>
-              <p className="max-w-xl text-sm leading-relaxed text-slate-300 [text-wrap:pretty] sm:text-base">
-                <span className="inline-block">キキタイの評価AIが、届いた回答ひとつひとつにそっと目を通します。</span>
-                <span className="inline-block">丁寧な声にはきちんとボーナスを、雑な“水増し”にはストップを。</span>
-                <span className="inline-block">だから集まるのは、研究にそのまま使える、きれいなデータだけ。</span>
+              <p className="max-w-xl text-base leading-7 text-slate-700 [text-wrap:pretty]">
+                キキタイの評価AIが、届いた回答ひとつひとつにそっと目を通します。
+                丁寧な声にはきちんとボーナスを、雑な“水増し”にはストップを。
+                だから集まるのは、研究にそのまま使える、きれいなデータだけ。
               </p>
+              <Link href="/intelligence" className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:text-brand-700">
+                キキタイ・インテリジェンスの仕組みを見る
+                <IconArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </Reveal>
 
-            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
               {[
                 { value: '24h', label: 'いつでも自動でレビュー' },
                 { value: '0円', label: '回答する人への追加負担なし' },
                 { value: '×1.5', label: '丁寧な回答にはボーナス' },
               ].map((s) => (
                 <Reveal key={s.label} direction="up" delay={80}>
-                  <div className="kk-boop rounded-2xl border border-white/10 bg-white/5 px-5 py-5 text-center backdrop-blur">
-                    <p className="text-3xl font-black text-white">{s.value}</p>
-                    <p className="mt-1 text-xs text-slate-400">{s.label}</p>
+                  <div className="kk-boop rounded-2xl border border-brand-100 bg-white/70 px-5 py-5 text-center">
+                    <p className="text-3xl font-black text-brand-600">{s.value}</p>
+                    <p className="mt-1 text-xs text-slate-500">{s.label}</p>
                   </div>
                 </Reveal>
               ))}
@@ -438,12 +430,12 @@ export default function LandingPage() {
                     },
                   ].map(({ icon: Icon, title, body }) => (
                     <li key={title} className="flex gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-300">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-brand-600 ring-1 ring-slate-100">
                         <Icon className="h-5 w-5" />
                       </span>
                       <div>
-                        <h3 className="font-extrabold text-white">{title}</h3>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-300">{body}</p>
+                        <h3 className="font-extrabold text-slate-900">{title}</h3>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{body}</p>
                       </div>
                     </li>
                   ))}
@@ -498,11 +490,9 @@ export default function LandingPage() {
 
         {/* ───────── 05 非公開アンケート＝無料のGoogleフォーム代替 ───────── */}
         <section id="free" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
-          {/* 暗転シーンから明るいシーンへ滑らかに復帰（上端に余韻を残す） */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 kk-scene-fade-from-dark opacity-60" aria-hidden />
           <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
             <div>
-              <SectionKicker no="04" label="Free & Beautiful" />
+              <SectionKicker no="05" label="Free & Beautiful" />
               <Reveal>
                 <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
                   非公開なら、

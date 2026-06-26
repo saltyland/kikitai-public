@@ -55,6 +55,17 @@ body {
   background: var(--color-brand-200);
 }
 
+/* テキストにホバーした際の文字選択カーソル（Iビーム）を全体で無効化。
+   入力欄・テキストエリア・編集可能要素だけは本来の文字カーソルを残す。 */
+body {
+  cursor: default;
+}
+input,
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
 @layer utilities {
   /* 立体カード：多層シャドウ＋うっすら白ハイライト。
      Card コンポーネントを使わない素の要素でも成立するよう、背景・角丸・境界も内包する。 */

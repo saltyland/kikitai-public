@@ -114,6 +114,14 @@ export default async function ManagePage({
                       回答数 {s.response_count} / {s.required_count}
                       {s.deadline && ` ・期限 ${s.deadline}`}
                     </p>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      消費ポイント 合計 {s.consumed_points ?? 0}pt
+                      {' ・'}平均{' '}
+                      {s.response_count > 0
+                        ? Math.round(((s.consumed_points ?? 0) / s.response_count) * 10) / 10
+                        : 0}
+                      pt/回答
+                    </p>
                   </div>
                 </div>
 
