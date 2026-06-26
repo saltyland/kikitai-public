@@ -3,6 +3,7 @@ import Logo, { LogoMark } from '@/components/Logo';
 import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
 import HeroBackground from '@/components/landing/HeroBackground';
 import LoopShowcase from '@/components/landing/LoopShowcase';
+import HeroCycle from '@/components/landing/HeroCycle';
 
 /** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
 const SCENES = [
@@ -123,56 +124,6 @@ function IconBrain({ className }: { className?: string }) {
   );
 }
 
-/** ヒーロー右側：実際の回答画面を模したモックカード */
-function HeroMock() {
-  return (
-    <div className="relative mx-auto w-full max-w-md">
-      {/* 後ろに重なるカード */}
-      <div className="absolute -left-4 top-6 h-full w-full rotate-[-4deg] rounded-3xl bg-brand-200/50" aria-hidden />
-      <div className="card-3d kk-float relative rotate-[2deg] p-6 sm:p-7" style={{ ['--kk-rot' as string]: '2deg' }}>
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <span className="font-bold text-brand-600">質問 2 / 5</span>
-          <span>研究室のコーヒー文化調査</span>
-        </div>
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
-          <div className="h-full w-2/5 rounded-full bg-brand-500" />
-        </div>
-        <p className="mt-5 text-base font-bold text-slate-800">
-          作業中によく飲むものは？
-        </p>
-        <div className="mt-4 space-y-2.5">
-          <div className="flex items-center gap-3 rounded-xl border-2 border-brand-500 bg-brand-50 px-4 py-2.5 text-sm font-bold text-brand-700">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
-            </span>
-            コーヒー
-          </div>
-          {['紅茶・お茶', 'エナジードリンク', '水・その他'].map((label) => (
-            <div
-              key={label}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600"
-            >
-              <span className="h-5 w-5 rounded-full border-2 border-slate-300 bg-white" />
-              {label}
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 flex justify-end">
-          <span className="btn-3d btn-3d-primary px-5 py-2 text-sm">次へ</span>
-        </div>
-      </div>
-      {/* 浮かぶポイントチップ */}
-      <div className="card-3d kk-float kk-float-delay absolute -right-3 -top-5 px-4 py-2 text-sm font-extrabold text-brand-600 sm:-right-8" style={{ ['--kk-rot' as string]: '6deg' }}>
-        +15pt 獲得
-      </div>
-      <div className="card-3d kk-float-slow absolute -bottom-5 -left-3 flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 sm:-left-8" style={{ ['--kk-rot' as string]: '-5deg' }}>
-        <IconSparkle className="h-4 w-4 text-brand-500" />
-        AI品質スコア 92点
-      </div>
-    </div>
-  );
-}
-
 /** 大きな章番号ラベル（ゲームフリーク風のスクロール章立て） */
 function SectionKicker({ no, label }: { no: string; label: string }) {
   return (
@@ -269,7 +220,7 @@ export default function LandingPage() {
               </Reveal>
             </div>
             <Reveal direction="scale" delay={300}>
-              <HeroMock />
+              <HeroCycle />
             </Reveal>
           </div>
 
@@ -417,16 +368,18 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+          {/* 下端を次の暗転シーンへ少しずつ橙転させ、急な切り替わりを和らげる */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 kk-scene-fade-to-dark opacity-60" aria-hidden />
         </section>
 
-        {/* ───────── キキタイ・インテリジェンス（最大の差別化要素・暗転クライマックス） ───────── */}
+        {/* ───────── キキタイ・インテリジェンス（最大の差別化要素） ───────── */}
         <section
           id="intelligence"
           className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-28 text-white sm:py-36"
-          style={{ background: 'linear-gradient(160deg, var(--color-brand-950) 0%, var(--color-brand-900) 55%, #0a3b38 100%)' }}
+          style={{ background: 'linear-gradient(160deg, var(--color-brand-900) 0%, var(--color-brand-900) 55%, #0a3b38 100%)' }}
         >
           {/* 上端を直前の明るいシーンから滑らかに繋ぐ */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 kk-scene-fade-from-dark opacity-90" aria-hidden />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-56 kk-scene-fade-from-dark opacity-70" aria-hidden />
           {/* ブランドティールのオーロラ光（slate/indigoではなく世界観に統一） */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(69,190,178,0.30),transparent_55%),radial-gradient(circle_at_85%_5%,rgba(124,216,205,0.20),transparent_48%),radial-gradient(circle_at_70%_95%,rgba(38,166,154,0.22),transparent_50%)]" />
           <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
