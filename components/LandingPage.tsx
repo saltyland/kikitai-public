@@ -2,12 +2,11 @@ import Link from 'next/link';
 import Logo, { LogoMark } from '@/components/Logo';
 import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
 import HeroBackground from '@/components/landing/HeroBackground';
-import ScrollStory from '@/components/landing/ScrollStory';
+import LoopShowcase from '@/components/landing/LoopShowcase';
 
 /** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
 const SCENES = [
   { id: 'top', label: 'キキタイ' },
-  { id: 'flow', label: 'つかい方' },
   { id: 'story', label: '課題' },
   { id: 'how', label: '仕組み' },
   { id: 'features', label: '機能' },
@@ -48,14 +47,6 @@ function IconSparkle({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
       <path d="M19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16z" />
-    </svg>
-  );
-}
-function IconShield({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" />
-      <path d="M9 12l2 2 4-4.5" />
     </svg>
   );
 }
@@ -293,11 +284,6 @@ export default function LandingPage() {
           </a>
         </section>
 
-        {/* ───────── スクロールストーリー：3ステップで仕組みを見せる ───────── */}
-        <section id="flow" className="relative scroll-mt-16 overflow-hidden bg-white/40">
-          <ScrollStory />
-        </section>
-
         {/* ───────── 01 課題（ストーリー導入） ───────── */}
         <section id="story" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
           <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
@@ -356,47 +342,8 @@ export default function LandingPage() {
               </p>
             </Reveal>
 
-            <div className="mx-auto mt-14 max-w-2xl space-y-6">
-              {[
-                {
-                  icon: IconCoin,
-                  step: '1',
-                  title: 'アンケートに答える',
-                  body: '気になるアンケートに回答してポイントを獲得。1問ずつ進むスマホ最適化の回答画面で、すきま時間にサクサク答えられます。',
-                },
-                {
-                  icon: IconArrowRight,
-                  step: '2',
-                  title: 'ポイントで集める',
-                  body: '貯めたポイントを使って自分のアンケートを公開。回答し合うコミュニティだから、待っているだけでは集まらなかった回答が届きます。',
-                },
-                {
-                  icon: IconShield,
-                  step: '3',
-                  title: 'AIが質を守る',
-                  body: '提出された回答はAIが自動で品質評価。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータの質を担保します。',
-                },
-              ].map(({ icon: Icon, step, title, body }, i, arr) => (
-                <Reveal key={step} direction="left" delay={i * 120}>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-extrabold text-white shadow-lg shadow-brand-500/30">
-                        {step}
-                      </span>
-                      {i < arr.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-brand-200" aria-hidden />}
-                    </div>
-                    <div className="card-3d card-3d-hover flex-1 p-5">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
-                      </div>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
+            <div className="mt-14">
+              <LoopShowcase />
             </div>
           </div>
         </section>
