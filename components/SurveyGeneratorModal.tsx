@@ -143,7 +143,7 @@ export default function SurveyGeneratorModal({
           <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-slate-700">
-                アテンションチェックを含める
+                不正回答検知問題を含める
                 <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700">推奨</span>
               </p>
               <p className="text-xs text-slate-400 mt-0.5">不正回答の検出精度が上がります</p>
