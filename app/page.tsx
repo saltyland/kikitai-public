@@ -3,8 +3,9 @@ import { AuthService } from '@/lib/services/authService';
 import Header from '@/components/Header';
 import LandingPage from '@/components/LandingPage';
 import MySurveysSummaryCard from '@/components/MySurveysSummaryCard';
-import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
+import AnswerDeck from '@/components/AnswerDeck';
 import FaqAccordion from '@/components/FaqAccordion';
+import type { SurveyWithStats } from '@/lib/types/database';
 import { SurveyService } from '@/lib/services/surveyService';
 import HomeTour from '@/components/HomeTour';
 
@@ -29,6 +30,15 @@ export default async function HomePage({
     service.listByFollowedUsers(profile.id),
     service.listNewest(profile.id),
   ]);
+
+  // おすすめ→フォロー中→新着 を重複排除して1つの回答キューに統合
+  const seen = new Set<string>();
+  const answerQueue: SurveyWithStats[] = [];
+  for (const s of [...recommended, ...byFollowedUsers, ...newest]) {
+    if (seen.has(s.id)) continue;
+    seen.add(s.id);
+    answerQueue.push(s);
+  }
 
   return (
     <>
@@ -69,30 +79,19 @@ export default async function HomePage({
 
         {/* アンケート回答セクション */}
         <div className="mt-6 border-t border-slate-300/70 pt-6">
-          <div className="mb-4 border-l-4 border-brand-400 pl-3">
+          <div className="mb-1 border-l-4 border-brand-400 pl-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               アンケートに回答する
             </h2>
           </div>
+          <p className="mb-5 pl-4 text-sm text-slate-500">
+            カードを1枚ずつチェックして、回答するかスキップするか選べます。
+          </p>
         </div>
 
-        <div data-tour="answer">
-          <HorizontalSurveyRow
-            title="あなたへのおすすめ"
-            surveys={recommended.slice(0, 8)}
-            viewMoreHref="/surveys"
-          />
+        <div data-tour="answer" className="mb-10">
+          <AnswerDeck surveys={answerQueue} />
         </div>
-        <HorizontalSurveyRow
-          title="フォロー中ユーザーの新着アンケート"
-          surveys={byFollowedUsers.slice(0, 8)}
-          viewMoreHref="/surveys"
-        />
-        <HorizontalSurveyRow
-          title="新着アンケート"
-          surveys={newest.slice(0, 8)}
-          viewMoreHref="/surveys"
-        />
 
         <FaqAccordion />
       </main>

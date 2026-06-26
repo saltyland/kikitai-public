@@ -5,7 +5,7 @@ import { calcProgress } from '@/lib/ui/surveyStats';
 import type { PreviewQuestionLite, SurveyWithStats } from '@/lib/types/database';
 
 /** 設問1問分のコンパクトな見た目（非操作・あくまで雰囲気を見せるだけ） */
-function MiniQuestion({ q, index }: { q: PreviewQuestionLite; index: number }) {
+export function MiniQuestion({ q, index }: { q: PreviewQuestionLite; index: number }) {
   return (
     <div className="space-y-1.5">
       <p className="line-clamp-1 text-xs font-medium text-slate-700">
