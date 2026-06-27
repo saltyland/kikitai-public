@@ -55,6 +55,44 @@ const STAGES = [
 ] as const;
 
 const AUTO_SPEED = 14; // 自動回転スピード（度/秒）
+const SCENE_INTERVAL = 4200; // 中央カードの設問が切り替わる間隔（ms）
+
+/** 中央カードに表示する設問のサンプル（実際にキキタイで出せる代表的な3形式を時間でローテーション） */
+type Scene =
+  | { type: 'choice'; survey: string; qIndex: number; qTotal: number; question: string; selected: string; others: string[] }
+  | { type: 'scale'; survey: string; qIndex: number; qTotal: number; question: string; min: string; max: string; selected: number; steps: number }
+  | { type: 'text'; survey: string; qIndex: number; qTotal: number; question: string; answer: string };
+
+const SCENES: Scene[] = [
+  {
+    type: 'choice',
+    survey: 'コーヒー文化調査',
+    qIndex: 2,
+    qTotal: 5,
+    question: '作業中によく飲むものは？',
+    selected: 'コーヒー',
+    others: ['紅茶・お茶', '水・その他'],
+  },
+  {
+    type: 'scale',
+    survey: '夏休みの満足度調査',
+    qIndex: 4,
+    qTotal: 6,
+    question: '今学期の満足度を5段階で教えてください',
+    min: '不満そう',
+    max: '楽しみ',
+    selected: 4,
+    steps: 5,
+  },
+  {
+    type: 'text',
+    survey: '一言フィードバック調査',
+    qIndex: 1,
+    qTotal: 3,
+    question: 'このサービスの良いところを一言で',
+    answer: '回答するだけでポイントが貯まるのが嬉しい',
+  },
+];
 
 /**
  * ヒーロー右側のインタラクティブな「循環」イラスト。
@@ -67,6 +105,8 @@ export default function HeroCycle() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [angle, setAngle] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [sceneVisible, setSceneVisible] = useState(true);
 
   // アニメーション／ドラッグ状態は ref に保持（再レンダリングを起こさず rAF で更新）
   const angleRef = useRef(0);
@@ -92,6 +132,22 @@ export default function HeroCycle() {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  // 中央カードの設問を時間でローテーション（フェードアウト→差し替え→フェードイン）
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    const id = setInterval(() => {
+      setSceneVisible(false);
+      window.setTimeout(() => {
+        setSceneIndex((i) => (i + 1) % SCENES.length);
+        setSceneVisible(true);
+      }, 220);
+    }, SCENE_INTERVAL);
+    return () => clearInterval(id);
+  }, []);
+
+  const scene = SCENES[sceneIndex];
 
   /** コンテナ中心から見たポインタの角度（度） */
   const pointerAngleOf = (clientX: number, clientY: number) => {
@@ -132,18 +188,19 @@ export default function HeroCycle() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-md select-none">
+    <div className="relative mx-auto w-full max-w-xl select-none sm:max-w-2xl" style={{ perspective: '1400px' }}>
       <div
         ref={wrapRef}
         role="img"
         aria-label="アンケートに答えるとポイントが貯まり、自分の調査を公開して回答データが集まる——という循環を表したイラスト。ドラッグで回せます。"
         className={`relative aspect-square w-full touch-none ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ transformStyle: 'preserve-3d' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        {/* 軌道リング＋流れの矢印（回転角に追従） */}
+        {/* 軌道リング＋流れの矢印（回転角に追従。奥行きを出すため縦方向を圧縮した楕円） */}
         <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden>
           <defs>
             <linearGradient id="kk-cycle-flow" x1="0" y1="0" x2="1" y2="1">
@@ -154,14 +211,14 @@ export default function HeroCycle() {
               <path d="M1 1L9 5L1 9z" fill="var(--color-brand-500)" />
             </marker>
           </defs>
-          {/* 下地の点線リング（チップの軌道に合わせた半径） */}
-          <circle cx="100" cy="100" r="64" fill="none" stroke="var(--color-brand-200)" strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" />
+          {/* 下地の点線リング（奥行き感のため縦長を縮めた楕円） */}
+          <ellipse cx="100" cy="100" rx="76" ry="50" fill="none" stroke="var(--color-brand-200)" strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" />
           {/* 流れを示す回転アーク（4本、各ステージ間をつなぐ） */}
           <g transform={`rotate(${angle} 100 100)`}>
             {[0, 90, 180, 270].map((base) => (
               <g key={base} transform={`rotate(${base} 100 100)`}>
                 <path
-                  d="M100 36 A64 64 0 0 1 145.25 54.75"
+                  d="M100 24 A76 50 0 0 1 153.8 50.5"
                   fill="none"
                   stroke="url(#kk-cycle-flow)"
                   strokeWidth="3"
@@ -174,36 +231,50 @@ export default function HeroCycle() {
           </g>
         </svg>
 
-        {/* 軌道上のステージチップ：中心からの距離(半径)と角度を直接計算して配置する
-           （親要素を回転させて子を打ち消す方式は、ネストした transform の基準点がずれて
-           4枚が正しい円周上に乗らない不具合があったため、三角関数で直接座標を出す方式に変更）。 */}
+        {/* 軌道上のステージチップ：中心からの距離(半径)と角度を直接計算して配置する。
+           縦方向を圧縮した楕円軌道＋手前/奥でスケールと不透明度を変えることで
+           三次元的にぐるぐる回って見えるようにしている（手前=大きく濃く・奥=小さく薄く）。 */}
         {STAGES.map((s, i) => {
           const baseDeg = [270, 0, 90, 180][i]; // 上・右・下・左
           const theta = ((baseDeg + angle) * Math.PI) / 180;
-          const radius = 32; // 中心からの距離（%）
-          const left = 50 + radius * Math.cos(theta);
-          const top = 50 + radius * Math.sin(theta);
+          const radiusX = 38; // 横方向の半径（%）
+          const radiusY = 25; // 縦方向の半径（%）。横より小さくして奥行きの圧縮を表現
+          const left = 50 + radiusX * Math.cos(theta);
+          const top = 50 + radiusY * Math.sin(theta);
+          // depth: -1(最奥) 〜 1(最前面)。手前に来るほど大きく・濃く・上に重なる
+          const depth = Math.sin(theta);
+          const scale = 0.74 + ((depth + 1) / 2) * 0.46; // 0.74〜1.20
+          const opacity = 0.55 + ((depth + 1) / 2) * 0.45; // 0.55〜1.0
+          const z = Math.round(depth * 60); // translateZ（px）
           return (
             <div
               key={s.label}
-              className="absolute"
-              style={{ left: `${left}%`, top: `${top}%`, transform: 'translate(-50%, -50%)' }}
+              className="absolute transition-[opacity] duration-150"
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                opacity,
+                zIndex: Math.round(depth * 10) + 10,
+                transform: `translate(-50%, -50%) translateZ(${z}px) scale(${scale})`,
+              }}
             >
-              <div className="card-3d flex w-28 items-center gap-2 px-2.5 py-2 sm:w-32 sm:px-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 sm:h-8 sm:w-8">
-                  <s.Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <div className="card-3d flex w-32 items-center gap-2 px-2.5 py-2 sm:w-36 sm:px-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 sm:h-9 sm:w-9">
+                  <s.Icon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
                 </span>
                 <span className="leading-tight">
-                  <span className="block text-[11px] font-extrabold text-slate-800 sm:text-xs">{s.label}</span>
-                  <span className="block text-[9px] text-slate-400 sm:text-[10px]">{s.sub}</span>
+                  <span className="block text-xs font-extrabold text-slate-800 sm:text-sm">{s.label}</span>
+                  <span className="block text-[10px] text-slate-400 sm:text-[11px]">{s.sub}</span>
                 </span>
               </div>
             </div>
           );
         })}
 
-        {/* 中央：回答中のアンケートカード（束ねたカードの一番上にいる、循環の起点） */}
-        <div className="absolute left-1/2 top-1/2 w-[58%] -translate-x-1/2 -translate-y-1/2">
+        {/* 中央：回答中のアンケートカード（束ねたカードの一番上にいる、循環の起点）。
+           設問は SCENES を数秒ごとにローテーションし、実際にキキタイで出せる
+           形式（選択・5段階評価・短文記述）が入れ替わって見えるようにしている。 */}
+        <div className="absolute left-1/2 top-1/2 z-20 w-[68%] -translate-x-1/2 -translate-y-1/2">
           {/* 背後に重ねた2枚のカード（「いくつものアンケートが束ねられている」感を出す） */}
           <div
             className="card-3d absolute inset-x-3 top-3 -z-20 h-full opacity-50"
@@ -215,33 +286,86 @@ export default function HeroCycle() {
             style={{ transform: 'rotate(3deg)' }}
             aria-hidden
           />
-          <div className="card-3d relative p-3.5">
-            <div className="flex items-center justify-between text-[10px] text-slate-400">
-              <span className="font-bold text-brand-600">質問 2 / 5</span>
-              <span>コーヒー文化調査</span>
-            </div>
-            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-brand-100">
-              <div className="h-full w-2/5 rounded-full bg-brand-500" />
-            </div>
-            <p className="mt-2.5 text-xs font-bold text-slate-800">作業中によく飲むものは？</p>
-            <div className="mt-2 space-y-1.5">
-              <div className="flex items-center gap-2 rounded-lg border-2 border-brand-500 bg-brand-50 px-2.5 py-1.5 text-[11px] font-bold text-brand-700">
-                <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+          <div
+            className="card-3d relative overflow-hidden p-0 transition-all duration-200"
+            style={{ opacity: sceneVisible ? 1 : 0, transform: sceneVisible ? 'translateY(0) scale(1)' : 'translateY(4px) scale(0.985)' }}
+          >
+            {/* ヘッダー帯：写真のカードらしく、塗りのバーで進捗とタイトルを見せる */}
+            <div className="bg-gradient-to-r from-brand-500 to-brand-600 px-3.5 pb-2.5 pt-2.5">
+              <div className="flex items-center justify-between text-[10px] font-semibold text-white/85">
+                <span>
+                  質問 {scene.qIndex} / {scene.qTotal}
                 </span>
-                コーヒー
+                <span className="truncate">{scene.survey}</span>
               </div>
-              {['紅茶・お茶', '水・その他'].map((label) => (
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/25">
                 <div
-                  key={label}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500"
-                >
-                  <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-300 bg-white" />
-                  {label}
+                  className="h-full rounded-full bg-white transition-[width] duration-300"
+                  style={{ width: `${(scene.qIndex / scene.qTotal) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="p-3.5">
+              <p className="text-xs font-bold leading-snug text-slate-800 sm:text-[13px]">{scene.question}</p>
+
+              {scene.type === 'choice' && (
+                <div className="mt-2.5 space-y-1.5">
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-brand-500 bg-brand-50 px-2.5 py-1.5 text-[11px] font-bold text-brand-700">
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                    </span>
+                    {scene.selected}
+                  </div>
+                  {scene.others.map((label) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500"
+                    >
+                      <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-300 bg-white" />
+                      {label}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {scene.type === 'scale' && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-center gap-2.5">
+                    {Array.from({ length: scene.steps }, (_, i) => i + 1).map((n) => (
+                      <span
+                        key={n}
+                        className={
+                          n === scene.selected
+                            ? 'flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-[11px] font-extrabold text-white shadow-sm'
+                            : 'flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-200 text-[11px] font-bold text-slate-400'
+                        }
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>{scene.min}</span>
+                    <span>{scene.max}</span>
+                  </div>
+                </div>
+              )}
+
+              {scene.type === 'text' && (
+                <div className="mt-2.5 rounded-lg border border-brand-200 bg-brand-50/60 px-2.5 py-2 text-[11px] leading-relaxed text-slate-700">
+                  {scene.answer}
+                  <span className="ml-0.5 inline-block h-3 w-px animate-pulse bg-brand-400 align-middle" aria-hidden />
+                </div>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* 浮かぶ「ポイント獲得」チップ（写真のような臨場感を出すため軌道の外、右上に固定） */}
+        <div className="card-3d absolute right-0 top-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-extrabold text-brand-600 sm:right-2">
+          <IconCoin className="h-3.5 w-3.5" />
+          +15pt 獲得
         </div>
       </div>
 
