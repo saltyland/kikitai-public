@@ -352,7 +352,14 @@ function surveySql(survey) {
           question.section ?? 0
         }, ${qj(question.cfg)}, ${qj(question.cond)}) returning id into qid;`
     );
-    (question.opts ?? []).forEach((opt, j) => {
+    const opts =
+      question.type === 'scale' && question.cfg
+        ? Array.from(
+            { length: question.cfg.max - question.cfg.min + 1 },
+            (_, j) => String(question.cfg.min + j)
+          )
+        : question.opts ?? [];
+    opts.forEach((opt, j) => {
       lines.push(`  insert into options (question_id, text, order_index) values (qid, ${q(opt)}, ${j});`);
     });
   });
