@@ -123,6 +123,23 @@ function IconBrain({ className }: { className?: string }) {
     </svg>
   );
 }
+function IconQuestion({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="5" y="3.5" width="14" height="17" rx="2.5" />
+      <path d="M9 3.5V3a1 1 0 011-1h4a1 1 0 011 1v.5" />
+      <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4.5" />
+    </svg>
+  );
+}
+function IconPersonGhost({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="7.5" r="3.2" strokeDasharray="2.2 2.2" />
+      <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" strokeDasharray="2.2 2.2" />
+    </svg>
+  );
+}
 
 /** 大きな章番号ラベル（ゲームフリーク風のスクロール章立て） */
 function SectionKicker({ no, label }: { no: string; label: string }) {
@@ -259,18 +276,56 @@ export default function LandingPage() {
               </Reveal>
             </div>
             <Reveal direction="right" delay={120}>
-              <div className="relative mx-auto max-w-sm">
-                <div className="card-3d kk-float-slow p-6" style={{ ['--kk-rot' as string]: '-2deg' }}>
-                  <p className="text-sm font-bold text-slate-700">あなたのアンケート</p>
-                  <div className="mt-4 space-y-2">
-                    <div className="h-2 w-3/4 rounded-full bg-slate-200" />
-                    <div className="h-2 w-full rounded-full bg-slate-200" />
-                    <div className="h-2 w-2/3 rounded-full bg-slate-200" />
+              <div className="relative mx-auto max-w-md lg:max-w-lg">
+                {/* 中央：問いかけの吹き出し（誰にも届いていない） */}
+                <div className="card-3d kk-float-slow relative overflow-hidden p-7 sm:p-9" style={{ ['--kk-rot' as string]: '-1.5deg' }}>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 ring-1 ring-brand-100">
+                      <IconQuestion className="h-7 w-7" />
+                    </span>
+                    <div>
+                      <p className="text-base font-bold text-slate-700">あなたのアンケート</p>
+                      <p className="text-xs text-slate-400">3日前に公開・誰も見ていない</p>
+                    </div>
                   </div>
-                  <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                    <span className="text-xs text-slate-400">回答数</span>
-                    <span className="text-2xl font-extrabold text-slate-300">0</span>
+
+                  <div className="mt-5 space-y-2.5">
+                    <div className="h-2.5 w-3/4 rounded-full bg-slate-200" />
+                    <div className="h-2.5 w-full rounded-full bg-slate-200" />
+                    <div className="h-2.5 w-2/3 rounded-full bg-slate-200" />
                   </div>
+
+                  {/* 反応がない人たち：輪郭線だけの“空席”アイコン */}
+                  <div className="mt-6 flex items-center gap-2.5">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-slate-200 text-slate-300"
+                      >
+                        <IconPersonGhost className="h-5 w-5" />
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400">誰からも回答が来ていません……</p>
+
+                  <div className="mt-6 flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4 ring-1 ring-slate-100">
+                    <span className="text-xs font-bold text-slate-400">現在の回答数</span>
+                    <span className="text-4xl font-black leading-none text-slate-300">0</span>
+                  </div>
+                </div>
+
+                {/* 浮き出るつぶやき：聞きたいのに、誰も答えてくれない */}
+                <div
+                  className="card-3d kk-float absolute -right-5 -top-6 max-w-[11rem] px-4 py-3 text-xs font-bold leading-relaxed text-rose-500 sm:-right-10"
+                  style={{ ['--kk-rot' as string]: '6deg' }}
+                >
+                  本当は聞きたいことがあるのに、誰にも答えてもらえない……
+                </div>
+                <div
+                  className="card-3d kk-float-slow absolute -bottom-6 -left-4 flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold text-slate-400 sm:-left-9"
+                  style={{ ['--kk-rot' as string]: '-5deg' }}
+                >
+                  既読 0 ／ 回答 0
                 </div>
               </div>
             </Reveal>
