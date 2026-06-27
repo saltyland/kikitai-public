@@ -38,13 +38,6 @@ function IconChart({ className }: { className?: string }) {
     </svg>
   );
 }
-function IconSparkle({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-      <path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6L12 2z" />
-    </svg>
-  );
-}
 function IconArrowRight({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
@@ -327,10 +320,11 @@ export default function HeroCycle() {
               />
             </div>
 
-            <p className="mt-3.5 text-sm font-bold leading-snug text-slate-800 sm:text-base">{scene.question}</p>
+            <p className="mt-3.5 min-h-[2.5rem] text-sm font-bold leading-snug text-slate-800 sm:text-base">{scene.question}</p>
 
+            <div className="flex min-h-[148px] flex-col justify-center">
             {scene.type === 'choice' && (
-              <div className="mt-3 space-y-2">
+              <div className="space-y-2">
                 <div className="flex items-center gap-3 rounded-xl border-2 border-brand-500 bg-brand-50 px-4 py-2.5 text-sm font-bold text-brand-700">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
                     <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
@@ -350,7 +344,7 @@ export default function HeroCycle() {
             )}
 
             {scene.type === 'scale' && (
-              <div className="mt-4">
+              <div>
                 <div className="flex items-center justify-center gap-3">
                   {Array.from({ length: scene.steps }, (_, i) => i + 1).map((n) => (
                     <span
@@ -373,11 +367,12 @@ export default function HeroCycle() {
             )}
 
             {scene.type === 'text' && (
-              <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm leading-relaxed text-slate-700">
+              <div className="rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm leading-relaxed text-slate-700">
                 {scene.answer}
                 <span className="ml-0.5 inline-block h-3.5 w-px animate-pulse bg-brand-400 align-middle" aria-hidden />
               </div>
             )}
+            </div>
 
             <div className="mt-4 flex justify-end">
               <span className="btn-3d inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white">
@@ -387,19 +382,8 @@ export default function HeroCycle() {
             </div>
           </div>
         </div>
-
-        {/* 浮かぶ「ポイント獲得」チップ（写真のように軌道の外へ少しはみ出して固定） */}
-        <div className="card-3d absolute -top-2 right-0 flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold text-brand-600 sm:-right-3 sm:text-sm">
-          <IconCoin className="h-4 w-4" />
-          +15pt 獲得
-        </div>
       </div>
 
-      {/* 浮かぶAI品質チップ＋ドラッグ操作のヒント */}
-      <div className="card-3d absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-slate-700">
-        <IconSparkle className="h-4 w-4 text-brand-500" />
-        AI品質スコア 92点
-      </div>
       <p className="mt-7 text-center text-[11px] font-medium text-brand-500/80">
         ドラッグで循環を回せます
       </p>
