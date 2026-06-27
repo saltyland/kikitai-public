@@ -304,7 +304,7 @@ export default function HeroCycle() {
             aria-hidden
           />
           <div
-            className="card-3d relative rounded-[1.75rem] p-4 transition-all duration-200 sm:p-5"
+            className="card-3d relative rounded-[1.75rem] p-3.5 transition-all duration-200 sm:p-4"
             style={{ opacity: sceneVisible ? 1 : 0, transform: sceneVisible ? 'translateY(0) scale(1)' : 'translateY(4px) scale(0.985)' }}
           >
             <div className="flex items-center justify-between text-xs">
@@ -320,12 +320,12 @@ export default function HeroCycle() {
               />
             </div>
 
-            <p className="mt-3.5 min-h-[2.5rem] text-sm font-bold leading-snug text-slate-800 sm:text-base">{scene.question}</p>
+            <p className="mt-3 text-sm font-bold leading-snug text-slate-800 sm:text-base">{scene.question}</p>
 
-            <div className="flex min-h-[148px] flex-col justify-center">
+            <div className="flex min-h-[104px] flex-col justify-center">
             {scene.type === 'choice' && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 rounded-xl border-2 border-brand-500 bg-brand-50 px-4 py-2.5 text-sm font-bold text-brand-700">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-3 rounded-xl border-2 border-brand-500 bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
                     <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
                   </span>
@@ -334,7 +334,7 @@ export default function HeroCycle() {
                 {scene.others.map((label) => (
                   <div
                     key={label}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-500"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500"
                   >
                     <span className="h-5 w-5 shrink-0 rounded-full border-2 border-slate-300 bg-white" />
                     {label}
@@ -374,8 +374,8 @@ export default function HeroCycle() {
             )}
             </div>
 
-            <div className="mt-4 flex justify-end">
-              <span className="btn-3d inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white">
+            <div className="mt-3 flex justify-end">
+              <span className="btn-3d inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white">
                 次へ
                 <IconArrowRight className="h-4 w-4" />
               </span>
