@@ -92,16 +92,6 @@ textarea,
       0 3px 0 rgba(13, 84, 79, 0.05);
   }
 
-  /* 設問カードの差し替え演出：小さい→ちょっと大きい→元の大きさ、のスポーン効果 */
-  .kk-scene-spawn {
-    animation: kk-scene-spawn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .kk-scene-spawn {
-      animation: none;
-    }
-  }
-
   /* 押し込みボタン：下に「厚み」を持たせ、押すと沈む */
   .btn-3d {
     --btn-edge: var(--color-brand-800);
@@ -292,13 +282,6 @@ textarea,
 }
 
 /* ふわふわ浮遊（装飾カード・チップ） */
-/* 設問カードの差し替え演出：小さい→ちょっと大きい→元の大きさ */
-@keyframes kk-scene-spawn {
-  0% { opacity: 0; transform: scale(0.82) translateY(6px); }
-  55% { opacity: 1; transform: scale(1.05) translateY(-2px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-
 @keyframes kk-float {
   0%, 100% { transform: translateY(0) rotate(var(--kk-rot, 0deg)); }
   50% { transform: translateY(-16px) rotate(var(--kk-rot, 0deg)); }

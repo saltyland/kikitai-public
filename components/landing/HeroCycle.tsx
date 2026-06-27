@@ -130,6 +130,7 @@ export default function HeroCycle() {
   const [angle, setAngle] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [sceneIndex, setSceneIndex] = useState(0);
+  const [sceneVisible, setSceneVisible] = useState(true);
 
   // アニメーション／ドラッグ状態は ref に保持（再レンダリングを起こさず rAF で更新）
   const angleRef = useRef(0);
@@ -156,12 +157,16 @@ export default function HeroCycle() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // 中央カードの設問を時間でローテーション（差し替え時に spawn アニメーションが再生される）
+  // 中央カードの設問を時間でローテーション（フェードアウト→差し替え→フェードイン）
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
     const id = setInterval(() => {
-      setSceneIndex((i) => (i + 1) % SCENES.length);
+      setSceneVisible(false);
+      window.setTimeout(() => {
+        setSceneIndex((i) => (i + 1) % SCENES.length);
+        setSceneVisible(true);
+      }, 220);
     }, SCENE_INTERVAL);
     return () => clearInterval(id);
   }, []);
@@ -305,8 +310,10 @@ export default function HeroCycle() {
             style={{ transform: 'rotate(3deg)' }}
             aria-hidden
           />
-          {/* key=sceneIndex で毎回マウントし直し、kk-scene-spawn（小さい→ちょっと大きい→元の大きさ）を再生する */}
-          <div key={sceneIndex} className="card-3d kk-scene-spawn relative rounded-[1.75rem] p-4 sm:p-5">
+          <div
+            className="card-3d relative rounded-[1.75rem] p-4 transition-all duration-200 sm:p-5"
+            style={{ opacity: sceneVisible ? 1 : 0, transform: sceneVisible ? 'translateY(0) scale(1)' : 'translateY(4px) scale(0.985)' }}
+          >
             <div className="flex items-center justify-between text-xs">
               <span className="font-extrabold text-slate-800">
                 質問 {sceneIndex + 1} / {SCENE_TOTAL}
