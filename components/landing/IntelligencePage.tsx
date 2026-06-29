@@ -4,6 +4,13 @@ import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { Reveal } from '@/components/ScrollReveal';
 
+/* ───────── 書体（学術的トーンを出すための明朝/等幅スタック） ───────── */
+// 見出し・図キャプションは明朝系で「論文の図」のような落ち着きを出す。
+const SERIF =
+  '"Times New Roman", "Times", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Noto Serif JP", "MS PMincho", serif';
+// セクション番号・ラベル・図番号は等幅で実験ノート感を出す。
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+
 /* ───────── 装飾アイコン（絵文字は使わない方針のためすべてSVG） ───────── */
 
 function IconArrowLeft({ className }: { className?: string }) {
@@ -17,6 +24,29 @@ function IconArrowRight({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       <path d="M4 12h15M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+/* ───────── 学術的な背景（方眼紙＋座標目盛りの線画） ─────────
+ * ゲームフリーク「VISION」のような、静かで図面的なトーンを狙う。
+ * 微細グリッド＋主目盛り＋十字ティックで「研究ノート／設計図」の質感を出す。 */
+function AcademicGrid({ className }: { className?: string }) {
+  return (
+    <svg className={className} aria-hidden preserveAspectRatio="xMidYMid slice">
+      <defs>
+        {/* 微細グリッド（方眼紙） */}
+        <pattern id="kk-fine" width="22" height="22" patternUnits="userSpaceOnUse">
+          <path d="M22 0H0V22" fill="none" stroke="#45beb2" strokeWidth="0.4" />
+        </pattern>
+        {/* 主目盛り＋交点の十字ティック（科学プロットの座標感） */}
+        <pattern id="kk-major" width="110" height="110" patternUnits="userSpaceOnUse">
+          <path d="M110 0H0V110" fill="none" stroke="#45beb2" strokeWidth="0.8" />
+          <path d="M-4 0H4M0 -4V4" stroke="#7cd8cd" strokeWidth="0.8" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#kk-fine)" opacity="0.55" />
+      <rect width="100%" height="100%" fill="url(#kk-major)" />
     </svg>
   );
 }
@@ -70,24 +100,26 @@ function FigureGeneration({ className }: { className?: string }) {
 
       {/* 変換ノード */}
       <circle cx="190" cy="140" r="24" fill="#0a2120" stroke="#45beb2" strokeWidth="1.8" />
-      <path d="M182 132l2 2 2-3-2 9-2-3-2 2 2-7zM198 132l2 7-2-2-2 3-2-9 2 3 2-2z" fill="#45beb2" opacity="0" />
       <path d="M190 128l2.6 7.6 7.6 2.6-7.6 2.6-2.6 7.6-2.6-7.6-7.6-2.6 7.6-2.6z" fill="#7cd8cd" />
       <path d="M28 140h130" stroke="#26a69a" strokeWidth="2" strokeDasharray="3 4" />
 
-      {/* 出力：分岐する設問群 */}
+      {/* 出力：分岐する設問群（うち2問は品質シグナル＝色を変える） */}
       {[
-        { y: 60, w: 96 },
-        { y: 104, w: 84 },
-        { y: 148, w: 92 },
-        { y: 192, w: 80 },
+        { y: 60, w: 96, signal: false },
+        { y: 104, w: 84, signal: true },
+        { y: 148, w: 92, signal: false },
+        { y: 192, w: 80, signal: true },
       ].map((q, i) => (
         <g key={i}>
           <path d={`M214 140 C232 140, 232 ${q.y + 12}, 252 ${q.y + 12}`} fill="none" stroke="#26a69a" strokeWidth="1.6" opacity="0.8" />
-          <rect x="252" y={q.y} width={q.w} height="24" rx="8" fill="#0f2c2a" stroke="#3a5654" strokeWidth="1.2" />
-          <circle cx="264" cy={q.y + 12} r="3" fill="#45beb2" />
+          <rect x="252" y={q.y} width={q.w} height="24" rx="8" fill="#0f2c2a" stroke={q.signal ? '#7cd8cd' : '#3a5654'} strokeWidth={q.signal ? 1.6 : 1.2} />
+          <circle cx="264" cy={q.y + 12} r="3" fill={q.signal ? '#7cd8cd' : '#45beb2'} />
           <line x1="274" y1={q.y + 12} x2={252 + q.w - 14} y2={q.y + 12} stroke="#5a7a78" strokeWidth="2" strokeLinecap="round" />
         </g>
       ))}
+      {/* 凡例：品質シグナル設問 */}
+      <circle cx="260" cy="244" r="3" fill="#7cd8cd" />
+      <text x="268" y="248" fontSize="8" fill="#7cd8cd">＝ 不正検知シグナル設問</text>
     </svg>
   );
 }
@@ -126,47 +158,75 @@ function FigureMonitoring({ className }: { className?: string }) {
   );
 }
 
-const FEATURES = [
+type Feature = {
+  no: string;
+  tag: string;
+  title: string;
+  /** 手法を一行で示す学術的なサブラベル（Method 行） */
+  method: string;
+  lead: string;
+  points: string[];
+  /** 図のキャプション（「図1 ── …」の本文部分） */
+  caption: string;
+  Figure: (props: { className?: string }) => React.ReactElement;
+};
+
+const FEATURES: Feature[] = [
   {
     no: '01',
-    tag: 'Quality Scoring',
+    tag: 'Response Quality Assessment',
     title: '回答品質の評価AI',
-    lead: '届いた回答ひとつひとつを、設問との適合度・具体性・誠実さの3軸でAIが採点します。',
+    method: '機械フィルタ層 × 自社品質モデル × 大規模言語モデルの三層構成',
+    lead:
+      '届いた回答ひとつひとつを、設問への適合度・回答の具体性・誠実性といった複数の観点から、多層構成の評価エンジンがスコア化します。汎用AIに丸投げするのではなく、品質判定に特化した自社システムを評価の軸に据えているのが核心です。',
     points: [
-      '0〜100点のスコアと、何が評価されたかの根拠を併せて記録',
-      '高品質な回答には付与ポイントをボーナス倍率で上乗せ',
-      '研究者は集計後のデータをそのまま分析に使える状態で受け取れる',
+      '三層パイプライン：流し読み・連続投稿・定型コピペなど物理的・論理的に確実に弾ける回答は、軽量な機械フィルタ層が即時に処理する。意味の理解を要するグレーな回答だけを上位の評価層へ送り、判定コストと精度を両立させる責務分離設計。',
+      'アテンション機構：アンケート内に「正解が一意に定まる確認設問」を組み込み、設問文を読まずに惰性で回答する人間・ボットを検出する。回答が“設問を読んだ上でのものか”という注意（attention）そのものを検査し、明確な誤答はその場で無効化する。',
+      '自社開発の品質特化モデル：回答を自前のローカルエンコーダで意味ベクトルへ変換し、古典的な機械学習分類器が品質を判定する独自経路を構築。実際の回答を人手でラベリングして較正しており、外部にデータを送らずに動作する非送信ルートを持つ。',
+      '意味的関連性の照合：アンケート設計時に一度だけ「望ましい回答が占める意味的な領域」を生成しておき、各回答との意味的な近さを測る。これにより、設問と噛み合わない・はぐらかし・中身の薄い回答を、表層の単語一致ではなく意味で捉える。',
+      '二重評価と非対称コスト設計：ルールベース判定とAI判定を常に突き合わせ、両者が大きく食い違うときは保守的に扱う。「真面目な回答を誤って弾く損失」を最も重く見積もり、疑わしい回答も即破棄せず段階的に降格・救済する。',
+      '操作耐性：回答テキストに紛れ込んだ「満点をつけろ」等の指示を検出し、加点ではなく誠実性の減点材料として扱う。AIスコア単独では破棄を確定させない多重防御。',
     ],
+    caption: '機械フィルタ・自社品質モデル・LLMを束ねる多層評価パイプライン。各回答にスコアと根拠が併記される。',
     Figure: FigureScoring,
   },
   {
     no: '02',
-    tag: 'AI Generation',
-    title: 'アンケートのAI自動作成',
-    lead: '調査テーマと目的を入力するだけで、設問の構成・選択肢・尋ね方をAIが下書きします。',
+    tag: 'AI Survey Generation',
+    title: 'アンケートのAI自動生成',
+    method: '他社LLM × キキタイ専用スキーマ × 不正検知設問の自動設計',
+    lead:
+      '調査テーマと目的を入力するだけで、他社の大規模言語モデル（LLM）を基盤に、キキタイの品質評価パイプラインへ最適化されたアンケートを設計します。単なる設問の下書きではなく、雑な回答・不正を構造から防ぐ「品質シグナル」を織り込んで生成するのが特徴です。',
     points: [
-      '単一回答・複数回答・自由記述など設問タイプを目的に応じて自動選択',
-      '誘導的な聞き方やバイアスのかかった選択肢をAIが事前に検出',
-      '生成後はすべて手動編集が可能。AIは“最初の一歩”を引き受けるだけ',
+      'キキタイ専用への最適化：汎用LLMの出力をそのまま使うのではなく、評価エンジンが解釈できる構造化スキーマ（各設問の役割タグ）に沿って生成する。生成されたアンケートは、そのまま回答品質AIの評価対象として接続できる。',
+      'アテンションチェックの自動埋め込み：正解が一意に定まる確認設問を中盤〜後半へ自動配置し、設問を読み飛ばす流し読み・ボットを構造的に検出できるようにする。',
+      '矛盾検出ペアの自動設計：同一の概念を異なる表現で二度尋ねる設問ペアを自動で組み込み、回答の前後の食い違いから、いい加減な回答を炙り出す。',
+      '自由記述シグナルの戦略的配置：評価尺度の設問直後に自由記述を置くなど、回答品質AIが意味を評価しやすい構造を設計に織り込む。導入→本題→詳細の3段構成や設問タイプの配分といった、学術調査の作法にも沿う。',
+      '構造とAI監視の「両輪」：自動生成されたアンケート構造そのものと、公開中ずっと働くAIの不正監視（次節）。この二つが噛み合うことで、雑・手抜き・不正な回答を入口（設計）と出口（監視）の両方で止める。',
+      '生成後はすべて手動編集が可能。AIは設計の土台を引き受けるだけで、最終的な意思決定は研究者の手に残る。',
     ],
+    caption: '1行の入力が、品質シグナル（不正検知設問）を内包したアンケートへ展開される。',
     Figure: FigureGeneration,
   },
   {
     no: '03',
     tag: 'Reliability Monitoring',
     title: '信頼性を守るアンケート監視',
-    lead: 'アンケート作成時に有効化すると、公開期間中ずっと自動で回答を監視し続けます。',
+    method: '機械シグナル × ハニーポット × 近傍重複検出の常時稼働',
+    lead:
+      'アンケート作成時に有効化すると、公開期間中ずっと自動で回答を監視し続けます。②で設計に織り込んだ品質シグナルを、収集の現場で実際に発火させる「もう一方の車輪」です。',
     points: [
-      'コピペ・無関係な入力・短時間の連続回答などの異常パターンを検知',
-      '怪しい回答は集計前に自動でフィルタリングし、研究データを汚さない',
-      '監視ログは作成者側の管理画面でいつでも確認できる',
+      'コピペ・無関係な入力・短時間の連続回答などの異常パターンを検知。回答間の近傍重複や、人間には見えない隠し項目（ハニーポット）への入力も手がかりにする。',
+      '怪しい回答は集計前に自動でフィルタリングし、研究データを汚さない。確実なものだけを破棄し、グレーは保持して上位の意味評価へ申し送る。',
+      '監視ログは作成者側の管理画面でいつでも確認でき、なぜその判定になったかの根拠も追える。',
     ],
+    caption: '流れ込む回答を常時スキャンし、異常パターンの回答だけを集計前に捕捉する。',
     Figure: FigureMonitoring,
   },
 ];
 
 /** 「キキタイ・インテリジェンス」専用ページ。トップのランディングとは別に、
- * 3つのAI機能を技術的な裏付けとして落ち着いたトーンで紹介する。 */
+ * 3つのAI機能を技術的な裏付けとして、論文の手法節のような落ち着いたトーンで紹介する。 */
 export default function IntelligencePage() {
   return (
     <div className="min-h-screen bg-[#0a1f1e] text-slate-100">
@@ -189,26 +249,25 @@ export default function IntelligencePage() {
       <main>
         {/* ヒーロー */}
         <section className="relative overflow-hidden border-b border-white/10 px-4 py-24 sm:px-6 sm:py-32">
-          {/* 背景：回路・ネットワークを思わせる静かな線画グリッド */}
-          <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]" aria-hidden preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <pattern id="kk-grid" width="64" height="64" patternUnits="userSpaceOnUse">
-                <path d="M0 0H64M0 0V64" stroke="#45beb2" strokeWidth="0.6" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#kk-grid)" />
-          </svg>
-          <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" aria-hidden />
-          <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" aria-hidden />
+          {/* 背景：方眼紙＋座標目盛りの図面的グリッド（学術トーン） */}
+          <AcademicGrid className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.16]" />
+          <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" aria-hidden />
+          <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-cyan-400/5 blur-3xl" aria-hidden />
 
           <div className="relative mx-auto max-w-3xl text-center">
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-brand-300">
+              <span
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-brand-300"
+                style={{ fontFamily: MONO }}
+              >
                 Kikitai Intelligence
               </span>
             </Reveal>
             <Reveal delay={100}>
-              <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-tight">
+              <h1
+                className="mt-6 text-3xl font-bold leading-tight tracking-tight text-white [text-wrap:balance] sm:text-5xl sm:leading-tight"
+                style={{ fontFamily: SERIF }}
+              >
                 データの「信頼できる量」を、
                 <br />
                 AIで設計する。
@@ -221,6 +280,15 @@ export default function IntelligencePage() {
                 研究にそのまま使えるデータを設計段階から守ります。
               </p>
             </Reveal>
+            {/* アブストラクト風の要約行（学術文書のメタ表記） */}
+            <Reveal delay={300}>
+              <p
+                className="mx-auto mt-8 max-w-lg border-t border-white/10 pt-4 text-[11px] leading-relaxed text-slate-400"
+                style={{ fontFamily: MONO }}
+              >
+                Methods — three-layer quality pipeline · schema-optimized generation · always-on reliability monitoring
+              </p>
+            </Reveal>
           </div>
         </section>
 
@@ -228,18 +296,27 @@ export default function IntelligencePage() {
         {FEATURES.map((f, i) => (
           <section
             key={f.no}
-            className={`border-b border-white/10 px-4 py-20 sm:px-6 sm:py-28 ${i % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+            className={`relative overflow-hidden border-b border-white/10 px-4 py-20 sm:px-6 sm:py-28 ${i % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
           >
-            <div className="mx-auto max-w-5xl">
+            {/* セクションにも図面グリッドを淡く敷く */}
+            <AcademicGrid className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.05]" />
+            <div className="relative mx-auto max-w-5xl">
               <div className={`grid items-center gap-12 lg:grid-cols-2 ${i % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
                 <Reveal direction={i % 2 === 1 ? 'right' : 'left'}>
                   <div className="flex items-center gap-3">
-                    <span className="text-4xl font-black leading-none text-white/15 sm:text-5xl">{f.no}</span>
-                    <span className="text-xs font-bold uppercase tracking-[0.25em] text-brand-300">{f.tag}</span>
+                    <span className="text-4xl font-black leading-none text-white/15 sm:text-5xl" style={{ fontFamily: MONO }}>{f.no}</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-300" style={{ fontFamily: MONO }}>{f.tag}</span>
                   </div>
-                  <h2 className="mt-4 text-2xl font-extrabold leading-snug text-white [text-wrap:balance] sm:text-3xl">
+                  <h2
+                    className="mt-4 text-2xl font-bold leading-snug text-white [text-wrap:balance] sm:text-3xl"
+                    style={{ fontFamily: SERIF }}
+                  >
                     {f.title}
                   </h2>
+                  {/* Method 行（手法の一行要約） */}
+                  <p className="mt-3 text-xs font-medium tracking-wide text-brand-300/90" style={{ fontFamily: MONO }}>
+                    <span className="text-brand-400">Method —</span> {f.method}
+                  </p>
                   <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300 [text-wrap:pretty] sm:text-base">
                     {f.lead}
                   </p>
@@ -253,7 +330,14 @@ export default function IntelligencePage() {
                   </ul>
                 </Reveal>
                 <Reveal direction={i % 2 === 1 ? 'left' : 'right'} delay={120}>
-                  <f.Figure className="w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.03]" />
+                  <figure className="m-0">
+                    <f.Figure className="w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.03]" />
+                    {/* 図キャプション（論文の図のように番号付き・明朝） */}
+                    <figcaption className="mt-3 max-w-md text-xs leading-relaxed text-slate-400" style={{ fontFamily: SERIF }}>
+                      <span className="font-semibold text-brand-300" style={{ fontFamily: MONO }}>{`図${f.no.replace(/^0/, '')}.`}</span>{' '}
+                      {f.caption}
+                    </figcaption>
+                  </figure>
                 </Reveal>
               </div>
             </div>
@@ -261,15 +345,16 @@ export default function IntelligencePage() {
         ))}
 
         {/* CTA */}
-        <section className="px-4 py-20 text-center sm:px-6 sm:py-28">
+        <section className="relative overflow-hidden px-4 py-20 text-center sm:px-6 sm:py-28">
+          <AcademicGrid className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.07]" />
           <Reveal>
-            <h2 className="text-2xl font-extrabold text-white [text-wrap:balance] sm:text-3xl">
+            <h2 className="relative text-2xl font-bold text-white [text-wrap:balance] sm:text-3xl" style={{ fontFamily: SERIF }}>
               質の高いデータで、研究を前に進める。
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-300 [text-wrap:pretty]">
+            <p className="relative mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-300 [text-wrap:pretty]">
               キキタイ・インテリジェンスは、すべてのアンケートで自動的に有効です。
             </p>
-            <div className="mt-8 flex justify-center">
+            <div className="relative mt-8 flex justify-center">
               <Link href="/register" className="btn-3d btn-3d-primary px-7 py-3 text-base">
                 無料ではじめる
                 <IconArrowRight className="h-4 w-4" />
