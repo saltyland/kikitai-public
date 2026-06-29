@@ -60,7 +60,8 @@ const SCENE_TOTAL = 6; // 表示する設問の総数（1/6〜6/6で進む）
 
 /** 中央カードに表示する設問のサンプル（実際にキキタイで出せる代表的な3形式を時間でローテーション） */
 type Scene =
-  | { type: 'choice'; survey: string; question: string; selected: string; others: string[] }
+  | { type: 'choice'; survey: string; question: string; multi?: false; selected: string; others: string[] }
+  | { type: 'choice'; survey: string; question: string; multi: true; selected: string[]; others: string[] }
   | { type: 'scale'; survey: string; question: string; min: string; max: string; selected: number; steps: number }
   | { type: 'text'; survey: string; question: string; answer: string };
 
@@ -70,7 +71,7 @@ const SCENES: Scene[] = [
     survey: '研究室のコーヒー文化調査',
     question: '作業中によく飲むものは？',
     selected: 'コーヒー',
-    others: ['紅茶・お茶', 'エナジードリンク', '水・その他'],
+    others: ['紅茶・お茶', '水・その他'],
   },
   {
     type: 'scale',
@@ -90,9 +91,10 @@ const SCENES: Scene[] = [
   {
     type: 'choice',
     survey: '授業の課題量アンケート',
-    question: '今学期の課題量はどう感じる？',
-    selected: 'やや多い',
-    others: ['ちょうどいい', '少ない', '非常に多い'],
+    question: '当てはまるものをすべて選んでください',
+    multi: true,
+    selected: ['レポートが多い', '締切が近い'],
+    others: ['グループ課題が多い'],
   },
   {
     type: 'scale',
@@ -322,21 +324,48 @@ export default function HeroCycle() {
 
             <p className="mt-3 text-sm font-bold leading-snug text-slate-800 sm:text-base">{scene.question}</p>
 
-            <div className="flex min-h-[104px] flex-col justify-center">
-            {scene.type === 'choice' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-3 rounded-xl border-2 border-brand-500 bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
-                    <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
+            <div className="flex h-[104px] flex-col justify-center overflow-hidden">
+            {scene.type === 'choice' && scene.multi && (
+              <div className="space-y-1">
+                {scene.selected.map((label) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-2 rounded-lg border-2 border-brand-500 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 sm:text-sm"
+                  >
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border-2 border-brand-500 bg-brand-500">
+                      <svg viewBox="0 0 16 16" className="h-2.5 w-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M3.5 8.5l3 3 6-7" />
+                      </svg>
+                    </span>
+                    {label}
+                  </div>
+                ))}
+                {scene.others.map((label) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 sm:text-sm"
+                  >
+                    <span className="h-4 w-4 shrink-0 rounded-[5px] border-2 border-slate-300 bg-white" />
+                    {label}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {scene.type === 'choice' && !scene.multi && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 rounded-lg border-2 border-brand-500 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 sm:text-sm">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
+                    <span className="h-2 w-2 rounded-full bg-brand-500" />
                   </span>
                   {scene.selected}
                 </div>
                 {scene.others.map((label) => (
                   <div
                     key={label}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500"
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 sm:text-sm"
                   >
-                    <span className="h-5 w-5 shrink-0 rounded-full border-2 border-slate-300 bg-white" />
+                    <span className="h-4 w-4 shrink-0 rounded-full border-2 border-slate-300 bg-white" />
                     {label}
                   </div>
                 ))}
