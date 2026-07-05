@@ -19,7 +19,7 @@ if _env.exists():
                 os.environ.setdefault(_k.strip(), _v.strip())
 
 _SCRIPTS  = pathlib.Path(__file__).parent
-API_KEY   = os.environ.get("REDACTED_API_KEY", "")
+API_KEY   = os.environ["GEMINI_API_KEY"]  # 環境変数から取得（キーをソースに埋め込まない）
 MODEL     = "gemini-1.5-flash"
 URL       = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
 FEATURES  = str(_SCRIPTS / "features.jsonl")

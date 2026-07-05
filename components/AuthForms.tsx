@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { loginWithGoogleAction } from '@/app/actions/auth';
 import { demoLoginAction, type DemoLoginState } from '@/app/actions/demo';
 import { Spinner } from '@/components/ui/Spinner';
+import { Turnstile } from '@/components/Turnstile';
 import { useTransition, useActionState } from 'react';
 
 function GoogleIcon() {
@@ -61,7 +62,9 @@ export function LoginForm({ next }: { next?: string }) {
         <div className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <form action={demoAction} onSubmit={() => startDemoTransition(() => {})}>
+      <form action={demoAction} onSubmit={() => startDemoTransition(() => {})} className="space-y-2">
+        {/* ボット対策。NEXT_PUBLIC_TURNSTILE_SITE_KEY 未設定なら何も描画しない */}
+        <Turnstile />
         <button
           type="submit"
           disabled={pending || demoPending}
