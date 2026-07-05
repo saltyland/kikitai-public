@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import { ResponseService } from '@/lib/services/responseService';
@@ -41,6 +42,8 @@ export async function submitResponseAction(
     result = await new ResponseService(supabase).submitResponse(user.id, surveyId, answers, {
       durationSec,
       acceptLowQuality,
+      // 締切超過時のLLM遅延監査は応答送信後に実行する（回答者を待たせない）
+      scheduleBackground: (task) => after(task),
     });
   } catch (e) {
     return { error: e instanceof Error ? e.message : '回答の送信に失敗しました' };
@@ -97,7 +100,12 @@ export async function submitSharedLinkResponseAction(
       user.id,
       shareToken,
       answers,
-      { durationSec, acceptLowQuality }
+      {
+        durationSec,
+        acceptLowQuality,
+        // 締切超過時のLLM遅延監査は応答送信後に実行する（回答者を待たせない）
+        scheduleBackground: (task) => after(task),
+      }
     );
   } catch (e) {
     return { error: e instanceof Error ? e.message : '回答の送信に失敗しました' };

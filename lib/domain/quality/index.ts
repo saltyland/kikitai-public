@@ -12,6 +12,7 @@ import { GeminiEvaluator } from './gemini';
 // S2/S4 が配置したLLMプロバイダ実装。AI_PROVIDER_SPECS に載せて連鎖に組み込む。
 import { GroqEvaluator } from './groq';
 import { CerebrasEvaluator } from './cerebras';
+import { LocalLLMEvaluator } from './local';
 
 export type {
   IQualityEvaluator,
@@ -30,6 +31,12 @@ export { scoreToMultiplier } from './types';
 export { RuleBasedEvaluator } from './ruleBased';
 export { shouldCallLLM } from './routing';
 export type { RoutingUser } from './routing';
+export {
+  evaluateWithDeadline,
+  resolveQualityDeadlineMs,
+  DEFAULT_QUALITY_DEADLINE_MS,
+} from './deadline';
+export type { DeadlineEvaluation } from './deadline';
 
 /**
  * AI評価（LLM）とルールベース評価を突き合わせる合成評価器。
@@ -144,6 +151,20 @@ interface AIProviderSpec {
 
 const AI_PROVIDER_SPECS: AIProviderSpec[] = [
   {
+    // ローカルLLM（Ollama / LM Studio 等の OpenAI 互換サーバ）。
+    // 日次クォータが無いため、設定されていれば最優先で使い Gemini の 1500件/日 を温存する。
+    // LOCAL_LLM_URL 未設定（Vercel 本番等）なら自動で連鎖から外れ、従来どおり gemini が一次になる。
+    name: 'local',
+    build: () => {
+      const url = process.env.LOCAL_LLM_URL;
+      if (!url) return null;
+      const model = process.env.LOCAL_LLM_MODEL || undefined;
+      const timeoutRaw = Number(process.env.LOCAL_LLM_TIMEOUT_MS);
+      const timeoutMs = Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : undefined;
+      return new LocalLLMEvaluator(url, model, timeoutMs);
+    },
+  },
+  {
     name: 'gemini',
     build: () => {
       const key = process.env.GEMINI_API_KEY;
@@ -151,8 +172,8 @@ const AI_PROVIDER_SPECS: AIProviderSpec[] = [
     },
   },
   // ── 拡張ポイント（S2/S4 が配置したプロバイダ）─────────────────────
-  // 優先順位＝配列順（gemini → groq → cerebras）。各 build は env が無ければ
-  // null を返し、連鎖から自動で外れる。
+  // 優先順位＝配列順（local → gemini → groq → cerebras）。各 build は env が
+  // 無ければ null を返し、連鎖から自動で外れる。
   {
     name: 'groq',
     build: () => {
@@ -167,11 +188,6 @@ const AI_PROVIDER_SPECS: AIProviderSpec[] = [
       return key ? new CerebrasEvaluator(key) : null;
     },
   },
-  // 将来の local プロバイダを足す場合（S4）:
-  // {
-  //   name: 'local',
-  //   build: () => (process.env.LOCAL_LLM_URL ? new LocalEvaluator(process.env.LOCAL_LLM_URL) : null),
-  // },
 ];
 
 /** build() の例外を握りつぶし、未配置/破損プロバイダで全体が落ちないようにする。 */
