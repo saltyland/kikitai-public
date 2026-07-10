@@ -81,19 +81,19 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
   const POINTS = [
     {
       icon: IconCoin,
-      kicker: 'EARN',
+      kicker: '貯める',
       title: '答えると、ポイントが貯まる',
       body: '他の人のアンケートに回答するだけでポイントを獲得。スマホで1問ずつ、すきま時間にサクサク答えられます。',
     },
     {
       icon: IconExchange,
-      kicker: 'EXCHANGE',
+      kicker: '集める',
       title: 'ポイントで、回答者を集める',
       body: '貯めたポイントを使って自分のアンケートを公開。回答し合うコミュニティだから、待つだけでは集まらなかった回答が届きます。',
     },
     {
       icon: IconSparkle,
-      kicker: 'QUALITY',
+      kicker: '質を守る',
       title: 'AIが、データの質を守る',
       body: '提出された回答はAIが自動採点。雑な回答は報酬ゼロ、丁寧な回答にはボーナス。研究に使えるデータだけが集まります。',
     },
@@ -128,7 +128,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
           </Reveal>
           <Reveal delay={500}>
             <div className="mt-10 flex flex-col items-center gap-1 text-xs font-bold tracking-widest text-brand-500">
-              SCROLL
+              スクロールして続きを見る
               <IconArrowDown className="kk-scroll-cue h-5 w-5" />
             </div>
           </Reveal>
@@ -139,7 +139,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
       <section className="relative overflow-hidden py-24 sm:py-28">
         <div className="mx-auto max-w-2xl px-2 text-center">
           <Reveal>
-            <p className="text-sm font-bold tracking-widest text-brand-500">CONCEPT</p>
+            <p className="text-sm font-bold tracking-widest text-brand-500">コンセプト</p>
           </Reveal>
           <Reveal delay={120}>
             <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
@@ -260,18 +260,18 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
         <AuroraBackground className="opacity-50" />
         <div className="relative mx-auto max-w-xl px-4 text-center">
           <Reveal>
-            <p className="text-sm font-bold tracking-widest text-brand-500">PRIVATE</p>
+            <p className="text-sm font-bold tracking-widest text-brand-500">限定公開</p>
           </Reveal>
           <Reveal delay={120}>
             <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
-              <span className="text-brand-600">非公開</span>で、
+              <span className="text-brand-600">限定公開</span>で、
               <br className="sm:hidden" />
               リンクを知っている人だけに。
             </h2>
           </Reveal>
           <Reveal delay={240}>
             <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-slate-600">
-              一覧や検索には表示せず、共有したリンクを知っている人だけが回答できる「非公開」公開も選べます。
+              一覧や検索には表示せず、共有したリンクを知っている人だけが回答できる「限定公開」も選べます。
               ゼミ・サークル・研究室など、特定の相手にだけ届けたいときに。
             </p>
           </Reveal>
@@ -283,7 +283,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
                   <IconLock className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-sm font-extrabold text-slate-900">非公開（リンク限定）</p>
+                  <p className="text-sm font-extrabold text-slate-900">限定公開（リンク限定）</p>
                   <p className="text-xs text-slate-500">一覧・検索には出ません</p>
                 </div>
               </div>
@@ -304,7 +304,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
       <section className="relative overflow-hidden px-4 py-24 sm:py-28">
         <div className="mx-auto max-w-lg text-center">
           <Reveal>
-            <p className="text-sm font-bold tracking-widest text-amber-500">FIRST STEP</p>
+            <p className="text-sm font-bold tracking-widest text-amber-500">はじめの一歩</p>
           </Reveal>
           <Reveal delay={120}>
             <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">

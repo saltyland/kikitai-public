@@ -56,7 +56,8 @@ export default function SurveyEditor({
             <p className="font-bold text-brand-800">通常公開</p>
             <p className="mt-1 text-xs text-slate-500">
               アンケート一覧に掲載され、ポイントで回答を集めます。
-              AI品質判定・低品質回答フィルタリングが有効になります。
+              AI品質判定・低品質回答フィルタリング・属性ターゲティングが使えます。
+              回答が届くたびにポイントを消費します。
             </p>
           </button>
           <button
@@ -64,10 +65,10 @@ export default function SurveyEditor({
             onClick={() => setChoice('unlisted')}
             className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 p-4 text-left hover:bg-slate-100 cursor-pointer transition"
           >
-            <p className="font-bold text-slate-800">🔒 リンクを知っている人に限定公開</p>
+            <p className="font-bold text-slate-800">🔒 限定公開（リンク共有）</p>
             <p className="mt-1 text-xs text-slate-500">
               一覧には表示されません。共有リンクを送った相手だけが回答できます。
-              ポイントの消費・付与なし（無料）。シンプルな設問作成のみ。
+              ポイントの消費・付与なし（無料）。ゼミ・授業内など回答者が決まっているときに。
             </p>
           </button>
         </div>

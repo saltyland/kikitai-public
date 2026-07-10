@@ -554,6 +554,11 @@ export default function PublicSurveyEditor({
   return (
     <div className={`lg:gap-6 lg:items-start ${step === 3 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
+        {/* 公開モードバッジ */}
+        <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">
+          🌐 通常公開モード（公開モードは作成後に変更できません）
+        </div>
+
         {/* ステップインジケーター */}
         <ol className="flex items-center gap-2 text-sm">
           {STEP_LABELS.map((label, i) => {

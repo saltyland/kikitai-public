@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 const FAQS = [
   {
@@ -66,6 +67,11 @@ export default function FaqAccordion() {
           );
         })}
       </div>
+      <p className="mt-3 text-right text-xs">
+        <Link href="/help" className="text-brand-600 hover:underline">
+          その他の質問はヘルプページへ →
+        </Link>
+      </p>
     </section>
   );
 }

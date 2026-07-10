@@ -67,30 +67,29 @@ export default async function HomePage({
           </p>
         </section>
 
-        {/* アンケート作成・管理セクション */}
-        <div className="mb-2 border-l-4 border-brand-400 pl-3">
+        {/* アンケート回答セクション（回答してポイントを貯めるのが最初の一歩なので先頭に置く） */}
+        <div className="mb-1 border-l-4 border-brand-400 pl-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            アンケートを作成・管理する
+            アンケートに回答する
           </h2>
         </div>
-        <div data-tour="my-surveys">
-          <MySurveysSummaryCard surveys={mySurveys} />
+        <p className="mb-5 pl-4 text-sm text-slate-500">
+          カードを1枚ずつチェックして、回答するかスキップするか選べます。
+        </p>
+        <div data-tour="answer">
+          <AnswerDeck surveys={answerQueue} />
         </div>
 
-        {/* アンケート回答セクション */}
-        <div className="mt-6 border-t border-slate-300/70 pt-6">
-          <div className="mb-1 border-l-4 border-brand-400 pl-3">
+        {/* アンケート作成・管理セクション */}
+        <div className="mt-8 border-t border-slate-300/70 pt-6">
+          <div className="mb-2 border-l-4 border-brand-400 pl-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              アンケートに回答する
+              アンケートを作成・管理する
             </h2>
           </div>
-          <p className="mb-5 pl-4 text-sm text-slate-500">
-            カードを1枚ずつチェックして、回答するかスキップするか選べます。
-          </p>
         </div>
-
-        <div data-tour="answer" className="mb-10">
-          <AnswerDeck surveys={answerQueue} />
+        <div data-tour="my-surveys" className="mb-10">
+          <MySurveysSummaryCard surveys={mySurveys} />
         </div>
 
         <FaqAccordion />

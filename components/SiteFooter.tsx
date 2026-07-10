@@ -13,6 +13,9 @@ export default function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
         <Logo className="text-brand-600" />
         <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
+          <Link href="/help" className="hover:text-brand-600">
+            ヘルプ・よくある質問
+          </Link>
           <Link href="/terms" className="hover:text-brand-600">
             利用規約
           </Link>

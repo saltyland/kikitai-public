@@ -278,41 +278,12 @@ export class SurveyRepository extends BaseRepository<Survey> implements ISurveyR
   }
 
   async replaceQuestions(surveyId: string, questions: QuestionRow[]): Promise<void> {
-    // 既存設問を削除（選択肢はON DELETE CASCADEで消える）
-    const { error: delError } = await this.supabase
-      .from('questions')
-      .delete()
-      .eq('survey_id', surveyId);
-    if (delError) throwDbError(delError, 'questions.delete');
-
-    for (const q of questions) {
-      const { data: insertedQ, error: qError } = await this.supabase
-        .from('questions')
-        .insert({
-          survey_id: surveyId,
-          type: q.type,
-          text: q.text,
-          description: q.description,
-          required: q.required,
-          config: q.config,
-          section_index: q.section_index,
-          order_index: q.order_index,
-          condition: q.condition,
-        })
-        .select('id')
-        .single();
-      if (qError) throwDbError(qError, 'questions.insert');
-
-      if (q.options.length > 0) {
-        const { error: oError } = await this.supabase.from('options').insert(
-          q.options.map((o) => ({
-            question_id: (insertedQ as { id: string }).id,
-            text: o.text,
-            order_index: o.order_index,
-          }))
-        );
-        if (oError) throwDbError(oError, 'options.insert');
-      }
-    }
+    // 削除→挿入をDB側の1トランザクションで実行するRPC。
+    // 途中で失敗した場合は全てロールバックされ、設問0件の不正状態にならない（FIX-12）。
+    const { error } = await this.supabase.rpc('replace_questions', {
+      p_survey_id: surveyId,
+      p_questions: questions,
+    });
+    if (error) throwRpcError(error, 'replace_questions');
   }
 }
