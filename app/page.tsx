@@ -55,7 +55,7 @@ export default async function HomePage({
           {/* 背景の装飾ブロブ（やわらかい奥行き） */}
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-300/30 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-brand-200/40 blur-3xl" />
-          <h1 className="relative text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+          <h1 className="relative text-balance text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
             <span className="bg-gradient-to-r from-brand-700 via-brand-500 to-brand-400 bg-clip-text text-transparent">
               こたえて、あつめる。
             </span>

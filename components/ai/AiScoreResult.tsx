@@ -30,7 +30,7 @@ interface Props {
   onApplySuggestion?: (suggestion: string, index: number) => void;
 }
 
-const LOADING_MESSAGES = ['AIが評価中...', '設問の明確さを確認中...', 'バイアスをチェック中...'];
+const LOADING_MESSAGES = ['AIが評価中…', '設問の明確さを確認中…', 'バイアスをチェック中…'];
 
 /** アンケート投稿直後に表示するAI評価結果。評価中→staggered表示の2フェーズ構成 */
 export default function AiScoreResult({ data, minLoadingMs = 1800, onApplySuggestion }: Props) {

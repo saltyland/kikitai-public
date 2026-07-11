@@ -28,7 +28,7 @@ import type {
 
 /**
  * 通常公開アンケート用のフルエディタ。
- * インフォームドコンセント・配信設定・AI品質判定・ポイント計算など
+ * インフォームドコンセント・配信設定・AI品質評価・ポイント計算など
  * 通常公開に必要な全機能を含む。
  */
 
@@ -962,10 +962,10 @@ export default function PublicSurveyEditor({
                       {/* 一貫性ペアのIDと連動バッジ */}
                       {(q.signal_meta?.role === 'consistency_anchor' || q.signal_meta?.role === 'consistency_check') && (
                         <div className="flex items-center gap-2 text-xs">
-                          <label className="text-slate-500 whitespace-nowrap">ペアID:</label>
+                          <label className="text-slate-500 whitespace-nowrap">ペアID：</label>
                           <input
                             className="rounded border border-slate-300 px-2 py-1 text-xs w-32"
-                            placeholder="例: sleep_q1"
+                            placeholder="例：sleep_q1"
                             value={q.signal_meta?.pairKey ?? ''}
                             onChange={(e) => {
                               const base: SignalMeta = q.signal_meta ?? { role: 'consistency_anchor' };

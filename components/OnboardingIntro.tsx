@@ -111,10 +111,10 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
             <LogoMark className="kk-breathe mx-auto h-16 text-brand-500" />
           </Reveal>
           <Reveal delay={120}>
-            <p className="mt-6 text-sm font-bold tracking-widest text-brand-500">WELCOME</p>
+            <p className="mt-6 text-sm font-bold tracking-widest text-brand-500">ようこそ</p>
           </Reveal>
           <Reveal delay={200}>
-            <h1 className="mt-3 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+            <h1 className="mt-3 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 text-balance sm:text-5xl">
               ようこそ、
               <br className="sm:hidden" />
               <span className="text-brand-600">{nickname}</span> さん。
@@ -142,7 +142,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
             <p className="text-sm font-bold tracking-widest text-brand-500">コンセプト</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
               答えるほど、集まる。
               <br />
               <span className="inline-block text-brand-600">“回答し合う”輪。</span>
@@ -182,10 +182,10 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
       <section className="relative overflow-hidden py-24 sm:py-28">
         <div className="mx-auto max-w-2xl px-4 text-center">
           <Reveal>
-            <p className="text-sm font-bold tracking-widest text-brand-500">CREATE</p>
+            <p className="text-sm font-bold tracking-widest text-brand-500">作成画面</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
               迷わず作れる、
               <br className="sm:hidden" />
               <span className="text-brand-600">一目でわかる作成画面。</span>
@@ -263,7 +263,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
             <p className="text-sm font-bold tracking-widest text-brand-500">限定公開</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
               <span className="text-brand-600">限定公開</span>で、
               <br className="sm:hidden" />
               リンクを知っている人だけに。
@@ -307,7 +307,7 @@ export default function OnboardingIntro({ nickname, onStart }: Props) {
             <p className="text-sm font-bold tracking-widest text-amber-500">はじめの一歩</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
               まずは、ポイントをゲット。
             </h2>
           </Reveal>
