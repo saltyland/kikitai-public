@@ -87,6 +87,9 @@ export default async function HomePage({
               アンケートを作成・管理する
             </h2>
           </div>
+          <p className="mb-5 pl-4 text-sm text-slate-500">
+            カードを1枚ずつチェックして、回答するかスキップするか選べます。
+          </p>
         </div>
         <div data-tour="my-surveys" className="mb-10">
           <MySurveysSummaryCard surveys={mySurveys} />
