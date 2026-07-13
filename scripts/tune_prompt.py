@@ -26,7 +26,7 @@ if _env.exists():
             os.environ.setdefault(_k.strip(), _v.strip())
 
 API_KEY = os.environ["GEMINI_API_KEY"]
-MODEL   = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL   = os.environ.get("REDACTED_API_KEY", "")
 URL     = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
 LABELS  = str(pathlib.Path(os.environ.get("LABELS_CSV", _HERE.parent.parent / "scripts_input_labels_remapped.csv")))
 

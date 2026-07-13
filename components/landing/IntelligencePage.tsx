@@ -231,7 +231,7 @@ export default function IntelligencePage() {
               <div className="mx-auto mt-6 h-px w-12 bg-brand-400" />
             </Reveal>
             <Reveal delay={180}>
-              <p className="mt-6 text-xl font-bold leading-snug text-slate-700 [text-wrap:balance] sm:text-2xl">
+              <p className="mt-6 text-xl font-bold leading-snug text-slate-700 text-balance sm:text-2xl">
                 データの「信頼できる量」を、AIで設計する。
               </p>
             </Reveal>
@@ -261,7 +261,7 @@ export default function IntelligencePage() {
                   <h3 className="mt-4 text-xl font-extrabold uppercase tracking-tight text-slate-900 sm:text-2xl">
                     {f.tag}
                   </h3>
-                  <h2 className="mt-1 text-base font-semibold leading-snug text-slate-500 [text-wrap:balance] sm:text-lg">
+                  <h2 className="mt-1 text-base font-semibold leading-snug text-slate-500 text-balance sm:text-lg">
                     {f.title}
                   </h2>
                   <p className="mt-3 text-xs font-medium tracking-wide text-brand-600/80">{f.method}</p>
@@ -294,7 +294,7 @@ export default function IntelligencePage() {
         <section className="border-t border-slate-100 px-4 py-20 text-center sm:px-6 sm:py-28">
           <Reveal>
             <span className="text-xs font-semibold tracking-[0.2em] text-brand-600">GET STARTED</span>
-            <h2 className="mt-3 text-2xl font-bold text-slate-900 [text-wrap:balance] sm:text-3xl">
+            <h2 className="mt-3 text-2xl font-bold text-slate-900 text-balance sm:text-3xl">
               質の高いデータで、研究を前に進める。
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-500 [text-wrap:pretty]">

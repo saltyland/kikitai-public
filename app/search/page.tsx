@@ -38,7 +38,7 @@ export default async function SearchPage({
               name="q"
               defaultValue={query}
               autoFocus
-              placeholder="アンケートを検索..."
+              placeholder="アンケートを検索…"
               className="w-full rounded-full border border-brand-100 bg-white/80 py-3 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200"
             />
           </div>

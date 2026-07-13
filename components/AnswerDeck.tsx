@@ -14,6 +14,7 @@ import Avatar from '@/components/Avatar';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { MiniQuestion } from '@/components/SurveyCard';
 import { calcProgress } from '@/lib/ui/surveyStats';
+import { formatDateJa } from '@/lib/utils';
 import type { SurveyWithStats } from '@/lib/types/database';
 
 type Action = 'answer' | 'skip';
@@ -56,7 +57,7 @@ function DeckCardBody({ survey }: { survey: SurveyWithStats }) {
             <p className="truncate text-sm font-bold text-slate-800">{author}</p>
             <p className="truncate text-xs text-slate-500">
               残り {remaining}枠
-              {survey.deadline && ` ・期限 ${survey.deadline}`}
+              {survey.deadline && ` ・期限 ${formatDateJa(survey.deadline)}`}
             </p>
           </div>
         </div>
@@ -327,6 +328,9 @@ export default function AnswerDeck({ surveys }: { surveys: SurveyWithStats[] }) 
         <span className="text-slate-500">← 左にスワイプでスキップ</span>
         <span aria-hidden className="text-slate-300">/</span>
         <span className="text-brand-600">右にスワイプで回答する →</span>
+      </p>
+      <p className="-mt-1 text-[10px] text-slate-400">
+        スキップしたアンケートは、次にこの画面を開いたときにまた表示されます
       </p>
     </div>
   );

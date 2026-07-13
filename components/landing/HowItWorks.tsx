@@ -92,7 +92,7 @@ function FormCreateMock() {
       <p className="text-xs font-bold text-brand-600">新しいアンケートを作成</p>
       <div className="mt-4 space-y-2.5">
         <div className="rounded-xl border border-slate-100 px-3.5 py-2.5 text-sm font-medium text-slate-400">
-          タイトルを入力...
+          タイトルを入力…
         </div>
         <div className="rounded-xl border border-dashed border-slate-200 px-3.5 py-2.5 text-sm font-medium text-slate-400">
           + 設問を追加

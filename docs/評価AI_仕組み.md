@@ -23,8 +23,10 @@
   │  → スコア=0 なら即確定（アテンションチェック失敗等）
   │
   ▼
-[第2層] LLM評価（GeminiEvaluator / Groq / Cerebras）
+[第2層] LLM評価（LocalLLM / GeminiEvaluator / Groq / Cerebras）
   │  → ルーティング判定：自由記述がない or T0確定 なら呼ばない
+  │  → 締切つき（QUALITY_DEADLINE_MS・既定4秒）。間に合わなければ
+  │     第1層の機械評価で即確定し、LLM評価は背景監査へ回る（§4）
   │  → 100点満点のスコアを出す
   │
   ▼
@@ -63,7 +65,7 @@
 
 ## 4. 第2層：LLM評価
 
-`lib/domain/quality/gemini.ts` / `groq.ts` / `cerebras.ts`
+`lib/domain/quality/local.ts` / `gemini.ts` / `groq.ts` / `cerebras.ts`
 
 ### 呼び出し条件（ルーティング）
 
@@ -91,13 +93,47 @@
 ### フォールバック連鎖
 
 ```
-Gemini 2.5 Flash（一次）
+ローカルLLM（LOCAL_LLM_URL 設定時のみ・最優先）
+  → 失敗・未設定     → Gemini 2.5 Flash
   → 失敗・レート上限 → Groq（二次）
   → 失敗             → Cerebras（バッチ向け）
   → 失敗             → RuleBasedにフォールバック
 ```
 
+ローカルLLMは Ollama / LM Studio / llama.cpp server 等の **OpenAI互換サーバ** を
+`LOCAL_LLM_URL`（例: `http://127.0.0.1:11434/v1`）で指す。日次クォータが無いため、
+設定されていれば Gemini の無料枠（1500件/日）を消費せずに評価が回る。
+モデルは `LOCAL_LLM_MODEL`（省略時 `qwen2.5:3b-instruct`）、タイムアウトは
+`LOCAL_LLM_TIMEOUT_MS`（省略時 90000ms）で調整できる。未設定環境（Vercel 本番等）では
+自動的に連鎖から外れ、従来どおり Gemini が一次になる。
+
 出力: `score`（0〜100）と `feedback`
+
+### 同期採点の締切（すぐ採点の構造的保証）
+
+`lib/domain/quality/deadline.ts` / 組み込みは `lib/services/responseService.ts`
+
+LLM（特にCPU推論のローカルLLM）は数十秒かかることがあり、回答者を送信画面で
+待たせてしまう。そこで **同期採点に締切** を設け、応答時間を構造的に保証する：
+
+```
+回答提出
+  ├─ 機械評価（ルールベース＋埋め込み関連性）… 数十ms で完了
+  └─ LLM評価 …………… 締切（QUALITY_DEADLINE_MS・既定4000ms）と競走
+        │
+        ├─ 締切内に完了 → 従来どおり Composite 合成スコアで確定
+        └─ 締切超過     → 機械評価スコアで即確定・ポイント付与
+                          走り続けるLLM評価は next/server の after() で
+                          応答送信後の「背景監査」へ回る
+```
+
+- 回答者から見ると、**どのプロバイダがどれだけ遅くても締切以内に必ず採点結果が出る**。
+  表示されたスコア・付与ポイントはその場で確定値（後から増減しない）。
+- 背景監査は、完走したLLM評価を即時確定値と突き合わせ、乖離
+  （特に「付与済みだがLLM評価ではT0相当」）を警告ログとして記録する。
+  較正データの収集と、将来の事後信頼スコア減点の接続点になる。
+- ローカルLLMを同期採点でも使いたい場合（GPU等で高速な環境）は
+  `LOCAL_LLM_TIMEOUT_MS` を締切より小さくして連鎖が締切内に回るよう調整する。
 
 ---
 

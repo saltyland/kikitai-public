@@ -94,7 +94,7 @@ export default function AiScoreDemo() {
             disabled={loading}
             className="btn-3d mt-4 bg-brand-500 px-5 py-3 text-sm text-white disabled:opacity-60"
           >
-            {loading ? 'AI評価中...' : 'AI評価する'}
+            {loading ? 'AI評価中…' : 'AI評価する'}
           </button>
         </div>
 
@@ -102,7 +102,7 @@ export default function AiScoreDemo() {
           {loading && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3">
               <span className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
-              <p className="text-sm font-bold text-brand-600">AI評価中...</p>
+              <p className="text-sm font-bold text-brand-600">AI評価中…</p>
             </div>
           )}
 

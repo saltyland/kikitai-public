@@ -11,6 +11,7 @@ import DeleteSurveyButton from '@/components/DeleteSurveyButton';
 import ShareLinkButton from '@/components/ShareLinkButton';
 import RefreshButton from '@/components/ui/RefreshButton';
 import { summarizeMySurveys } from '@/lib/ui/surveyStats';
+import { formatDateJa } from '@/lib/utils';
 import type { SurveyStatus } from '@/lib/types/database';
 
 const TABS: { key: SurveyStatus; label: string }[] = [
@@ -112,7 +113,15 @@ export default async function ManagePage({
                     </div>
                     <p className="mt-1 text-sm text-slate-500">
                       回答数 {s.response_count} / {s.required_count}
-                      {s.deadline && ` ・期限 ${s.deadline}`}
+                      {s.deadline && ` ・期限 ${formatDateJa(s.deadline)}`}
+                    </p>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      消費ポイント 合計 {s.consumed_points ?? 0}pt
+                      {' ・'}平均{' '}
+                      {s.response_count > 0
+                        ? Math.round(((s.consumed_points ?? 0) / s.response_count) * 10) / 10
+                        : 0}
+                      pt/回答
                     </p>
                     <p className="mt-0.5 text-sm text-slate-500">
                       消費ポイント 合計 {s.consumed_points ?? 0}pt

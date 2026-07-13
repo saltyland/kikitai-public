@@ -175,7 +175,7 @@ export default function LandingPage() {
               機能
             </a>
             <Link href="/intelligence" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
-              インテリジェンス
+              AI評価の仕組み
             </Link>
             <Link
               href="/login"
@@ -203,7 +203,7 @@ export default function LandingPage() {
                   学生・研究者のためのアンケート交換プラットフォーム
                 </p>
               </Reveal>
-              <h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
+              <h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-tight text-slate-900 text-balance sm:text-6xl">
                 <Reveal direction="up" delay={80} className="overflow-hidden">こたえて、</Reveal>
                 <Reveal direction="up" delay={220} className="overflow-hidden">あつめる。</Reveal>
                 <Reveal direction="up" delay={360} className="overflow-hidden">
@@ -230,7 +230,7 @@ export default function LandingPage() {
               </Reveal>
               <Reveal delay={760}>
                 <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-                  {['登録は無料', '非公開ならGoogleフォーム感覚でずっと無料', 'AIが質問を自動作成', '独自AI評価で悪質回答を自動ブロック'].map((t) => (
+                  {['登録は無料', '限定公開ならGoogleフォーム感覚でずっと無料', 'AIが質問を自動作成', '独自AI評価で悪質回答を自動ブロック'].map((t) => (
                     <li key={t} className="flex items-center gap-1.5">
                       <IconCheckCircle className="h-4 w-4 text-brand-500" />
                       {t}
@@ -261,7 +261,7 @@ export default function LandingPage() {
             <div>
               <SectionKicker no="01" label="The Problem" />
               <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
                   作ったのに、
                   <br />
                   <span className="inline-block text-slate-400">だれも答えてくれない。</span>
@@ -338,7 +338,7 @@ export default function LandingPage() {
           <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="02" label="The Loop" />
             <Reveal>
-              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
                 答えるほど、集まる。
                 <br />
                 <span className="inline-block text-brand-600">“回答し合う”経済圏。</span>
@@ -362,7 +362,7 @@ export default function LandingPage() {
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="03" label="Everything you need" />
             <Reveal>
-              <h2 className="text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
+              <h2 className="text-3xl font-extrabold text-slate-900 text-balance sm:text-4xl">
                 研究に必要な機能を、ぜんぶ。
               </h2>
             </Reveal>
@@ -375,8 +375,8 @@ export default function LandingPage() {
               {[
                 {
                   icon: IconLink,
-                  title: '非公開なら、ずっと無料',
-                  body: '非公開アンケートはポイント不要・無期限無料。発行したリンクを共有するだけで、Googleフォームと同じ感覚で誰でもすぐに使えます。',
+                  title: '限定公開なら、ずっと無料',
+                  body: '限定公開アンケートはポイント不要・無期限無料。発行したリンクを共有するだけで、Googleフォームと同じ感覚で誰でもすぐに使えます。',
                   badge: '完全無料',
                 },
                 {
@@ -433,7 +433,7 @@ export default function LandingPage() {
           <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
             <SectionKicker no="04" label="Kikitai Intelligence" />
             <Reveal className="mb-2 flex flex-col gap-3">
-              <h2 className="max-w-3xl text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
+              <h2 className="max-w-3xl text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
                 がんばった回答が、
                 <br />
                 <span className="inline-block text-brand-600">ちゃんと報われる。</span>
@@ -549,15 +549,15 @@ export default function LandingPage() {
             <div>
               <SectionKicker no="05" label="Free & Beautiful" />
               <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 [text-wrap:balance] sm:text-4xl">
-                  非公開なら、
+                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
+                  限定公開なら、
                   <br />
                   <span className="inline-block text-brand-600">ずっと無料のフォームツール。</span>
                 </h2>
               </Reveal>
               <Reveal delay={120}>
                 <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                  アンケートを「非公開」にすれば、ポイントは一切不要。発行されたリンクを
+                  アンケートを「限定公開」にすれば、ポイントは一切不要。発行されたリンクを
                   LINEやSlackで共有するだけで、Googleフォームと同じように誰でもすぐ回答を集められます。
                   しかも見た目はキキタイならではの、おしゃれで直感的なデザイン。
                 </p>
@@ -584,12 +584,12 @@ export default function LandingPage() {
               <div className="relative mx-auto max-w-sm">
                 <div className="card-3d p-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700">非公開アンケート</span>
-                    <span className="rounded-full bg-slate-700 px-3 py-0.5 text-xs font-bold text-white">非公開</span>
+                    <span className="text-sm font-bold text-slate-700">限定公開アンケート</span>
+                    <span className="rounded-full bg-slate-700 px-3 py-0.5 text-xs font-bold text-white">限定公開</span>
                   </div>
                   <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                     <IconLink className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="truncate text-xs text-slate-500">kikitai.app/s/3f9a2c...</span>
+                    <span className="truncate text-xs text-slate-500">kikitai.app/s/3f9a2c…</span>
                     <span className="ml-auto shrink-0 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-700">コピー</span>
                   </div>
                   <div className="mt-5 space-y-2.5">
@@ -623,7 +623,7 @@ export default function LandingPage() {
                 <div className="mx-auto w-fit">
                   <LogoMark className="kk-breathe relative h-16 text-brand-500" />
                 </div>
-                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 [text-wrap:balance] sm:text-4xl">
+                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 text-balance sm:text-4xl">
                   あなたの研究にも、回答を。
                 </h2>
                 <p className="mx-auto mt-3 max-w-[42ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">

@@ -29,12 +29,40 @@ export default function PrivacyPage() {
           </p>
           <p>
             プロフィール属性は項目ごとに「公開・非公開」を選択できます。
-            非公開に設定した属性はマッチング配信にのみ使用し、他のユーザーには表示されません。
+            「非公開」に設定した属性は、あなたのプロフィールページで他の一般ユーザーに
+            表示されなくなります。ただし、下記のとおり、あなたが回答したアンケートの作成者には、
+            回答内容の分析のために属性が開示されます（公開・非公開の設定にかかわらず）。
           </p>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-slate-800">2. 回答品質の評価と外部 AI への送信</h2>
+          <h2 className="text-base font-bold text-slate-800">
+            2. アンケート作成者に開示される情報（匿名性について）
+          </h2>
+          <p>
+            本サービスの回答は<span className="font-medium">完全な匿名ではありません</span>。
+            あなたがアンケートに回答すると、そのアンケートの作成者は結果画面・ダウンロードデータ上で
+            次の情報を閲覧できます。回答前に、その調査に協力してよいかご判断ください。
+          </p>
+          <ul className="list-inside list-disc space-y-1 pl-2">
+            <li>各回答の内容（選択・自由記述）と回答日時</li>
+            <li>
+              回答者の属性（年齢・性別・職業・学年・専攻・所属・分野）。
+              <span className="font-medium">プロフィールで「非公開」に設定した属性も含みます。</span>
+            </li>
+            <li>
+              回答とアカウントを結びつける内部の識別子。作成者はこれを通じて、
+              同一回答者の判別や、公開プロフィール（ニックネーム等）との照合が可能です。
+            </li>
+          </ul>
+          <p>
+            なお、パスワード・メールアドレス・認証情報が作成者に渡ることはありません。
+            共有リンクからのゲスト回答（ログインなし）では属性・アカウント識別子は収集されません。
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-bold text-slate-800">3. 回答品質の評価と外部 AI への送信</h2>
           <p>
             送信された回答は、回答品質を評価するために外部 AI サービス（Google Gemini 等）に
             送信される場合があります。その際、以下のプライバシー保護措置を講じます。
@@ -59,7 +87,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-slate-800">3. ユーザー識別情報の取り扱い</h2>
+          <h2 className="text-base font-bold text-slate-800">4. ユーザー識別情報の取り扱い（外部 AI）</h2>
           <p>
             外部 AI サービスへの送信データには、ユーザーを直接識別できる情報（ユーザーID・
             メールアドレス・ニックネーム・IPアドレスなど）は含めません。
@@ -68,7 +96,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-slate-800">4. データの保持と削除</h2>
+          <h2 className="text-base font-bold text-slate-800">5. データの保持と削除</h2>
           <p>
             回答データはアンケート作成者が設定した保持期間を過ぎると自動的に削除されます
             （デフォルト2年、最長5年）。アカウントを退会した場合は、
@@ -77,7 +105,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-slate-800">5. お問い合わせ</h2>
+          <h2 className="text-base font-bold text-slate-800">6. お問い合わせ</h2>
           <p>
             個人情報の取り扱いに関するお問い合わせは、サービス内のお問い合わせフォームから
             ご連絡ください。

@@ -25,7 +25,7 @@ export default function HeaderSearchBar() {
         <input
           ref={inputRef}
           type="search"
-          placeholder="アンケートを検索..."
+          placeholder="アンケートを検索…"
           className="w-full rounded-full border border-brand-100 bg-white/80 py-1.5 pl-9 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
       </div>

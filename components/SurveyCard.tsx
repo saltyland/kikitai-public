@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { calcProgress } from '@/lib/ui/surveyStats';
+import { formatDateJa } from '@/lib/utils';
 import type { PreviewQuestionLite, SurveyWithStats } from '@/lib/types/database';
 
 /** 設問1問分のコンパクトな見た目（非操作・あくまで雰囲気を見せるだけ） */
@@ -95,7 +96,7 @@ export default function SurveyCard({ survey }: { survey: SurveyWithStats }) {
           <p className="truncate text-sm font-bold text-slate-800 group-hover:text-brand-600 transition-colors">{author}</p>
           <p className="truncate text-xs text-slate-400">
             残り {remaining}枠
-            {survey.deadline && ` ・期限 ${survey.deadline}`}
+            {survey.deadline && ` ・期限 ${formatDateJa(survey.deadline)}`}
           </p>
         </div>
       </Link>

@@ -20,7 +20,7 @@ import type {
 
 /**
  * 限定公開アンケート用のシンプルエディタ。
- * AI品質判定・ポイント消費・配信設定・インフォームドコンセントは不要なので除外。
+ * AI品質評価・ポイント消費・配信設定・インフォームドコンセントは不要なので除外。
  * アテンションチェック設問も品質スコアに紐づくため除外。
  */
 
@@ -412,7 +412,7 @@ export default function UnlistedSurveyEditor({
       <div className="space-y-6">
         {/* 限定公開バッジ */}
         <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-          🔒 リンク限定公開モード
+          🔒 限定公開モード（公開モードは作成後に変更できません）
         </div>
 
         {/* ステップインジケーター */}

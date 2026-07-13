@@ -13,12 +13,15 @@ import { QuestionTypeRegistry } from '@/lib/domain/questions/registry';
 import { computeVisibleQuestionIds } from '@/lib/domain/questions/visibility';
 import {
   createQualityEvaluator,
+  evaluateWithDeadline,
   grade,
+  resolveQualityDeadlineMs,
   sanitizeItems,
   shouldCallLLM,
   RuleBasedEvaluator,
   LocalEmbeddingEvaluator,
   type EvaluationItem,
+  type GradeResult,
   type MechSignals,
   type QualityHints,
   type QualityResult,
@@ -62,6 +65,12 @@ export interface SubmitOptions {
    * TODO(S2/S3): フォーム側でこれらのヒントを計測して供給する。
    */
   qualityHints?: QualityHints;
+  /**
+   * 応答送信後に背景タスクを実行する手段。Server Action からは
+   * `next/server` の `after` を渡す（`(task) => after(task)`）。
+   * 未指定時は fire-and-forget で即時起動する（テスト・非Next環境用）。
+   */
+  scheduleBackground?: (task: () => Promise<void>) => void;
 }
 
 /** アンケート回答・結果集計のビジネスロジック */
@@ -324,12 +333,43 @@ export class ResponseService {
     // ルーティング（設計書 §3）：LLM を呼ぶか機械評価のみで確定するか分岐する。
     // TODO(S2): RoutingUser に信頼スコア等を供給して連動させる。
     const routing = shouldCallLLM(sanitized, mech, {});
-    const quality: QualityResult = routing.callLLM
-      ? await createQualityEvaluator().evaluate(sanitized, ctx)
-      : ruleResult;
+
+    // 締切つきAI評価（すぐ採点の構造的保証）：LLM が締切（QUALITY_DEADLINE_MS・既定4秒）
+    // 内に返せば従来どおり合成スコアを使い、間に合わなければ機械評価で即確定する。
+    // 走り続けるLLM評価は破棄せず、応答送信後の背景監査（scheduleLateAudit）へ回す。
+    // → どのプロバイダがどれだけ遅くても、回答者の待ち時間は締切以内に収まる。
+    let quality: QualityResult = ruleResult;
+    let lateAudit: Promise<QualityResult | null> | null = null;
+    if (routing.callLLM) {
+      const outcome = await evaluateWithDeadline(
+        createQualityEvaluator(),
+        sanitized,
+        ctx,
+        ruleResult,
+        resolveQualityDeadlineMs()
+      );
+      quality = outcome.quality;
+      lateAudit = outcome.late;
+      if (outcome.timedOut) {
+        console.warn(
+          `[quality] AI評価が締切超過（survey=${surveyId}）。機械評価で即時確定し、LLMは背景監査へ回します`
+        );
+      }
+    }
 
     // 最終グレーディング（設計書 §1/§7）：ティアと付与率を決定（S5実装をバレル経由で import）。
     const gradeResult = grade(quality, mech);
+
+    // 締切超過時のみ：完走したLLM評価を即時確定値と突き合わせる背景監査を予約する。
+    if (lateAudit) {
+      this.scheduleLateAudit(
+        lateAudit,
+        mech,
+        gradeResult,
+        { surveyId, userId },
+        options.scheduleBackground
+      );
+    }
     const result = { score: gradeResult.score, feedback: gradeResult.feedback };
     const multiplier = gradeResult.payoutRate;
 
@@ -380,6 +420,50 @@ export class ResponseService {
       surveyClosed: outcome.closed,
       rejected: false,
     };
+  }
+
+  /**
+   * 締切超過で機械評価により即時確定した回答について、走り続けていたLLM評価の
+   * 完了を背景で待ち、即時確定値との乖離を記録する（監査ログ・較正データ）。
+   * 特に「付与済みだがLLM評価ではT0相当」を警告として残す。
+   * TODO: 事後の信頼スコア減点RPCが用意でき次第、flagged 時にここで適用する。
+   */
+  private scheduleLateAudit(
+    lateAudit: Promise<QualityResult | null>,
+    mech: MechSignals,
+    syncGrade: GradeResult,
+    ref: { surveyId: string; userId: string },
+    scheduleBackground?: (task: () => Promise<void>) => void
+  ): void {
+    const task = async () => {
+      try {
+        const lateQuality = await lateAudit;
+        if (!lateQuality) {
+          console.warn(
+            `[quality] 遅延監査: LLM評価が完了しなかった（全プロバイダ失敗） survey=${ref.surveyId}`
+          );
+          return;
+        }
+        const lateGrade = grade(lateQuality, mech);
+        const flagged = lateGrade.payoutRate === 0 && syncGrade.tier !== 'T0';
+        const line =
+          `[quality] 遅延監査 survey=${ref.surveyId} user=${ref.userId} ` +
+          `sync(score=${syncGrade.score}, tier=${syncGrade.tier}) → ` +
+          `late(score=${lateQuality.score}, tier=${lateGrade.tier})`;
+        if (flagged) {
+          console.warn(`${line} ⚠️付与済みだがLLM評価ではT0相当`);
+        } else {
+          console.info(line);
+        }
+      } catch (e) {
+        console.error('[quality] 遅延監査に失敗:', e);
+      }
+    };
+    if (scheduleBackground) {
+      scheduleBackground(task);
+    } else {
+      void task();
+    }
   }
 
   /** 結果確認（作成者のみ） */

@@ -26,7 +26,8 @@ export class GroqEvaluator implements IQualityEvaluator {
       answer: this.describeAnswer(i),
     }));
 
-    const prompt = buildPrompt(JSON.stringify(payload, null, 2));
+    // インデント無しでシリアライズし、入力トークンを節約する（内容は同一）
+    const prompt = buildPrompt(JSON.stringify(payload));
 
     const res = await fetch(GroqEvaluator.ENDPOINT, {
       method: 'POST',

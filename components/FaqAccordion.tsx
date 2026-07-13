@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 const FAQS = [
   {
@@ -16,7 +17,7 @@ const FAQS = [
   {
     question: 'フォロー機能はどう使いますか？',
     answer:
-      '気になるユーザーのプロフィールページからフォローできます。フォロー中のユーザーが新しいアンケートを公開すると通知が届き、ホームや/surveysのタイムラインにも表示されます。',
+      '気になるユーザーのプロフィールページからフォローできます。フォロー中のユーザーが新しいアンケートを公開すると通知が届き、ホームやアンケート一覧のタイムラインにも表示されます。',
   },
   {
     question: '退会したい場合は？',
@@ -66,6 +67,11 @@ export default function FaqAccordion() {
           );
         })}
       </div>
+      <p className="mt-3 text-right text-xs">
+        <Link href="/help" className="text-brand-600 hover:underline">
+          その他の質問はヘルプページへ →
+        </Link>
+      </p>
     </section>
   );
 }

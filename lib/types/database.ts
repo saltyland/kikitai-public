@@ -116,7 +116,7 @@ export type PrivateField =
   | 'grade'
   | 'major';
 
-/** 非公開設定の対象となる属性の一覧（ボーナス計算・UI生成に使う） */
+/** 非公開設定の対象となる属性の一覧（プロフィール表示設定のUI生成に使う） */
 export const PRIVATE_FIELDS: PrivateField[] = [
   'affiliation',
   'field',
@@ -152,7 +152,7 @@ export interface Profile {
   points: number;
   /** 信頼スコア（0〜100, 既定70）。低品質回答で減点される。 */
   trust_score: number;
-  /** 非公開にした属性名。マッチング対象外になる代わりにボーナスが付く。 */
+  /** プロフィールページで非表示にした属性名。表示設定のみで、ポイント・マッチングには影響しない。 */
   private_fields: PrivateField[];
   /** 料金プラン。pro のみ統計解析モードを利用できる。 */
   plan: Plan;
