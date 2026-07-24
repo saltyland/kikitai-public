@@ -1,646 +1,284 @@
 import Link from 'next/link';
-import Logo, { LogoMark } from '@/components/Logo';
-import { Reveal, ScrollProgressBar, AuroraBackground, SceneNav } from '@/components/ScrollReveal';
-import HeroBackground from '@/components/landing/HeroBackground';
-import LoopShowcase from '@/components/landing/LoopShowcase';
-import HeroCycle from '@/components/landing/HeroCycle';
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  FileDown,
+  Link2,
+  MessageSquareText,
+  ScanSearch,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import Logo from '@/components/Logo';
+import KikitaiLoopDemo from '@/components/landing/KikitaiLoopDemo';
+import HeroFlowField from '@/components/landing/HeroFlowField';
+import LandingExperience from '@/components/landing/LandingExperience';
 
-/** 右端の章インデックスに表示するシーン一覧（順序＝スクロール順） */
-const SCENES = [
-  { id: 'top', label: 'キキタイ' },
-  { id: 'story', label: '課題' },
-  { id: 'how', label: '仕組み' },
-  { id: 'features', label: '機能' },
-  { id: 'intelligence', label: 'AI評価' },
-  { id: 'free', label: '無料' },
-  { id: 'cta', label: 'はじめる' },
+const essentials = [
+  { title: '限定公開はずっと無料', body: '共有URLを送るだけ。ポイントを使わず、回数制限なく回答を集められます。', Icon: Link2 },
+  { title: '集計をリアルタイム表示', body: '回答状況と傾向を、見やすいグラフですぐに確認できます。', Icon: BarChart3 },
+  { title: 'Excelへそのまま出力', body: '集まった回答は.xlsx形式で書き出し、そのまま研究データに使えます。', Icon: FileDown },
 ];
 
-/* 装飾用の小さなアイコン（絵文字は使わない方針のため、すべてSVG） */
+const faqs: [string, string][] = [
+  ['ポイントはどうやって貯まりますか？', '他の人のアンケートに回答すると貯まります。AIが回答の丁寧さを評価し、質の高い回答にはボーナスポイントが加わります。'],
+  ['アンケートの公開に費用はかかりますか？', '一般公開では回答者へ渡すポイントが必要です。共有リンクによる限定公開はポイント不要・無料で利用できます。'],
+  ['AIは何を評価しますか？', '設問への適合度、具体性、一貫性などを確認します。丁寧な回答へのボーナス付与と、無関係・不正な回答の検知に利用します。'],
+];
 
-function IconBranch({ className }: { className?: string }) {
+/** 行マスクめくり用の見出し1行。overflow:hidden の中で子spanを持ち上げる */
+function Line({ children }: { children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="6" cy="5" r="2.5" />
-      <circle cx="6" cy="19" r="2.5" />
-      <circle cx="18" cy="12" r="2.5" />
-      <path d="M6 7.5v9M8 6.5l7.5 4M8 17.5l7.5-4" />
-    </svg>
-  );
-}
-function IconStep({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="3" y="6" width="13" height="12" rx="2.5" />
-      <path d="M19 9l3 3-3 3M8 12h5" />
-    </svg>
-  );
-}
-function IconChart({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M4 20V8M10 20V4M16 20v-7M21 20H3" />
-    </svg>
-  );
-}
-function IconSparkle({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
-      <path d="M19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16z" />
-    </svg>
-  );
-}
-function IconCheckCircle({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8.5 12.5l2.5 2.5 4.5-5" />
-    </svg>
-  );
-}
-function IconArrowRight({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M4 12h15M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-function IconArrowDown({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M12 5v14M6 13l6 6 6-6" />
-    </svg>
-  );
-}
-function IconCoin({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v10M9.5 9.5h3.2a1.8 1.8 0 010 3.6H9.8M9.5 13.1h3.4a1.8 1.8 0 010 3.6H10" />
-    </svg>
-  );
-}
-function IconLink({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M9 15l6-6" />
-      <path d="M11 6.5l1-1a3.5 3.5 0 015 5l-1 1" />
-      <path d="M13 17.5l-1 1a3.5 3.5 0 01-5-5l1-1" />
-    </svg>
-  );
-}
-function IconTable({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="3" y="4" width="18" height="16" rx="2.5" />
-      <path d="M3 10h18M9 4v16" />
-    </svg>
-  );
-}
-function IconWand({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M4 20L15 9" />
-      <path d="M14 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" />
-      <path d="M18 13l.7 1.4 1.4.7-1.4.7-.7 1.4-.7-1.4-1.4-.7 1.4-.7.7-1.4z" />
-    </svg>
-  );
-}
-function IconBan({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M6.5 6.5l11 11" />
-    </svg>
-  );
-}
-function IconBrain({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <path d="M9 4.5a2.5 2.5 0 00-2.5 2.5v.2A2.8 2.8 0 004 9.8v.4a2.8 2.8 0 001 2.1 2.6 2.6 0 00-.4 1.4 2.8 2.8 0 002.8 2.8h.1V19a2.5 2.5 0 005 0V7a2.5 2.5 0 00-2.5-2.5z" />
-      <path d="M15 4.5A2.5 2.5 0 0117.5 7v.2a2.8 2.8 0 012.5 2.6v.4a2.8 2.8 0 01-1 2.1 2.6 2.6 0 01.4 1.4 2.8 2.8 0 01-2.8 2.8h-.1V19a2.5 2.5 0 01-5 0V7" />
-    </svg>
-  );
-}
-function IconQuestion({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="5" y="3.5" width="14" height="17" rx="2.5" />
-      <path d="M9 3.5V3a1 1 0 011-1h4a1 1 0 011 1v.5" />
-      <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4.5" />
-    </svg>
-  );
-}
-function IconPersonGhost({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="7.5" r="3.2" strokeDasharray="2.2 2.2" />
-      <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" strokeDasharray="2.2 2.2" />
-    </svg>
+    <span className="kx-line">
+      <span>{children}</span>
+    </span>
   );
 }
 
-/** 大きな章番号ラベル（ゲームフリーク風のスクロール章立て） */
-function SectionKicker({ no, label }: { no: string; label: string }) {
-  return (
-    <Reveal direction="left" className="mb-4 flex items-center gap-3">
-      <span className="text-5xl font-black leading-none text-brand-200 sm:text-6xl">{no}</span>
-      <span className="text-xs font-bold uppercase tracking-[0.3em] text-brand-500">{label}</span>
-    </Reveal>
-  );
-}
-
-/** 未ログイン時のトップページ（ランディング） */
 export default function LandingPage() {
   return (
-    <>
-      <ScrollProgressBar />
-      <SceneNav scenes={SCENES} />
+    <main className="kx">
+      <LandingExperience />
 
-      {/* ヘッダー：左ロゴ／右ナビ＋ログイン・新規登録 */}
-      <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="キキタイ トップ">
-            <Logo />
-          </Link>
-          <nav className="flex items-center gap-2 sm:gap-6">
-            <a href="#story" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
-              キキタイとは
-            </a>
-            <a href="#how" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
-              使い方
-            </a>
-            <a href="#features" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
-              機能
-            </a>
-            <Link href="/intelligence" className="relative hidden text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-all after:duration-300 hover:after:w-full sm:inline">
-              AI評価の仕組み
-            </Link>
-            <Link
-              href="/login"
-              className="px-2 py-1.5 text-sm font-bold text-slate-600 hover:text-brand-600"
-            >
-              ログイン
-            </Link>
-            <Link href="/register" className="btn-3d btn-3d-primary px-4 py-2 text-sm">
-              無料ではじめる
-            </Link>
-          </nav>
-        </div>
+      {/* ── ヘッダー ── */}
+      <header className="kx-topbar">
+        <Link href="/" aria-label="キキタイ ホーム" className="kx-topbar__logo" data-magnetic="0.2">
+          <Logo className="!text-[#0c211f]" />
+          <span>RESEARCH NETWORK</span>
+        </Link>
+        <nav aria-label="メインナビゲーション" className="kx-topbar__nav">
+          <a href="#concept">CONCEPT</a>
+          <a href="#flow">HOW IT WORKS</a>
+          <a href="#quality">AI QUALITY</a>
+          <a href="#features">FEATURES</a>
+        </nav>
+        <Link href="/register" className="kx-topbar__cta" data-magnetic="0.4">
+          はじめる <ArrowRight aria-hidden size={16} strokeWidth={1.8} />
+        </Link>
       </header>
 
-      <main className="flex-1">
-        {/* ───────── ヒーロー ───────── */}
-        <section id="top" className="kk-scene relative flex min-h-screen items-center overflow-hidden">
-          <AuroraBackground />
-          <HeroBackground />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-24 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-2">
-            <div>
-              <Reveal>
-                <p className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-brand-700">
-                  <LogoMark className="h-4" />
-                  学生・研究者のためのアンケート交換プラットフォーム
-                </p>
-              </Reveal>
-              <h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-tight text-slate-900 text-balance sm:text-6xl">
-                <Reveal direction="up" delay={80} className="overflow-hidden">こたえて、</Reveal>
-                <Reveal direction="up" delay={220} className="overflow-hidden">あつめる。</Reveal>
-                <Reveal direction="up" delay={360} className="overflow-hidden">
-                  <span className="text-brand-600">研究の輪。</span>
-                </Reveal>
-              </h1>
-              <Reveal delay={520}>
-                <p className="mt-6 max-w-[46ch] text-base leading-7 text-slate-700 [text-wrap:pretty] sm:text-lg sm:leading-8">
-                  「アンケートの回答者が集まらない」を、お互いさまで解決。
-                  他の人のアンケートに答えてポイントを貯め、そのポイントで
-                  あなたの研究に回答者を集めましょう。
-                </p>
-              </Reveal>
-              <Reveal delay={640}>
-                <div className="mt-8 flex flex-wrap items-center gap-4">
-                  <Link href="/register" className="btn-3d btn-3d-primary px-7 py-3 text-base">
-                    無料ではじめる
-                    <IconArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="/login" className="btn-3d btn-3d-secondary px-7 py-3 text-base">
-                    ログイン
-                  </Link>
-                </div>
-              </Reveal>
-              <Reveal delay={760}>
-                <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-                  {['登録は無料', '限定公開ならGoogleフォーム感覚でずっと無料', 'AIが質問を自動作成', '独自AI評価で悪質回答を自動ブロック'].map((t) => (
-                    <li key={t} className="flex items-center gap-1.5">
-                      <IconCheckCircle className="h-4 w-4 text-brand-500" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            </div>
-            <Reveal direction="scale" delay={300}>
-              <HeroCycle />
-            </Reveal>
+      {/* ── ヒーロー ── */}
+      <section className="kx-hero" id="top">
+        <HeroFlowField />
+        <div className="kx-hero__grid" aria-hidden />
+        <div className="kx-hero__inner">
+          <p className="kx-hero__eyebrow">
+            <span>FOR STUDENTS &amp; RESEARCHERS</span>
+            アンケート交換プラットフォーム
+          </p>
+          <h1 className="kx-hero__title" aria-label="ASK ANSWER EVOLVE">
+            <Line>ASK</Line>
+            <Line>ANSWER</Line>
+            <Line>EVOLVE</Line>
+          </h1>
+          <div className="kx-hero__lead">
+            <strong>
+              「アンケートの回答者が集まらない」を、
+              <br />
+              お互いさまで解決する。
+            </strong>
+            <p>他の人のアンケートに答えてポイントを貯め、そのポイントであなたの研究に回答者を集めましょう。</p>
           </div>
+          <div className="kx-hero__actions">
+            <Link href="/register" className="kx-btn kx-btn--solid" data-magnetic="0.4">
+              <span>無料ではじめる</span>
+              <ArrowRight aria-hidden size={17} strokeWidth={1.7} />
+            </Link>
+            <a href="#flow" className="kx-btn kx-btn--ghost" data-magnetic="0.3">
+              <span>仕組みを見る</span>
+              <ArrowDown aria-hidden size={16} strokeWidth={1.6} />
+            </a>
+          </div>
+          <ul className="kx-hero__proof">
+            <li><i />登録は無料</li>
+            <li><i />限定公開ならずっと無料</li>
+            <li><i />AIが回答品質を評価</li>
+          </ul>
+        </div>
+        <a className="kx-hero__scroll" href="#concept" aria-label="下にスクロール">
+          <span>SCROLL</span>
+          <i />
+        </a>
+      </section>
 
-          {/* スクロール誘導 */}
-          <a
-            href="#story"
-            className="absolute inset-x-0 bottom-6 mx-auto flex w-fit flex-col items-center gap-1 text-xs font-bold tracking-widest text-brand-500"
-            aria-label="下へスクロール"
-          >
-            SCROLL
-            <IconArrowDown className="kk-scroll-cue h-5 w-5" />
-          </a>
-        </section>
+      {/* ── マニフェスト帯（横流れ） ── */}
+      <section className="kx-band" aria-hidden>
+        <div className="kx-band__row" data-drift="-16">
+          <span>ANSWER</span><i />
+          <span className="is-out">EARNS</span><i />
+          <span>ANSWERS</span><i />
+          <span>ANSWER</span><i />
+          <span className="is-out">EARNS</span><i />
+          <span>ANSWERS</span><i />
+        </div>
+      </section>
 
-        {/* ───────── 01 課題（ストーリー導入） ───────── */}
-        <section id="story" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <SectionKicker no="01" label="The Problem" />
-              <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
-                  作ったのに、
-                  <br />
-                  <span className="inline-block text-slate-400">だれも答えてくれない。</span>
-                </h2>
-              </Reveal>
-              <Reveal delay={120}>
-                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                  研究や授業課題でアンケートを作っても、回答者が集まらない。
-                  かといって、誰かのアンケートに答えても自分には何のメリットもない——。
-                  この“片道通行”が、データ集めをいつも難しくしていました。
-                </p>
-              </Reveal>
+      {/* ── コンセプト ── */}
+      <section className="kx-concept" id="concept">
+        <p className="kx-kicker" data-reveal="rise">THE IDEA / 01</p>
+        <div className="kx-concept__head">
+          <h2 data-reveal="lines">
+            <Line>回答する時間を、</Line>
+            <Line>次の問いの力に。</Line>
+          </h2>
+          <div className="kx-concept__body" data-reveal="stagger">
+            <p>回答者が集まらない。お願いする相手も尽きてしまう。研究の入り口にあるこの問題を、キキタイは「お互いに答える仕組み」で変えます。</p>
+            <p>お金ではなく、協力した時間が次の調査を動かす。学生と研究者のための、持続するリサーチネットワークです。</p>
+            <Link href="/register" className="kx-textlink" data-magnetic="0.25">
+              今日から輪に加わる <ArrowUpRight aria-hidden size={17} strokeWidth={1.5} />
+            </Link>
+          </div>
+        </div>
+
+        <div className="kx-metrics" data-reveal="stagger">
+          <div>
+            <strong><span data-count="3">0</span><em>ステップ</em></strong>
+            <span>回答 → 獲得 → 募集の循環</span>
+          </div>
+          <div>
+            <strong><span data-count="98">0</span><em>点</em></strong>
+            <span>AIが測る回答品質スコア</span>
+          </div>
+          <div>
+            <strong>¥<span data-count="0">0</span></strong>
+            <span>限定公開はずっと無料</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 仕組み（既存デモを活用） ── */}
+      <section className="kx-flow" id="flow">
+        <div className="kx-flow__aura" aria-hidden />
+        <KikitaiLoopDemo />
+      </section>
+
+      {/* ── AI品質 ── */}
+      <section className="kx-quality" id="quality">
+        <div className="kx-quality__copy">
+          <p className="kx-kicker" data-reveal="rise">AI QUALITY CONTROL / 03</p>
+          <h2 data-reveal="lines">
+            <Line>集めるだけでなく、</Line>
+            <Line>回答の質まで守る。</Line>
+          </h2>
+          <p className="kx-quality__lead" data-reveal="rise">
+            ポイント制で回答数を増やしながら、評価AIが一件ずつ品質を確認します。丁寧な回答ほど報われ、雑な水増し回答は混ざりにくくなります。
+          </p>
+          <ol className="kx-pipeline" data-reveal="stagger">
+            <li><span className="kx-pipeline__icon"><MessageSquareText aria-hidden /></span><span><small>01 / RECEIVE</small><b>回答を受け取る</b></span></li>
+            <li><span className="kx-pipeline__icon"><ScanSearch aria-hidden /></span><span><small>02 / ANALYZE</small><b>AIが内容を評価</b></span></li>
+            <li><span className="kx-pipeline__icon"><ShieldCheck aria-hidden /></span><span><small>03 / PROTECT</small><b>良質なデータだけ残す</b></span></li>
+          </ol>
+          <Link href="/intelligence" className="kx-textlink" data-magnetic="0.25">
+            評価AIの仕組みを見る <ArrowUpRight aria-hidden size={18} strokeWidth={1.5} />
+          </Link>
+        </div>
+
+        <div className="kx-quality__visual" data-parallax="0.08" data-reveal="rise">
+          <div className="kx-score">
+            <div className="kx-score__head">
+              <span><Sparkles aria-hidden size={15} /> KIKITAI AI</span>
+              <b><i /> ANALYSIS COMPLETE</b>
             </div>
-            <Reveal direction="right" delay={120}>
-              <div className="relative mx-auto max-w-md lg:max-w-lg">
-                {/* 中央：問いかけの吹き出し（誰にも届いていない） */}
-                <div className="card-3d kk-float-slow relative overflow-hidden p-7 sm:p-9" style={{ ['--kk-rot' as string]: '-1.5deg' }}>
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 ring-1 ring-brand-100">
-                      <IconQuestion className="h-7 w-7" />
-                    </span>
-                    <div>
-                      <p className="text-base font-bold text-slate-700">あなたのアンケート</p>
-                      <p className="text-xs text-slate-400">3日前に公開・誰も見ていない</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 space-y-2.5">
-                    <div className="h-2.5 w-3/4 rounded-full bg-slate-200" />
-                    <div className="h-2.5 w-full rounded-full bg-slate-200" />
-                    <div className="h-2.5 w-2/3 rounded-full bg-slate-200" />
-                  </div>
-
-                  {/* 反応がない人たち：輪郭線だけの“空席”アイコン */}
-                  <div className="mt-6 flex items-center gap-2.5">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <span
-                        key={i}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-slate-200 text-slate-300"
-                      >
-                        <IconPersonGhost className="h-5 w-5" />
-                      </span>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-xs text-slate-400">誰からも回答が来ていません……</p>
-
-                  <div className="mt-6 flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4 ring-1 ring-slate-100">
-                    <span className="text-xs font-bold text-slate-400">現在の回答数</span>
-                    <span className="text-4xl font-black leading-none text-slate-300">0</span>
-                  </div>
-                </div>
-
-                {/* 浮き出るつぶやき：聞きたいのに、誰も答えてくれない */}
-                <div
-                  className="card-3d kk-float absolute -right-5 -top-6 max-w-[11rem] px-4 py-3 text-xs font-bold leading-relaxed text-rose-500 sm:-right-10"
-                  style={{ ['--kk-rot' as string]: '6deg' }}
-                >
-                  本当は聞きたいことがあるのに、誰にも答えてもらえない……
-                </div>
-                <div
-                  className="card-3d kk-float-slow absolute -bottom-6 -left-4 flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold text-slate-400 sm:-left-9"
-                  style={{ ['--kk-rot' as string]: '-5deg' }}
-                >
-                  既読 0 ／ 回答 0
-                </div>
+            <div className="kx-score__main">
+              <div className="kx-score__ring">
+                <strong><span data-count="94">0</span></strong>
+                <small>QUALITY<br />SCORE</small>
               </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ───────── 02 解決＝回答し合う経済圏（3ステップ） ───────── */}
-        <section id="how" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden bg-white/40 py-24 sm:py-32">
-          <AuroraBackground className="opacity-60" />
-          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
-            <SectionKicker no="02" label="The Loop" />
-            <Reveal>
-              <h2 className="max-w-2xl text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
-                答えるほど、集まる。
-                <br />
-                <span className="inline-block text-brand-600">“回答し合う”経済圏。</span>
-              </h2>
-            </Reveal>
-            <Reveal delay={120}>
-              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                回答するとポイントが貯まり、そのポイントで自分のアンケートに回答者を集められる。
-                一方通行だった調査が、ぐるぐる回る輪に変わります。
+              <p>
+                <b>丁寧な回答です</b>
+                <span>高品質ボーナス</span>
+                <strong>+15 pt</strong>
               </p>
-            </Reveal>
-
-            <div className="mt-14">
-              <LoopShowcase />
             </div>
+            <ul className="kx-score__bars">
+              <li className="kx-score__bar"><span>設問への適合度</span><i style={{ '--w': '98%' } as React.CSSProperties} /><strong>98</strong></li>
+              <li className="kx-score__bar"><span>回答の具体性</span><i style={{ '--w': '92%' } as React.CSSProperties} /><strong>92</strong></li>
+              <li className="kx-score__bar"><span>回答の一貫性</span><i style={{ '--w': '93%' } as React.CSSProperties} /><strong>93</strong></li>
+            </ul>
+            <div className="kx-score__note"><ShieldCheck aria-hidden size={16} strokeWidth={1.5} /> 無関係・コピペ・不正回答を検知</div>
           </div>
-        </section>
+          <div className="kx-quality__orbit" aria-hidden><i /><i /><i /></div>
+        </div>
+      </section>
 
-        {/* ───────── 03 機能（スタッガー出現） ───────── */}
-        <section id="features" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-20 sm:py-28">
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-            <SectionKicker no="03" label="Everything you need" />
-            <Reveal>
-              <h2 className="text-3xl font-extrabold text-slate-900 text-balance sm:text-4xl">
-                研究に必要な機能を、ぜんぶ。
-              </h2>
-            </Reveal>
-            <Reveal delay={100}>
-              <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                作る・集める・分析するまで、キキタイひとつで完結します。
-              </p>
-            </Reveal>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  icon: IconLink,
-                  title: '限定公開なら、ずっと無料',
-                  body: '限定公開アンケートはポイント不要・無期限無料。発行したリンクを共有するだけで、Googleフォームと同じ感覚で誰でもすぐに使えます。',
-                  badge: '完全無料',
-                },
-                {
-                  icon: IconTable,
-                  title: 'Excelで結果をすぐ確認',
-                  body: '回答結果はワンクリックでExcel（xlsx）形式にダウンロード。Googleフォームより直感的で見やすい、おしゃれな集計画面もそのまま使えます。',
-                  badge: 'Excel出力',
-                },
-                {
-                  icon: IconWand,
-                  title: 'AIがアンケートを自動作成',
-                  body: 'テーマと調査目的を入力するだけで、AIが設問を自動生成。さらに悪質な回答を自動検知してブロックする、キキタイ独自の防御機能つき。',
-                  badge: 'AI作成',
-                },
-                {
-                  icon: IconBranch,
-                  title: '分岐とセクション',
-                  body: '回答内容に応じて設問を出し分ける表示条件や、ページ分割に対応。複雑な調査設計もそのまま再現できます。',
-                },
-                {
-                  icon: IconStep,
-                  title: '答えやすい回答体験',
-                  body: '1問ずつ集中できるステッパー形式。進捗表示・途中保存・オフライン再送に対応し、回答の離脱を防ぎます。',
-                },
-                {
-                  icon: IconChart,
-                  title: 'リアルタイム集計',
-                  body: '円グラフ・棒グラフ・クロス集計を自動生成。CSVダウンロードや統計量（平均・標準偏差など）の算出にも対応します。',
-                },
-              ].map(({ icon: Icon, title, body, badge }, i) => (
-                <Reveal key={title} direction="up" delay={(i % 3) * 100 + Math.floor(i / 3) * 60}>
-                  <div className="card-3d card-3d-hover h-full p-6">
-                    <div className="flex items-start justify-between">
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-brand-600 ring-1 ring-slate-100">
-                        <Icon className="h-6 w-6" />
-                      </span>
-                      {badge && (
-                        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-brand-100">
-                          {badge}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-4 font-extrabold text-slate-900">{title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* ── 機能 ── */}
+      <section className="kx-features" id="features">
+        <div className="kx-features__head">
+          <p className="kx-kicker" data-reveal="rise">TOOLS FOR RESEARCH / 04</p>
+          <h2 data-reveal="lines">
+            <Line>研究に必要なものは、</Line>
+            <Line>全部そろっている。</Line>
+          </h2>
+        </div>
+        <div className="kx-features__list" data-reveal="stagger">
+          {essentials.map(({ title, body, Icon }, index) => (
+            <article key={title} className="kx-feature" data-magnetic="0.12">
+              <span className="kx-feature__no">0{index + 1}</span>
+              <Icon aria-hidden size={28} strokeWidth={1.25} />
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <ArrowUpRight aria-hidden size={20} strokeWidth={1.2} className="kx-feature__arrow" />
+            </article>
+          ))}
+        </div>
+      </section>
 
-        {/* ───────── キキタイ・インテリジェンス（最大の差別化要素） ───────── */}
-        <section id="intelligence" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
-          <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
-            <SectionKicker no="04" label="Kikitai Intelligence" />
-            <Reveal className="mb-2 flex flex-col gap-3">
-              <h2 className="max-w-3xl text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
-                がんばった回答が、
-                <br />
-                <span className="inline-block text-brand-600">ちゃんと報われる。</span>
-              </h2>
-              <p className="max-w-xl text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                キキタイの評価AIが、届いた回答ひとつひとつにそっと目を通します。
-                丁寧な声にはきちんとボーナスを、雑な“水増し”にはストップを。
-                だから集まるのは、研究にそのまま使える、きれいなデータだけ。
-              </p>
-              <Link href="/intelligence" className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:text-brand-700">
-                キキタイ・インテリジェンスの仕組みを見る
-                <IconArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Reveal>
+      {/* ── FAQ ── */}
+      <section className="kx-faq">
+        <div className="kx-faq__head">
+          <p className="kx-kicker" data-reveal="rise">FAQ / 05</p>
+          <h2 data-reveal="lines"><Line>よくある質問</Line></h2>
+        </div>
+        <div className="kx-faq__list" data-reveal="stagger">
+          {faqs.map(([q, a], index) => (
+            <details key={q}>
+              <summary><span className="kx-faq__no">0{index + 1}</span>{q}<i aria-hidden /></summary>
+              <p>{a}</p>
+            </details>
+          ))}
+          <Link href="/help" className="kx-textlink" data-magnetic="0.25">
+            ヘルプを見る <ArrowUpRight aria-hidden size={18} strokeWidth={1.5} />
+          </Link>
+        </div>
+      </section>
 
-            <div className="mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
-              {[
-                { value: '24h', label: 'いつでも自動でレビュー' },
-                { value: '0円', label: '回答する人への追加負担なし' },
-                { value: '×1.5', label: '丁寧な回答にはボーナス' },
-              ].map((s) => (
-                <Reveal key={s.label} direction="up" delay={80}>
-                  <div className="kk-boop rounded-2xl border border-brand-100 bg-white/70 px-5 py-5 text-center">
-                    <p className="text-3xl font-black text-brand-600">{s.value}</p>
-                    <p className="mt-1 text-xs text-slate-500">{s.label}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+      {/* ── CTA ── */}
+      <section className="kx-cta">
+        <div className="kx-cta__glow" aria-hidden />
+        <p data-reveal="rise">YOUR QUESTION CAN MOVE RESEARCH FORWARD.</p>
+        <h2 data-reveal="lines">
+          <Line>聞きたいことから、</Line>
+          <Line>研究ははじまる。</Line>
+        </h2>
+        <div className="kx-cta__actions" data-reveal="rise">
+          <Link href="/register" className="kx-btn kx-btn--solid" data-magnetic="0.4">
+            <span>無料ではじめる</span>
+            <ArrowRight aria-hidden size={17} strokeWidth={1.7} />
+          </Link>
+          <Link href="/login" className="kx-btn kx-btn--ghost" data-magnetic="0.3">
+            <span>ログイン</span>
+          </Link>
+        </div>
+      </section>
 
-            <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">
-              <Reveal direction="left">
-                <ul className="space-y-5">
-                  {[
-                    {
-                      icon: IconSparkle,
-                      title: '回答の「丁寧さ」を100点満点で採点',
-                      body: '設問への適合度・具体性・誠実さをAIが見て、丁寧な回答にはボーナスを。がんばりがそのままポイントになります。',
-                    },
-                    {
-                      icon: IconBan,
-                      title: '雑な“水増し”回答はそっとブロック',
-                      body: 'コピペや無関係な入力、ボットのような連続回答をAIが見つけて止めます。研究データを汚すノイズを未然に防ぎます。',
-                    },
-                    {
-                      icon: IconBrain,
-                      title: '「回答し合う輪」を守るための仕組み',
-                      body: 'お互いの時間を交換するキキタイだからこそ、回答の質はみんなの財産。それを守るために専用の評価AIを育てています。',
-                    },
-                  ].map(({ icon: Icon, title, body }) => (
-                    <li key={title} className="flex gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-brand-600 ring-1 ring-slate-100">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <h3 className="font-extrabold text-slate-900">{title}</h3>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{body}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal direction="right" delay={120}>
-                <div className="relative mx-auto max-w-sm">
-                  <div className="card-3d p-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-700">AI品質スコア</span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
-                        <IconSparkle className="h-3.5 w-3.5" /> 自動採点
-                      </span>
-                    </div>
-                    <div className="mt-5 flex items-end gap-2">
-                      <span className="text-6xl font-black leading-none text-brand-600">92</span>
-                      <span className="mb-2 text-lg font-bold text-slate-400">/ 100</span>
-                    </div>
-                    <div className="mt-4 space-y-3">
-                      {[
-                        { label: '設問への適合', v: 'w-[92%]' },
-                        { label: '回答の具体性', v: 'w-[88%]' },
-                        { label: '誠実さ', v: 'w-[95%]' },
-                      ].map((b) => (
-                        <div key={b.label}>
-                          <div className="mb-1 flex justify-between text-xs text-slate-500">
-                            <span>{b.label}</span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100">
-                            <div className={`h-full ${b.v} rounded-full bg-gradient-to-r from-brand-400 to-brand-600`} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-5 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
-                      <span className="text-xs font-bold text-amber-700">高品質ボーナス</span>
-                      <span className="text-lg font-extrabold text-amber-600">×1.5</span>
-                    </div>
-                  </div>
-                  <div className="card-3d kk-float absolute -right-4 -top-5 px-4 py-2 text-xs font-extrabold text-brand-600" style={{ ['--kk-rot' as string]: '5deg' }}>
-                    +30pt 確定
-                  </div>
-                  <div className="card-3d kk-float-slow absolute -bottom-5 -left-3 flex items-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 sm:-left-8" style={{ ['--kk-rot' as string]: '-4deg' }}>
-                    <IconBan className="h-3.5 w-3.5" />
-                    不正回答を自動ブロック
-                  </div>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        {/* ───────── 05 非公開アンケート＝無料のGoogleフォーム代替 ───────── */}
-        <section id="free" className="kk-scene relative flex min-h-screen scroll-mt-16 items-center overflow-hidden py-24 sm:py-32">
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <SectionKicker no="05" label="Free & Beautiful" />
-              <Reveal>
-                <h2 className="text-3xl font-extrabold leading-snug text-slate-900 text-balance sm:text-4xl">
-                  限定公開なら、
-                  <br />
-                  <span className="inline-block text-brand-600">ずっと無料のフォームツール。</span>
-                </h2>
-              </Reveal>
-              <Reveal delay={120}>
-                <p className="mt-5 max-w-[44ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                  アンケートを「限定公開」にすれば、ポイントは一切不要。発行されたリンクを
-                  LINEやSlackで共有するだけで、Googleフォームと同じように誰でもすぐ回答を集められます。
-                  しかも見た目はキキタイならではの、おしゃれで直感的なデザイン。
-                </p>
-              </Reveal>
-              <Reveal delay={200}>
-                <ul className="mt-6 space-y-3 text-sm text-slate-600">
-                  {[
-                    { icon: IconCoin, text: 'ポイント不要・回数制限なしでずっと無料' },
-                    { icon: IconLink, text: 'URLを発行してリンク共有するだけで回答を収集' },
-                    { icon: IconTable, text: '集まった結果はExcel（xlsx）で即ダウンロード' },
-                    { icon: IconSparkle, text: 'Googleフォームより見やすく、おしゃれな入力・集計画面' },
-                  ].map(({ icon: Icon, text }) => (
-                    <li key={text} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      {text}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            </div>
-            <Reveal direction="right" delay={120}>
-              <div className="relative mx-auto max-w-sm">
-                <div className="card-3d p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700">限定公開アンケート</span>
-                    <span className="rounded-full bg-slate-700 px-3 py-0.5 text-xs font-bold text-white">限定公開</span>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <IconLink className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="truncate text-xs text-slate-500">kikitai.app/s/3f9a2c…</span>
-                    <span className="ml-auto shrink-0 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-700">コピー</span>
-                  </div>
-                  <div className="mt-5 space-y-2.5">
-                    <div className="h-2 w-3/4 rounded-full bg-brand-200" />
-                    <div className="h-2 w-full rounded-full bg-brand-100" />
-                    <div className="h-2 w-2/3 rounded-full bg-brand-100" />
-                  </div>
-                  <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
-                    <span className="text-xs font-bold text-brand-700">必要なポイント</span>
-                    <span className="text-lg font-extrabold text-brand-600">0pt</span>
-                  </div>
-                </div>
-                <div className="card-3d kk-float absolute -right-4 -top-5 px-4 py-2 text-xs font-extrabold text-brand-600" style={{ ['--kk-rot' as string]: '5deg' }}>
-                  <span className="inline-flex items-center gap-1">
-                    <IconTable className="h-3.5 w-3.5" />
-                    Excelで出力
-                  </span>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ───────── 最後のCTA ───────── */}
-        <section id="cta" className="kk-scene flex min-h-screen scroll-mt-16 items-center border-b border-brand-100/70">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <Reveal direction="scale">
-            <div className="card-3d relative overflow-hidden p-10 text-center sm:p-16">
-              <AuroraBackground className="opacity-70" />
-              <div className="relative">
-                <div className="mx-auto w-fit">
-                  <LogoMark className="kk-breathe relative h-16 text-brand-500" />
-                </div>
-                <h2 className="mt-5 text-3xl font-extrabold text-slate-900 text-balance sm:text-4xl">
-                  あなたの研究にも、回答を。
-                </h2>
-                <p className="mx-auto mt-3 max-w-[42ch] text-base leading-7 text-slate-700 [text-wrap:pretty]">
-                  登録はかんたん。今日からアンケートに答えて、回答し合う輪に参加しましょう。
-                </p>
-                <div className="mt-8 flex justify-center">
-                  <Link href="/register" className="btn-3d btn-3d-primary px-8 py-3.5 text-base">
-                    無料ではじめる
-                    <IconArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-          </div>
-        </section>
-      </main>
-    </>
+      {/* ── フッター ── */}
+      <footer className="kx-footer">
+        <div className="kx-footer__brand">
+          <Logo className="!text-[#f4f8f6]" />
+          <p>回答し合う、研究のための<br />アンケートプラットフォーム。</p>
+        </div>
+        <nav className="kx-footer__nav">
+          <a href="#concept">CONCEPT</a>
+          <a href="#flow">HOW IT WORKS</a>
+          <a href="#quality">AI QUALITY</a>
+          <Link href="/terms">TERMS</Link>
+          <Link href="/privacy">PRIVACY</Link>
+        </nav>
+        <p className="kx-footer__copy">© KIKITAI. ALL RIGHTS RESERVED.</p>
+        <a href="#top" className="kx-footer__top" data-magnetic="0.3">PAGE TOP ↑</a>
+      </footer>
+    </main>
   );
 }
