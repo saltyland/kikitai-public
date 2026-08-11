@@ -552,7 +552,7 @@ export default function PublicSurveyEditor({
   };
 
   return (
-    <div className={`lg:gap-6 lg:items-start ${step === 3 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
+    <div className={`survey-studio lg:items-start lg:gap-6 ${step === 3 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
         {/* 公開モードバッジ */}
         <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">

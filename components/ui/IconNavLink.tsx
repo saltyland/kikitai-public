@@ -37,7 +37,7 @@ export default function IconNavLink({
     <Link
       href={href}
       aria-label={label}
-      className="group relative flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-brand-50 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className="app-header__nav-link group relative flex h-10 w-10 items-center justify-center rounded-xl text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#73eadb]"
     >
       <Icon className="h-5 w-5" aria-hidden />
       <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">

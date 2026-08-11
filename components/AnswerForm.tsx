@@ -435,9 +435,12 @@ export default function AnswerForm({
       Math.round(survey.questions.reduce((s, q) => s + (SECONDS_PER_TYPE[q.type] ?? 15), 0) / 60)
     );
     return (
-      <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">回答する前に確認しよう</h2>
-        <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">
+      <div className="card-3d space-y-5 overflow-hidden p-6 sm:p-8">
+        <div>
+          <p className="app-kicker">Before you begin</p>
+          <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900">回答する前に確認しよう</h2>
+        </div>
+        <p className="inline-flex rounded-full bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-700">
           全{survey.questions.length}問・所要時間 約{estMin}分
         </p>
         {/* 作成者が設定したインフォームドコンセント文（8位）。同意した人だけ設問へ進める */}
@@ -672,7 +675,7 @@ export default function AnswerForm({
           key={current.id}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="kikitai-slide-in relative rounded-xl bg-white border border-slate-200 p-6 shadow-sm space-y-5"
+        className="kikitai-slide-in card-3d relative space-y-6 overflow-hidden p-6 sm:p-8"
         >
           {/* ✓ マイクロフィードバック */}
           {showCheck && (

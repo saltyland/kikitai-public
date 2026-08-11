@@ -5,6 +5,7 @@ import { AuthService } from '@/lib/services/authService';
 import { SurveyService } from '@/lib/services/surveyService';
 import Header from '@/components/Header';
 import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function SearchPage({
   searchParams,
@@ -25,9 +26,14 @@ export default async function SearchPage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main className="app-main mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AppPageHeader
+          eyebrow="Explore research"
+          title="知りたいテーマから探す。"
+          description="タイトル、説明、設問の内容を横断して、関心の近いアンケートを見つけられます。"
+        />
         {/* 検索フォーム（GETでこのページに再アクセス＝サーバー側で再ランキング） */}
-        <form action="/search" method="get" className="mb-6">
+        <form action="/search" method="get" className="relative z-10 mx-auto -mt-14 mb-10 w-[calc(100%-2rem)] max-w-3xl sm:-mt-16">
           <div className="relative flex items-center">
             <Search
               className="pointer-events-none absolute left-4 h-5 w-5 text-slate-400"
@@ -39,7 +45,7 @@ export default async function SearchPage({
               defaultValue={query}
               autoFocus
               placeholder="アンケートを検索…"
-              className="w-full rounded-full border border-brand-100 bg-white/80 py-3 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="w-full rounded-2xl border border-brand-100 bg-white py-4 pl-12 pr-5 text-sm text-slate-700 shadow-[0_20px_50px_-34px_rgba(7,74,72,.65)] placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100"
             />
           </div>
         </form>

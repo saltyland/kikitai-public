@@ -12,7 +12,7 @@ export default async function ProfileSettingsPage() {
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+      <main className="app-main mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="mb-6 text-xl font-bold text-slate-800">設定</h1>
         <ProfileSettingsForm profile={profile} settings={profile.notification_settings} />
       </main>

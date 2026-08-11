@@ -13,7 +13,7 @@ export default function ProfileNavMenu({
     <Link
       href="/profile"
       aria-label="マイページ"
-      className="flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#73eadb]"
     >
       <Avatar name={nickname} src={avatarUrl} className="h-8 w-8 text-xs" />
     </Link>

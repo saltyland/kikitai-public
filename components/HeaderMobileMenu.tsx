@@ -27,7 +27,7 @@ export default function HeaderMobileMenu({
         aria-label="メニュー"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="rounded-md p-2 text-slate-700 hover:bg-brand-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="cursor-pointer rounded-xl p-2 text-white/75 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#73eadb]"
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
           {open ? (
@@ -39,7 +39,7 @@ export default function HeaderMobileMenu({
       </button>
 
       {open && (
-        <nav className="sm:hidden absolute inset-x-0 top-14 z-40 border-b border-brand-100/70 bg-white shadow-sm">
+        <nav className="absolute inset-x-0 top-[4.45rem] z-40 border-b border-white/10 bg-[#071b2b]/98 shadow-2xl backdrop-blur-xl sm:hidden">
           <div className="mx-auto max-w-4xl px-4 py-2 flex flex-col text-sm">
             {NAV_ITEMS.map((item) =>
               item.icon ? (

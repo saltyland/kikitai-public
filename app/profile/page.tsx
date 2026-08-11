@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import TrustBadge from '@/components/TrustBadge';
 import FollowingUsersTab from '@/components/FollowingUsersTab';
 import { PointsCard, LogoutButton, DeleteAccountSection } from '@/components/ProfileSummary';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
@@ -24,11 +25,27 @@ export default async function ProfilePage() {
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-slate-800">マイページ</h1>
+      <main className="app-main mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AppPageHeader
+          eyebrow="My research profile"
+          title={
+            <>
+              {profile.nickname}さんの
+              <br />
+              マイページ
+            </>
+          }
+          description="回答者としての信頼、ポイント、フォロー中の研究者をまとめて確認できます。"
+          actions={
+            <Link href="/profile/settings" className="btn-3d btn-3d-secondary px-5 py-2 text-sm">
+              <Settings className="h-4 w-4" aria-hidden />
+              設定をひらく
+            </Link>
+          }
+        />
 
         <div className="space-y-6">
-          <section className="card-3d rounded-2xl bg-white p-5">
+          <section className="card-3d rounded-2xl bg-gradient-to-br from-white to-brand-50/50 p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-500">信頼スコア</h2>
               <TrustBadge score={profile.trust_score} />

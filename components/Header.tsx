@@ -54,16 +54,16 @@ export default async function Header({
   );
 
   return (
-    <header className="glass sticky top-0 z-30 border-b border-brand-100/70">
-      <div className="mx-auto max-w-4xl px-4 h-16 flex items-center gap-2">
+    <header className="app-header sticky top-0 z-30">
+      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-2 px-4 sm:px-6">
 
         {/* 左: ロゴ + ページラベル */}
         <div className="flex items-center gap-2 shrink-0">
-          <Link href="/" aria-label="キキタイ ホーム">
-            <Logo />
+          <Link href="/" aria-label="キキタイ ホーム" className="app-header__logo rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#73eadb]">
+            <Logo className="text-white" />
           </Link>
           {pageLabel && (
-            <span className="hidden border-l border-brand-200 pl-2 text-xs font-semibold text-brand-600 sm:inline">
+            <span className="hidden border-l border-white/15 pl-3 text-xs font-semibold tracking-wide text-white/55 sm:inline">
               {pageLabel}
             </span>
           )}
@@ -83,11 +83,11 @@ export default async function Header({
           <Link
             href="/points"
             data-tour="points"
-            className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50"
+            className="app-header__points flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold text-white transition-colors"
           >
-            <Coins className="h-4 w-4 text-brand-500" aria-hidden />
+            <Coins className="h-4 w-4 text-[#d9ff72]" aria-hidden />
             <span>{points.toLocaleString()}</span>
-            <span className="text-xs font-normal text-slate-400">pt</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/45">pt</span>
           </Link>
           <span data-tour="notifications">
             <NotificationBell notifications={notifications} unreadCount={unreadCount} />

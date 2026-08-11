@@ -7,6 +7,7 @@ import HorizontalSurveyRow from '@/components/HorizontalSurveyRow';
 import RefreshButton from '@/components/ui/RefreshButton';
 import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function SurveyListPage() {
   const supabase = await createSupabaseServerClient();
@@ -28,14 +29,19 @@ export default async function SurveyListPage() {
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-2 rounded-xl bg-brand-50/50 px-4 py-3">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">回答できるアンケート</h1>
-            <p className="mt-1 text-sm text-slate-400">スクロールしていろんなアンケートを見てみましょう。</p>
-          </div>
-          <RefreshButton />
-        </div>
+      <main className="app-main mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AppPageHeader
+          eyebrow="Survey discovery"
+          title={
+            <>
+              気になる問いを、
+              <br />
+              見つけよう
+            </>
+          }
+          description="あなたの関心やプロフィールに合う調査をまとめました。ひとつの回答が、誰かの研究を前へ進めます。"
+          actions={<RefreshButton />}
+        />
 
         {isEmpty ? (
           <EmptyState

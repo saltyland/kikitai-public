@@ -15,6 +15,7 @@ import CrossTabExplorer, {
 import RefreshButton from '@/components/ui/RefreshButton';
 import { toChartData } from '@/lib/domain/resultCharts';
 import { crossTabbableQuestions, selectedOptionIds } from '@/lib/domain/crosstab';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function ResultsPage({
   params,
@@ -80,11 +81,15 @@ export default async function ResultsPage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-        <Link href="/manage" className="text-sm text-brand-600 hover:underline">← 作成・管理に戻る</Link>
-        <h1 className="mt-2 mb-1 text-xl font-bold text-slate-800">{survey.title}</h1>
+      <main className="app-main mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <Link href="/manage" className="mb-4 inline-flex text-sm font-medium text-brand-700 hover:underline">← 作成・管理に戻る</Link>
+        <AppPageHeader
+          eyebrow="Research results"
+          title={survey.title}
+          description={`現在 ${responseCount}件の回答が集まっています。集計・個票・クロス集計を切り替えながら、調査のシグナルを読み解けます。`}
+        />
         <div className="mb-6 flex items-center justify-between gap-4">
-          <p className="text-sm text-slate-600">回答数：{responseCount}件</p>
+          <p className="app-kicker">Analysis tools</p>
           <div className="flex items-center gap-2">
             <RefreshButton />
             <Link

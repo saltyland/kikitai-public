@@ -8,6 +8,7 @@ import FaqAccordion from '@/components/FaqAccordion';
 import type { SurveyWithStats } from '@/lib/types/database';
 import { SurveyService } from '@/lib/services/surveyService';
 import HomeTour from '@/components/HomeTour';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function HomePage({
   searchParams,
@@ -43,59 +44,55 @@ export default async function HomePage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+      <main className="app-main mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         {statusError && (
           <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {statusError}
           </div>
         )}
 
-        {/* ヒーローコピー（DESIGN_SPEC 準拠） */}
-        <section className="relative mb-8 overflow-hidden rounded-3xl border border-brand-100/70 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 px-6 py-8 text-center shadow-[0_8px_30px_-12px_rgba(38,166,154,0.35)] sm:px-8 sm:py-10 sm:text-left">
-          {/* 背景の装飾ブロブ（やわらかい奥行き） */}
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-300/30 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-brand-200/40 blur-3xl" />
-          <h1 className="relative text-balance text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            <span className="bg-gradient-to-r from-brand-700 via-brand-500 to-brand-400 bg-clip-text text-transparent">
-              こたえて、あつめる。
-            </span>
-            <span className="text-slate-800">研究の輪。</span>
-          </h1>
-          <p className="relative mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-            アンケートに答えてポイントを貯め、自分の研究に回答者を集めよう。<br className="hidden sm:inline" />
-            みんなで回答し合う、アンケート交換サービス。
-          </p>
-        </section>
+        <AppPageHeader
+          eyebrow="Your research workspace"
+          title={
+            <>
+              答えて、
+              <br />
+              集める研究の輪
+            </>
+          }
+          description="アンケートに答えてポイントを貯め、自分の研究に回答者を集める。今日の一歩を、ここから始めましょう。"
+          backgroundImage="/images/app/research-network-dashboard-v3-pale.webp"
+          backgroundAlt="回答と研究がつながるネットワーク"
+        />
 
         {/* アンケート回答セクション（回答してポイントを貯めるのが最初の一歩なので先頭に置く） */}
-        <div className="mb-1 border-l-4 border-brand-400 pl-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            アンケートに回答する
-          </h2>
+        <div className="app-section-heading">
+          <div>
+            <p className="app-kicker">Answer & earn</p>
+            <h2>次にこたえるアンケート</h2>
+            <p>内容を確認しながら、自分に合う調査を選べます。</p>
+          </div>
         </div>
-        <p className="mb-5 pl-4 text-sm text-slate-500">
-          カードを1枚ずつチェックして、回答するかスキップするか選べます。
-        </p>
-        <div data-tour="answer">
+        <div data-tour="answer" className="mx-auto max-w-4xl">
           <AnswerDeck surveys={answerQueue} />
         </div>
 
         {/* アンケート作成・管理セクション */}
-        <div className="mt-8 border-t border-slate-300/70 pt-6">
-          <div className="mb-2 border-l-4 border-brand-400 pl-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              アンケートを作成・管理する
-            </h2>
+        <div className="app-section-heading mt-12 border-t border-slate-200/70 pt-8">
+          <div>
+            <p className="app-kicker">Create & manage</p>
+            <h2>あなたの調査</h2>
+            <p>作成中のアンケートから、公開後の回答状況までまとめて確認できます。</p>
           </div>
           <p className="mb-5 pl-4 text-sm text-slate-500">
             カードを1枚ずつチェックして、回答するかスキップするか選べます。
           </p>
         </div>
-        <div data-tour="my-surveys" className="mb-10">
+        <div data-tour="my-surveys" className="mx-auto mb-10 max-w-4xl">
           <MySurveysSummaryCard surveys={mySurveys} />
         </div>
 
-        <FaqAccordion />
+        <div className="mx-auto max-w-4xl"><FaqAccordion /></div>
       </main>
       <HomeTour />
     </>

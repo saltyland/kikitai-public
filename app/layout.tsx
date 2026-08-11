@@ -25,8 +25,12 @@ export const metadata: Metadata = {
   description: SITE_DESC,
   applicationName: SITE_NAME,
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    // ファビコンはブラウザ側で長くキャッシュされるため、更新時はURLを変えて再取得させる。
+    icon: [{ url: "/icon.svg?v=20260713", type: "image/svg+xml" }],
+    shortcut: [{ url: "/favicon.ico?v=20260713" }],
+    apple: [{ url: "/apple-touch-icon.png?v=20260713", sizes: "180x180", type: "image/png" }],
   },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

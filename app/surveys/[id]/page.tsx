@@ -27,7 +27,7 @@ export default async function AnswerSurveyPage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
+      <main className="app-main mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         {errorMsg || !survey ? (
           <div role="alert" className="rounded-lg bg-red-50 border border-red-200 p-8 text-center">
             <p className="text-sm font-medium text-red-700">
@@ -41,13 +41,16 @@ export default async function AnswerSurveyPage({
             </Link>
           </div>
         ) : (
-          <>
-            <h1 className="mb-2 text-xl font-bold text-slate-800">{survey.title}</h1>
+          <div className="app-answer-workspace">
+            <div className="app-answer-title">
+              <p className="app-kicker">Answer session</p>
+              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{survey.title}</h1>
             {survey.description && (
-              <p className="mb-6 text-sm text-slate-600">{survey.description}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{survey.description}</p>
             )}
+            </div>
             <AnswerForm survey={survey} userId={profile.id} />
-          </>
+          </div>
         )}
       </main>
     </>

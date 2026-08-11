@@ -8,6 +8,7 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from '@/app/actions/notification';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 export default async function NotificationsPage() {
   const supabase = await createSupabaseServerClient();
@@ -20,17 +21,19 @@ export default async function NotificationsPage() {
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <h1 className="text-lg font-bold text-slate-800">通知</h1>
-          {unreadCount > 0 && (
+      <main className="app-main mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AppPageHeader
+          eyebrow="Activity"
+          title="通知"
+          description={unreadCount > 0 ? `未読の通知が${unreadCount}件あります。調査の進捗や新しいつながりを確認しましょう。` : '新しい回答やフォロー、調査に関する更新をここで確認できます。'}
+          actions={unreadCount > 0 ? (
             <form action={markAllNotificationsReadAction}>
-              <button type="submit" className="text-sm text-brand-600 hover:underline cursor-pointer">
+              <button type="submit" className="btn-3d btn-3d-secondary cursor-pointer px-5 py-2 text-sm">
                 すべて既読にする
               </button>
             </form>
-          )}
-        </div>
+          ) : undefined}
+        />
 
         {notifications.length === 0 ? (
           <div className="card-3d px-4 py-10 text-center">
@@ -54,7 +57,7 @@ export default async function NotificationsPage() {
                 </div>
               );
               return (
-                <li key={n.id} className="card-3d flex items-center gap-2 p-4">
+                <li key={n.id} className={`card-3d flex items-center gap-2 p-4 transition ${n.read ? '' : 'border-brand-200 bg-brand-50/35'}`}>
                   <div className="min-w-0 flex-1">
                     {n.link ? (
                       <Link href={n.link} className="block hover:opacity-80">
