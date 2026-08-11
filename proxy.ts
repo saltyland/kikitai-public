@@ -11,7 +11,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // 静的ファイル・画像最適化・faviconを除く全パスで実行
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // 静的ファイル・画像最適化・faviconに加えてメタデータ系ルートを除く全パスで実行
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest|txt|xml|ico)$).*)',
   ],
 };
