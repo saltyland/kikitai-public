@@ -16,6 +16,8 @@ import {
   evaluateWithDeadline,
   grade,
   resolveQualityDeadlineMs,
+  resolveRelevanceDeadlineMs,
+  withDeadline,
   sanitizeItems,
   shouldCallLLM,
   RuleBasedEvaluator,
@@ -317,10 +319,21 @@ export class ResponseService {
     const rawRefs = (survey as unknown as { reference_vectors: unknown }).reference_vectors;
     const refs = rawRefs ? (rawRefs as SurveyReferenceVectors) : null;
     const localEval = new LocalEmbeddingEvaluator(refs);
-    const relevanceRisk = await localEval.computeRelRisk(sanitized).catch((e) => {
-      console.warn('[responseService] LocalEmbeddingEvaluator.computeRelRisk に失敗:', e);
-      return 0;
-    });
+    const relevanceDeadlineMs = resolveRelevanceDeadlineMs();
+    const relevanceStartedAt = Date.now();
+    const relevanceRisk = await withDeadline(
+      localEval.computeRelRisk(sanitized).catch((e) => {
+        console.warn('[responseService] LocalEmbeddingEvaluator.computeRelRisk に失敗:', e);
+        return 0;
+      }),
+      relevanceDeadlineMs,
+      0 // 締切超過時は関連性で減点しない（安全側）に倒す
+    );
+    if (Date.now() - relevanceStartedAt >= relevanceDeadlineMs) {
+      console.warn(
+        `[responseService] 関連性リスク計算が締切超過（${relevanceDeadlineMs}ms）。relevanceRisk=0で確定します（survey=${surveyId}）`
+      );
+    }
 
     const mech: MechSignals = {
       rulePass: ruleResult.score >= 100,
