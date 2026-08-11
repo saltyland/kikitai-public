@@ -13,6 +13,7 @@ import RefreshButton from '@/components/ui/RefreshButton';
 import { summarizeMySurveys } from '@/lib/ui/surveyStats';
 import { formatDateJa } from '@/lib/utils';
 import type { SurveyStatus } from '@/lib/types/database';
+import AppPageHeader from '@/components/ui/AppPageHeader';
 
 const TABS: { key: SurveyStatus; label: string }[] = [
   { key: 'draft', label: '下書き' },
@@ -48,19 +49,20 @@ export default async function ManagePage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} pageLabel="アンケート管理" />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h1 className="text-lg font-bold text-slate-800">作成・管理</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/surveys/new"
-              className="btn-3d btn-3d-primary px-3 py-1.5 text-sm"
-            >
-              ＋ アンケートを作成する
-            </Link>
-            <RefreshButton />
-          </div>
-        </div>
+      <main className="app-main mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AppPageHeader
+          eyebrow="Research management"
+          title="調査の現在地を、ひと目で。"
+          description="下書き、公開中、終了済みの調査と回答の集まり方を、一つのワークスペースで管理できます。"
+          actions={
+            <>
+              <Link href="/surveys/new" className="btn-3d btn-3d-primary px-5 py-2 text-sm">
+                ＋ アンケートを作成する
+              </Link>
+              <RefreshButton />
+            </>
+          }
+        />
 
         <ManageDashboard surveys={allSurveys} />
 

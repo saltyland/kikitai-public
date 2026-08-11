@@ -408,7 +408,7 @@ export default function UnlistedSurveyEditor({
 
   return (
     <>
-    <div className={`lg:gap-6 lg:items-start ${step === 2 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
+    <div className={`survey-studio lg:items-start lg:gap-6 ${step === 2 && showRight ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)]' : ''}`}>
       <div className="space-y-6">
         {/* 限定公開バッジ */}
         <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">

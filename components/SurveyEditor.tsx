@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import PublicSurveyEditor from '@/components/PublicSurveyEditor';
 import UnlistedSurveyEditor from '@/components/UnlistedSurveyEditor';
 import type { SurveyWithQuestions } from '@/lib/types/database';
+import Image from 'next/image';
 
 /**
  * アンケートエディタのエントリポイント。
@@ -177,28 +178,53 @@ export default function SurveyEditor({
 
   // 新規作成時：公開モード選択モーダル
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+    <main
+      aria-labelledby="mode-modal-title"
+      className="fixed inset-0 z-[100] min-h-dvh overflow-y-auto bg-gradient-to-b from-brand-50 via-white to-slate-50"
+    >
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mode-modal-title"
-        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-10"
+        className="mx-auto min-h-dvh w-full max-w-7xl bg-white px-4 py-5 shadow-[0_20px_60px_-40px_rgba(7,27,43,.5)] sm:px-8 sm:py-8 lg:px-12"
       >
-        <div className="text-center">
-          <h2 id="mode-modal-title" className="text-balance text-2xl font-extrabold text-slate-800 sm:text-3xl">
-            公開モードを選んでください
-          </h2>
-          <p className="mx-auto mt-2 max-w-prose text-balance text-sm text-slate-500">
-            アンケートに合う届け方を選びましょう。どちらも同じ作成画面から設問を作れます。
-          </p>
+        <div className="mb-5 flex items-center justify-between gap-4 sm:mb-7">
+          <div>
+            <p className="app-kicker">Survey studio</p>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">アンケートの公開方法を選択します</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="cursor-pointer rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300"
+          >
+            キャンセル
+          </button>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="relative mb-8 h-56 overflow-hidden rounded-3xl bg-[#e7f3ed] sm:h-64">
+          <Image
+            src="/images/app/survey-builder-ai-v3-pale.webp"
+            alt="設問カードを組み立てるAIアシスタント"
+            fill
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            className="object-contain object-right"
+          />
+          <div className="absolute inset-y-0 left-0 w-[78%] bg-gradient-to-r from-[#e7f3ed] via-[#eaf5f0]/95 to-transparent sm:w-[68%]" />
+          <div className="absolute left-0 top-0 w-[76%] px-6 pt-7 text-left sm:w-[62%] sm:px-10 sm:pt-9 lg:px-14 lg:pt-12">
+            <p className="app-kicker">Start your research</p>
+            <h1 id="mode-modal-title" className="mt-2 text-balance text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              公開モードを選んでください
+            </h1>
+            <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-600 sm:text-sm">
+              アンケートに合う届け方を選びましょう。どちらも同じ作成画面から設問を作れます。
+            </p>
+          </div>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 lg:gap-8">
           {/* 通常公開 */}
           <button
             type="button"
             onClick={() => setChoice('public')}
-            className="group relative flex flex-col rounded-2xl border-2 border-brand-300 bg-brand-50 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 focus-visible:ring-offset-2 cursor-pointer sm:p-6"
+            className="group relative flex cursor-pointer flex-col rounded-2xl border border-brand-200 bg-gradient-to-br from-white to-brand-50 p-5 text-left shadow-[0_20px_45px_-35px_rgba(7,27,43,.55)] transition-all duration-300 hover:-translate-y-1 hover:border-brand-400 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 focus-visible:ring-offset-2 sm:p-6"
           >
             <span className="absolute -top-3 left-6 rounded-full bg-amber-400 px-3 py-1 text-xs font-extrabold text-white shadow-md">
               おすすめ
@@ -228,7 +254,7 @@ export default function SurveyEditor({
           <button
             type="button"
             onClick={() => setChoice('unlisted')}
-            className="group flex flex-col rounded-2xl border-2 border-slate-300 bg-slate-50 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 focus-visible:ring-offset-2 cursor-pointer sm:p-6"
+            className="group flex cursor-pointer flex-col rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 text-left shadow-[0_20px_45px_-35px_rgba(7,27,43,.45)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 focus-visible:ring-offset-2 sm:p-6"
           >
             <UnlistedModeIllustration />
 
@@ -257,7 +283,7 @@ export default function SurveyEditor({
           </button>
         </div>
 
-        <div className="mt-7 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mx-auto mt-8 flex max-w-6xl items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true">
             <path
               d="M12 3.5 21.5 20h-19L12 3.5Z"
@@ -284,6 +310,6 @@ export default function SurveyEditor({
           キャンセルしてホームに戻る
         </button>
       </div>
-    </div>
+    </main>
   );
 }

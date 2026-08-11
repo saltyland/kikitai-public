@@ -25,8 +25,12 @@ export default async function EditSurveyPage({
   return (
     <>
       <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold text-slate-800">アンケートを編集</h1>
+      <main className="app-main mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mb-7">
+          <p className="app-kicker">Survey studio / edit</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">アンケートを編集</h1>
+          <p className="mt-2 text-sm text-slate-500">回答者に伝わる流れを確認しながら、調査内容を仕上げましょう。</p>
+        </div>
         <SurveyEditor survey={survey} />
       </main>
     </>

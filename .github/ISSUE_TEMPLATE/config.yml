@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: サービスを試す
+    url: https://kikitai.vercel.app
+    about: 登録なしでデモを触れます
+  - name: 設計ドキュメント
+    url: https://github.com/saltyland/kikitai-public/tree/main/docs
+    about: 要件定義・アーキテクチャ・技術選定の記録

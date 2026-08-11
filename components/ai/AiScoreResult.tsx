@@ -70,7 +70,7 @@ export default function AiScoreResult({ data, minLoadingMs = 1800, onApplySugges
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-5 rounded-3xl border border-brand-200/70 bg-gradient-to-br from-white via-white to-brand-50/70 p-5 shadow-[0_26px_70px_-48px_rgba(7,27,43,.7)] sm:p-7"
     >
       <Section>
         <ScoreRing score={data.totalScore} />
@@ -103,9 +103,9 @@ export default function AiScoreResult({ data, minLoadingMs = 1800, onApplySugges
       </Section>
 
       <Section>
-        <div className="flex items-center justify-between rounded-md bg-slate-50 px-4 py-3">
-          <span className="text-sm text-slate-500">必要ポイントコスト</span>
-          <span className="text-lg font-bold text-brand-700">
+        <div className="flex items-center justify-between rounded-2xl bg-[#071b2b] px-5 py-4 text-white shadow-lg">
+          <span className="text-sm text-white/60">必要ポイントコスト</span>
+          <span className="text-xl font-extrabold text-[#d9ff72]">
             <PointCostCountUp value={data.pointCost} />pt
           </span>
         </div>
@@ -135,7 +135,7 @@ function Section({ children }: { children: React.ReactNode }) {
 
 function Metric({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-slate-100 px-3 py-2">
+    <div className="flex min-h-24 flex-col justify-between gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-3 shadow-sm">
       <span className="flex items-center gap-1 text-xs text-slate-400">
         {icon}
         {label}

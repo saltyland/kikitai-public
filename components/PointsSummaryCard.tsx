@@ -23,16 +23,19 @@ export default function PointsSummaryCard({
   lots: PointLot[];
 }) {
   return (
-    <section className="card-3d rounded-2xl bg-white p-5">
-      <div className="flex items-end justify-between">
+    <section className="card-3d overflow-hidden rounded-2xl bg-white p-0">
+      <div className="flex items-end justify-between bg-gradient-to-br from-brand-50 via-white to-[#eff8dd] p-6 sm:p-8">
         <div>
-          <h2 className="text-sm font-semibold text-slate-500">ポイント残高</h2>
-          <p className="mt-1 text-3xl font-bold text-brand-600">
+          <p className="app-kicker">Available balance</p>
+          <h2 className="mt-2 text-sm font-semibold text-slate-500">ポイント残高</h2>
+          <p className="mt-1 text-4xl font-extrabold tracking-tight text-brand-700 sm:text-5xl">
             {summary.available}
             <span className="ml-1 text-base font-semibold text-slate-400">pt</span>
           </p>
         </div>
       </div>
+
+      <div className="p-5 sm:p-6">
 
       {summary.expiringSoon.length > 0 && (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -77,6 +80,7 @@ export default function PointsSummaryCard({
       <p className="mt-3 text-xs text-slate-400">
         ポイントは自分のアンケートに回答が届くたびに、その品質に応じて古い付与分から順に消費され、付与から180日で失効します。
       </p>
+      </div>
     </section>
   );
 }

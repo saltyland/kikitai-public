@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthService } from '@/lib/services/authService';
 import PointRevealCard from '@/components/gamification/PointRevealCard';
+import Image from 'next/image';
 
 /**
  * アンケート回答後の結果画面。
@@ -47,18 +48,29 @@ export default async function AnsweredPage({
   return (
     <>
       {profile && <Header nickname={profile.nickname} avatarUrl={profile.avatar_url} />}
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center px-4 py-10">
+      <main className="app-main mx-auto flex w-full max-w-2xl flex-1 flex-col items-center px-4 py-10 sm:px-6">
         <div className="w-full space-y-5 text-center">
-          <div>
-            <p className="text-5xl">{ev?.emoji ?? '✅'}</p>
-            <h1 className="mt-3 text-2xl font-extrabold text-slate-800">回答を送信しました</h1>
-            <p className="mt-1 text-sm text-slate-500">ご協力ありがとうございました！</p>
+          <div className="app-completion-art">
+            <Image
+              src="/images/app/answer-quality-signal-v3-pale.webp"
+              alt="回答が品質評価を通り研究シグナルへ変わる様子"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 672px"
+            />
+            <div className="absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-[#e2f1eb] via-[#e7f3ed]/95 to-transparent" />
+            <div className="absolute left-0 top-0 w-[72%] p-6 text-left sm:w-[62%] sm:p-8">
+              <p className="app-kicker">Answer complete</p>
+              <h1 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">回答を送信しました</h1>
+              <p className="mt-1 text-sm text-slate-600">あなたの回答が、研究を前へ進めるデータになりました。</p>
+            </div>
           </div>
 
           {/* 品質評価 */}
           {qScore !== null && ev && (
             <section className="card-3d rounded-2xl bg-white p-6">
-              <h2 className="text-sm font-semibold text-slate-500">回答の質</h2>
+              <p className="app-kicker">AI quality check</p>
+              <h2 className="mt-2 text-sm font-semibold text-slate-500">回答の質</h2>
               <p className={`mt-2 text-3xl font-bold ${ev.color}`}>
                 {qScore}
                 <span className="ml-1 text-base font-semibold text-slate-400">点</span>
