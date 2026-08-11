@@ -1,0 +1,76 @@
+Kikitai Source-Available License (Evaluation and Review Only)
+キキタイ ソースアベイラブル・ライセンス（閲覧・評価目的に限る）
+
+Copyright (c) 2026 Kikitai Project. All rights reserved.
+
+--------------------------------------------------------------------------
+English
+--------------------------------------------------------------------------
+
+This source code is made publicly available for the sole purpose of allowing
+others to read, review, and evaluate the authors' engineering work
+(for example, as part of a portfolio, a job application, or a technical
+assessment).
+
+PERMITTED, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"):
+
+  (a) Viewing and reading the Software.
+  (b) Cloning or downloading the Software for the purpose of reading it
+      locally, and running it locally solely to evaluate it.
+  (c) Quoting short excerpts for the purpose of review, commentary,
+      education, or technical discussion, with attribution.
+
+NOT PERMITTED without prior written permission from the copyright holder:
+
+  (1) Use of the Software, in whole or in part, in any product, service, or
+      internal system, whether commercial or non-commercial.
+  (2) Copying, modifying, merging, publishing, distributing, sublicensing,
+      selling, or otherwise redistributing the Software or any derivative
+      work based on it.
+  (3) Operating, hosting, or offering to third parties any service based on
+      the Software or any derivative work based on it.
+  (4) Using the Software, or any part of it, as training data for machine
+      learning models intended for redistribution or commercial use.
+
+All rights not expressly granted above are reserved by the copyright holder.
+
+To request a license for any use beyond the above, contact the repository
+owner via GitHub.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------
+日本語（参考訳。解釈が分かれる場合は上記英文を正とする）
+--------------------------------------------------------------------------
+
+本ソースコードは、制作者の開発内容を第三者が読み、レビューし、評価できるように
+する目的（ポートフォリオ、採用選考、技術評価など）に限って公開しています。
+
+【許諾する行為】無償で誰でも行えます。
+  (a) 本ソフトウェアを閲覧・読解すること。
+  (b) 読解のためにクローン／ダウンロードし、評価目的でローカル実行すること。
+  (c) レビュー・論評・教育・技術的議論のために、出典を示して短い引用をすること。
+
+【著作権者の事前の書面による許諾なく行えない行為】
+  (1) 本ソフトウェアの全部または一部を、商用・非商用を問わず、製品・サービス・
+      社内システムに使用すること。
+  (2) 本ソフトウェアまたはその派生物を複製・改変・結合・公開・頒布・
+      サブライセンス・販売・再配布すること。
+  (3) 本ソフトウェアまたはその派生物に基づくサービスを運営・ホスティングし、
+      または第三者に提供すること。
+  (4) 再配布または商用利用を目的とする機械学習モデルの学習データとして
+      使用すること。
+
+上記で明示的に許諾されていない一切の権利は著作権者が留保します。
+上記を超える利用をご希望の場合は、GitHub 経由でリポジトリ所有者にご連絡ください。
+
+本ソフトウェアは「現状のまま」提供され、明示・黙示を問わずいかなる保証も
+行いません。本ソフトウェアの使用またはその他の取扱いに関連して生じた
+いかなる請求・損害・その他の責任についても、著作権者は責任を負いません。
