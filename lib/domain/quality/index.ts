@@ -35,6 +35,9 @@ export {
   evaluateWithDeadline,
   resolveQualityDeadlineMs,
   DEFAULT_QUALITY_DEADLINE_MS,
+  withDeadline,
+  resolveRelevanceDeadlineMs,
+  DEFAULT_RELEVANCE_DEADLINE_MS,
 } from './deadline';
 export type { DeadlineEvaluation } from './deadline';
 

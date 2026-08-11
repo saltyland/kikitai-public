@@ -2,11 +2,12 @@
  * evaluateWithDeadline（締切つきAI評価）のテスト。
  * 「回答者は締切以内に必ずスコアを受け取る」構造的保証を検証する。
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_QUALITY_DEADLINE_MS,
   evaluateWithDeadline,
   resolveQualityDeadlineMs,
+  withDeadline,
 } from './deadline';
 import type { IQualityEvaluator, QualityResult } from './types';
 
@@ -57,6 +58,32 @@ describe('evaluateWithDeadline', () => {
     expect(res.quality).toEqual(fallback);
     expect(res.timedOut).toBe(true);
     await expect(res.late).resolves.toBeNull();
+  });
+});
+
+describe('withDeadline', () => {
+  it('締切内に解決 → その値を返す', async () => {
+    const p = new Promise<number>((resolve) => setTimeout(() => resolve(42), 5));
+    await expect(withDeadline(p, 200, -1)).resolves.toBe(42);
+  });
+
+  it('締切超過 → fallbackを返す', async () => {
+    const p = new Promise<number>((resolve) => setTimeout(() => resolve(42), 80));
+    await expect(withDeadline(p, 20, -1)).resolves.toBe(-1);
+  });
+
+  it('締切超過後に元のPromiseがrejectしても落ちない（unhandled rejectionにならない）', async () => {
+    const onUnhandled = vi.fn();
+    process.once('unhandledRejection', onUnhandled);
+
+    const p = new Promise<number>((_, reject) =>
+      setTimeout(() => reject(new Error('後から失敗')), 80)
+    );
+    await expect(withDeadline(p, 20, -1)).resolves.toBe(-1);
+
+    // 元のPromiseの後続処理が走り切るまで待つ
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(onUnhandled).not.toHaveBeenCalled();
   });
 });
 

@@ -22,6 +22,50 @@ export function resolveQualityDeadlineMs(
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_QUALITY_DEADLINE_MS;
 }
 
+/**
+ * 関連性リスク計算（埋め込みエンコーダ）の締切（ms）のデフォルト。
+ *
+ * エンコーダのコールドスタート（初回モデルロード）は数秒〜十数秒かかりうるため、
+ * ここにも締切を設けて回答送信の待ち時間を保証する（設計書 §13.2 補足）。
+ */
+export const DEFAULT_RELEVANCE_DEADLINE_MS = 1_500;
+
+/** 環境変数 RELEVANCE_DEADLINE_MS から締切を解決する（未設定・不正値はデフォルト）。 */
+export function resolveRelevanceDeadlineMs(
+  env: Record<string, string | undefined> = process.env
+): number {
+  const raw = Number(env.RELEVANCE_DEADLINE_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_RELEVANCE_DEADLINE_MS;
+}
+
+/**
+ * 任意の Promise に締切を掛ける汎用ヘルパー。
+ *
+ * 締切内に解決すればその値を返し、超過すれば fallback を返す。
+ * 超過後に元の Promise が resolve/reject しても呼び出し側には伝播しない
+ * （unhandled rejection にならないよう、ここで握りつぶす）。
+ */
+export async function withDeadline<T>(
+  promise: Promise<T>,
+  deadlineMs: number,
+  fallback: T
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timer = setTimeout(() => resolve('timeout'), deadlineMs);
+  });
+
+  // 超過後にpromiseがrejectしてもunhandled rejectionにならないよう、ここで必ず拾う。
+  const guarded = promise.catch(() => fallback);
+
+  try {
+    const winner = await Promise.race([guarded, timeout]);
+    return winner === 'timeout' ? fallback : winner;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** {@link evaluateWithDeadline} の結果 */
 export interface DeadlineEvaluation {
   /** 回答者への即時提示・ポイント確定に使う品質結果 */
