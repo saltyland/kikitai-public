@@ -46,3 +46,17 @@ next-env.d.ts
 # 品質採点ベンチマークの実行時生成物（personas.json は凍結なのでコミットする）
 _benchmark_result.txt
 _sim_result.tsv
+
+# 就活・社内共有用の資料（ローカル専用）
+キキタイ_プロジェクト概要_就活用.md
+
+# 開発エージェント／チーム内向けの手順書（公開リポジトリには含めない）
+CLAUDE.md
+AGENTS.md
+TEAM_GUIDE.md
+ONBOARDING.md
+GITHUB_GUIDE.md
+.claude/
+
+# 画像の配信形式は WebP。PNG原本はローカルにのみ保持する
+public/images/**/*.png

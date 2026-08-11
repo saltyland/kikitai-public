@@ -1,0 +1,31 @@
+name: 機能提案
+description: 追加・改善したい機能を提案する
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: 「〜ができなくて困っている」の形で書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する解決策
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度の体感
+      options:
+        - 高（これが無いと使えない）
+        - 中（あると明確に良い）
+        - 低（いつか）
+    validations:
+      required: true

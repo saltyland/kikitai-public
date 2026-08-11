@@ -1,0 +1,51 @@
+name: バグ報告
+description: 想定と異なる挙動を報告する
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きたか
+      placeholder: 実際に観測された挙動を書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待していた挙動
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 該当箇所
+      options:
+        - アンケート作成
+        - 回答
+        - 結果分析
+        - ポイント / 品質評価
+        - 認証 / プロフィール
+        - 通知 / ソーシャル
+        - その他
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 環境
+      placeholder: "例: Chrome 140 / macOS / 本番(kikitai.vercel.app)"
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ・スクリーンショット
+      description: あれば貼ってください

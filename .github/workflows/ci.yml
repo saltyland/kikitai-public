@@ -7,9 +7,21 @@ on:
   push:
     branches: [main]
 
+# 同じブランチで新しい push があったら、走行中の古いジョブを打ち切る。
+# Actions の実行時間を無駄にせず、最新コミットの結果だけを見る。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 既定の権限を読み取りのみに絞る（最小権限）。
+permissions:
+  contents: read
+
 jobs:
   verify:
+    name: 型チェック・Lint・テスト・ビルド
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
